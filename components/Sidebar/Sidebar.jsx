@@ -24,7 +24,7 @@ const Sidebar = () => {
   }, [location]);
 
   const menuItems = [
-    { name: "Dashboard", icon: <Home size={20} />, path: "/admin" },
+    { name: "Dashboard", icon: <Home size={20} />, path: "/" },
     {
       name: "Users",
       icon: <Users size={20} />,
@@ -44,8 +44,8 @@ const Sidebar = () => {
     name: "Notes", 
     icon: <BookOpen size={20} />, 
     submenu: [
-      { name: "All Notes", path: "/admin/notes" },
-      { name: "Add Note", path: "/admin/notes/add" },
+      { name: "All Notes", path: "/notespage" },
+      { name: "Add Note", path: "/notes/add" },
     ] 
   },
       { name: "Colleges", icon: <GraduationCap size={20} />, path: "/college" },
