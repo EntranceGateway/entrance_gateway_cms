@@ -6,6 +6,7 @@ import NotePage from "./pages/notes/NotesPage";
 import { Provider } from "react-redux";
 import store from "../store/store"
 import AddTraning from "./pages/admin/training/AddTraining";
+import AddCollege from "./pages/college/AddCollege";
 export default function App() {
   return (
   <Provider store={store}>
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/notes/add" element={<CreateNote/>}/>
         <Route path="/notespage" element={<NotePage/>}/>
         <Route path="/traning/add" element={<AddTraning/>}/>
+        <Route path="/college/add" element={<AddCollege/>}/>
       </Routes>
     </BrowserRouter>
   </Provider>

@@ -49,7 +49,8 @@ const Sidebar = () => {
     ] 
   },
   
-      { name: "Colleges", icon: <GraduationCap size={20} />, path: "/college" },
+  
+      { name: "Colleges", icon: <GraduationCap size={20} />, path: "/college/add" },
 
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
         { name: "Training", icon: <BookOpen size={18} />, path: "/traning/add" },
