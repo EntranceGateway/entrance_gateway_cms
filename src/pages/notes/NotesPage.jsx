@@ -1,7 +1,7 @@
-import Layout from "../../components/layout/layout";
+import Layout from "../../../components/layout/layout";
 import NotesTable from "./components/notesTable/NotesTable";
 
-const NotesPage = () => {
+const NotePage = () => {
   return (
     <Layout>
 
@@ -14,4 +14,4 @@ const NotesPage = () => {
   );
 };
 
-export default NotesPage;
+export default NotePage;

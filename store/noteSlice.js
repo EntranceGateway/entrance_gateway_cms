@@ -16,6 +16,9 @@ const notesSlice = createSlice({
         setData(state, action) {
             state.data = action.payload;
         },
+         setToken(state, action) {
+            state.token = action.payload;
+        },
         updateNoteInState(state, action) {
             const updatedNote = action.payload;
             state.data = state.data.map(note => 
@@ -29,7 +32,7 @@ const notesSlice = createSlice({
     }
 });
 
-export const { setStatus, setData, updateNoteInState, removeNoteFromState } = notesSlice.actions;
+export const { setStatus, setData, setToken,updateNoteInState, removeNoteFromState } = notesSlice.actions;
 export default notesSlice.reducer;
 
 // Add note
@@ -38,7 +41,9 @@ export function addNotes(data) {
         dispatch(setStatus(STATUSES.LOADING));
         try {
             const response = await API.post('notes', data, {
-                headers: { "Content-Type": "multipart/form-data" }
+                headers:  {
+                     "Content-Type": "multipart/form-data"
+                     }
             });
             if (response.status === 201) {
                 dispatch(setStatus(STATUSES.SUCCESS));

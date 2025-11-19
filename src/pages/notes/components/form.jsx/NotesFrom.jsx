@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const NoteForm = () => {
+const NoteForm = ({ onSubmit }) => {
   const [form, setForm] = useState({
     subject: "",
     subjectCode: "",
@@ -10,31 +10,28 @@ const NoteForm = () => {
     pdfFile: null,
   });
 
-  // text inputs
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // file input
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type !== "application/pdf") {
-      alert("Only PDF files are allowed.");
-      return;
-    }
-    setForm({ ...form, pdfFile: file });
+    if (file && file.type !== "application/pdf")
+      return alert("Only PDF files allowed");
+
+    setForm((prev) => ({ ...prev, pdfFile: file || null }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!form.subject || !form.subjectCode || !form.noteName) {
-      alert("Fill the required fields.");
-      return;
-    }
+    // === Validation ===
+    if (!form.subject.trim()) return alert("Subject is required");
+    if (!form.subjectCode.trim()) return alert("Subject code is required");
+    if (!form.noteName.trim()) return alert("Note name is required");
+    if (!form.pdfFile) return alert("PDF file is required");
+
+    // Call parent handler
+    onSubmit?.(form);
 
     console.log("Form Submitted:", form);
   };
@@ -45,7 +42,6 @@ const NoteForm = () => {
 
       <form className="grid grid-cols-1 sm:grid-cols-2 gap-4" onSubmit={handleSubmit}>
         
-        {/* Subject */}
         <div>
           <label className="block text-sm font-medium mb-1">Subject *</label>
           <input
@@ -55,11 +51,9 @@ const NoteForm = () => {
             onChange={handleChange}
             placeholder="Enter subject"
             className="w-full border px-3 py-2 rounded"
-            required
           />
         </div>
 
-        {/* Subject Code */}
         <div>
           <label className="block text-sm font-medium mb-1">Subject Code *</label>
           <input
@@ -69,11 +63,9 @@ const NoteForm = () => {
             onChange={handleChange}
             placeholder="e.g., CS101"
             className="w-full border px-3 py-2 rounded"
-            required
           />
         </div>
 
-        {/* Note Name */}
         <div>
           <label className="block text-sm font-medium mb-1">Note Name *</label>
           <input
@@ -83,11 +75,9 @@ const NoteForm = () => {
             onChange={handleChange}
             placeholder="Enter note name"
             className="w-full border px-3 py-2 rounded"
-            required
           />
         </div>
 
-        {/* Course ID */}
         <div>
           <label className="block text-sm font-medium mb-1">Course ID</label>
           <input
@@ -100,7 +90,6 @@ const NoteForm = () => {
           />
         </div>
 
-        {/* Note Description */}
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium mb-1">Note Description</label>
           <textarea
@@ -112,7 +101,6 @@ const NoteForm = () => {
           ></textarea>
         </div>
 
-        {/* PDF Upload */}
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium mb-1">Upload PDF *</label>
           <input
@@ -121,10 +109,8 @@ const NoteForm = () => {
             onChange={handleFileChange}
             className="w-full border px-3 py-2 rounded bg-gray-50"
           />
-          <p className="text-xs text-gray-600 mt-1">Only PDF file is allowed.</p>
         </div>
 
-        {/* Submit Button */}
         <div className="sm:col-span-2">
           <button
             type="submit"

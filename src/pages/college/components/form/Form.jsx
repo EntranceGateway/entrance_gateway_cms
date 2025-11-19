@@ -1,7 +1,6 @@
 // CollegeForm.jsx - Simple & Responsive Nepal Colleges Manager
 import React, { useState, useEffect } from "react";
 import { Upload, Building2, MapPin, Globe, Calendar, University, Search, Trash2 } from "lucide-react";
-import Layout from "../../../../components/layout/layout";
 
 const CollegeForm = (type,onSubmit) => {
   const [colleges, setColleges] = useState(() => {
@@ -91,7 +90,6 @@ const CollegeForm = (type,onSubmit) => {
   );
 
   return (
-    <Layout>
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
 
@@ -313,7 +311,6 @@ const CollegeForm = (type,onSubmit) => {
         </div>
       </div>
     </div>
-    </Layout>
   );
 };
 

@@ -48,10 +48,13 @@ const Sidebar = () => {
       { name: "Add Note", path: "/notes/add" },
     ] 
   },
+  
       { name: "Colleges", icon: <GraduationCap size={20} />, path: "/college" },
 
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
+        { name: "Training", icon: <BookOpen size={18} />, path: "/traning/add" },
   ];
+  
 
   const toggleSubmenu = (name) => {
     setOpenSubmenu(openSubmenu === name ? null : name);
