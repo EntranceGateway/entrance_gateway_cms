@@ -11,7 +11,7 @@ const NotesTable = () => {
   // Fetch notes
   useEffect(() => {
     axios
-      .get("https://691c3b293aaeed735c9006f6.mockapi.io/notes")
+      .get("http://185.177.116.173:8080/api/v1/notes")
       .then((res) => setNotes(res.data))
       .catch(() => alert("Failed to load notes"));
   }, []);
