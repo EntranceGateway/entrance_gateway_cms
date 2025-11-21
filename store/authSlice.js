@@ -19,18 +19,12 @@ const authSlice = createSlice({
     setToken(state, action) {
       state.token = action.payload;
     },
-    removeUserFromState(state, action) {
-      // only keep this if user is a list of users; otherwise remove
-      const id = action.payload;
-      if (Array.isArray(state.user)) {
-        state.user = state.user.filter(u => u.id !== id);
-      }
+    
     }
-  }
 });
 
 // Export reducers
-export const { setStatus, setUser, setToken, removeUserFromState } = authSlice.actions;
+export const { setStatus, setUser, setToken} = authSlice.actions;
 export default authSlice.reducer;
 
 // Thunks
@@ -40,7 +34,7 @@ export function addAuth(data) {
     dispatch(setStatus(STATUSES.LOADING));
     try {
       const response = await API.post('/api/v1/auth/admin/register', data);
-      if (response.status === 201) {
+      if (response.status === 200) {
         dispatch(setStatus(STATUSES.SUCCESS));
       } else {
         dispatch(setStatus(STATUSES.ERROR));
@@ -56,9 +50,9 @@ export function login(data) {
     dispatch(setStatus(STATUSES.LOADING));
     try {
       const response = await API.post("/api/v1/auth/login", data);
-      if (response.status === 200 && response.data.token) {
-        dispatch(setToken(response.data.token));
-        dispatch(setUser(response.data.user || null)); // save user info if available
+      if (response.status === 200 && response.data.data.token) {
+        dispatch(setToken(response.data.data.token));
+        dispatch(setUser(response.data.data.user)); // save user info if available
         dispatch(setStatus(STATUSES.SUCCESS));
       } else {
         dispatch(setStatus(STATUSES.ERROR));
