@@ -64,8 +64,14 @@ const Sidebar = () => {
         { name: "All Question", path: "/question" },
         { name: "Add Question", path: "/question/add" },
       ],
+    }, {
+      name: "Colleges",
+      icon: <GraduationCap size={20} />,
+      submenu: [
+        { name: "All Colleges", path: "/college/all" },
+        { name: "Add Colleges", path: "/college/add" },
+      ],
     },
-    { name: "Colleges", icon: <GraduationCap size={20} />, path: "/college/add" },
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
     { name: "Training", icon: <BookOpen size={18} />, path: "/training/add" },
   ];

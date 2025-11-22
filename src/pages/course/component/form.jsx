@@ -1,28 +1,57 @@
 // src/CourseForm.jsx
 import React, { useState } from "react";
-
+import { createCourse } from "../../../http/course";
 const CourseForm = () => {
   const [form, setForm] = useState({
     courseName: "",
     description: "",
     collegeId: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  // Assuming your token is stored in localStorage
+  const token = localStorage.getItem("token");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", form);
-    alert(`Course Created: ${form.courseName}`);
-    // You can send form to API here
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const res = await createCourse(form, token); // pass token
+      console.log("API Response:", res.data);
+      setMessage(`Course "${form.courseName}" created successfully!`);
+      setForm({ courseName: "", description: "", collegeId: "" });
+    } catch (err) {
+      console.error("API Error:", err);
+      setMessage("Failed to create course. Try again.");
+    }
+
+    setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white shadow-2xl rounded-xl max-w-lg w-full p-10">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Add New Course</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+          Add New Course
+        </h1>
+
+        {message && (
+          <p
+            className={`text-center mb-4 font-medium ${
+              message.includes("successfully") ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {message}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-gray-700 mb-2 font-medium">Course Name</label>
@@ -36,6 +65,7 @@ const CourseForm = () => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
           </div>
+
           <div>
             <label className="block text-gray-700 mb-2 font-medium">Description</label>
             <textarea
@@ -46,8 +76,9 @@ const CourseForm = () => {
               placeholder="An introduction to software engineering principles..."
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            ></textarea>
+            />
           </div>
+
           <div>
             <label className="block text-gray-700 mb-2 font-medium">College ID</label>
             <input
@@ -60,11 +91,13 @@ const CourseForm = () => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
           </div>
+
           <button
             type="submit"
-            className="w-full bg-linear-to-r from-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-600 text-white py-3 rounded-lg font-semibold transition-all"
+            disabled={loading}
+            className="w-full bg-linear-to-r from-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-600 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50"
           >
-            Submit
+            {loading ? "Submitting..." : "Submit"}
           </button>
         </form>
       </div>

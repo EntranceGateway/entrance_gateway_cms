@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const Form = ({ role = "user", type, onSubmit, user }) => {
+const Form = ({ role = "user", type, onSubmit, user,error  }) => {
   const [data, setData] = useState({
     email: "",
     password: "",
@@ -37,6 +37,12 @@ const Form = ({ role = "user", type, onSubmit, user }) => {
       <div className="md:w-1/2 flex items-center justify-center p-10 bg-gray-100">
         <div className="bg-white shadow-2xl rounded-xl w-full max-w-md p-10">
           <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">{title}</h1>
+          {error && (
+  <p className="text-red-500 text-sm mb-2 text-center">
+    {error}
+  </p>
+)}
+
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="block text-gray-700 mb-2 font-medium">Email</label>

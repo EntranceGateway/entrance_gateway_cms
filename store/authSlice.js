@@ -7,11 +7,18 @@ const authSlice = createSlice({
   initialState: {
     user: null,
     status: null,
-    token: null
+    token: null,
+    userId:null,
+    error: null, 
+
+
   },
   reducers: {
     setStatus(state, action) {
       state.status = action.payload;
+    },
+     setError(state, action) {
+      state.error = action.payload;
     },
     setUser(state, action) {
       state.user = action.payload;
@@ -19,12 +26,15 @@ const authSlice = createSlice({
     setToken(state, action) {
       state.token = action.payload;
     },
+      setUserId(state, action) {
+      state.userId = action.payload;
+    },
     
     }
 });
 
 // Export reducers
-export const { setStatus, setUser, setToken} = authSlice.actions;
+export const { setStatus, setUser, setToken,setUserId,setError} = authSlice.actions;
 export default authSlice.reducer;
 
 // Thunks
@@ -46,22 +56,39 @@ export function addAuth(data) {
 }
 
 export function login(data) {
-  return async function(dispatch) {
+  return async function (dispatch) {
     dispatch(setStatus(STATUSES.LOADING));
+
     try {
       const response = await API.post("/api/v1/auth/login", data);
+
       if (response.status === 200 && response.data.data.token) {
-        dispatch(setToken(response.data.data.token));
-        dispatch(setUser(response.data.data.user)); // save user info if available
+        const { token, userId, user } = response.data.data;
+
+        dispatch(setToken(token));
+        dispatch(setUserId(userId));
+        dispatch(setUser(user));
+
+        // persist
+        localStorage.setItem("token", token);
+        localStorage.setItem("userId", userId);
+
         dispatch(setStatus(STATUSES.SUCCESS));
       } else {
+        // If backend responds 200 but no token
         dispatch(setStatus(STATUSES.ERROR));
+        dispatch(setError(response.data.message || "Login failed"));
       }
     } catch (error) {
+      // Backend returned an error response
+      const message =
+        error.response?.data?.message || "Something went wrong";
       dispatch(setStatus(STATUSES.ERROR));
+      dispatch(setError(message));
     }
-  }
+  };
 }
+
 
 export function fetchAuth() {
   return async function(dispatch) {
