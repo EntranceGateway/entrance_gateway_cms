@@ -1,4 +1,4 @@
-import Layout from "../../../components/layout/layout";
+import Layout from "../../../components/layout/Layout";
 import CourseTable from "./component/CourseTable";
 
 function AllCourse(){

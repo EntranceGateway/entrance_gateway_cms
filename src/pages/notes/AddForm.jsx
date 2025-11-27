@@ -1,18 +1,17 @@
-import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
 import Layout from "../../../components/layout/layout";
 import NoteForm from "./components/form.jsx/NotesFrom";
-import STATUSES from "../../globals/status/statuses";
+import { createNotes } from "../../http/notes";
 
 const CreateNote = () => {
+  const token = localStorage.getItem("token");
 
-  const handleNotes = (formData) => {
+  const handleNotes = async (data) => {
+    return await createNotes(data, token);
   };
 
- 
   return (
     <Layout>
-      <NoteForm onSubmit={handleNotes} />
+      <NoteForm mode="add" onSubmit={handleNotes} />
     </Layout>
   );
 };

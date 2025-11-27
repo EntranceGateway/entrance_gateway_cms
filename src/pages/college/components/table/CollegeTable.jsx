@@ -1,29 +1,26 @@
-// src/components/CollegeTable.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Pagination from "../../../../Verification/Pagination";
-import UniversalFilter from "../../../../Verification/UniversalFilter";
 import { deleteColleges, getColleges } from "../../../../http/colleges";
-
-const LIMIT = 15;
+import UniversalFilter from "../../../../Verification/UniversalFilter";
+import Pagination from "../../../../Verification/Pagination";
 
 const CollegeTable = () => {
-  const [colleges, setColleges] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [allColleges, setAllColleges] = useState([]);
+  const [filteredColleges, setFilteredColleges] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({});
+
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
 
   const token = localStorage.getItem("token");
 
-  // Fetch colleges from API
   const fetchColleges = async () => {
     setLoading(true);
     try {
-      const params = { page, limit: LIMIT, ...filters };
-      const res = await getColleges(params, token);
-      setColleges(res.data.colleges || []);
-      setTotal(res.data.total || 0);
+      const res = await getColleges({}, token);
+      const data = res.data.data.content || [];
+      setAllColleges(data);
+      setFilteredColleges(data);
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -32,26 +29,54 @@ const CollegeTable = () => {
 
   useEffect(() => {
     fetchColleges();
-  }, [page, filters]);
+  }, []);
 
-  // Delete a college
+  // Live, case-insensitive filter
+  const handleFilter = (filters) => {
+    let data = [...allColleges];
+
+    if (filters.collegeName)
+      data = data.filter((c) =>
+        c.collegeName.toLowerCase().includes(filters.collegeName.toLowerCase())
+      );
+
+    if (filters.location)
+      data = data.filter((c) =>
+        c.location.toLowerCase().includes(filters.location.toLowerCase())
+      );
+
+    if (filters.collegeType)
+      data = data.filter((c) => c.collegeType.toLowerCase() === filters.collegeType.toLowerCase());
+
+    if (filters.priority)
+      data = data.filter((c) => c.priority.toLowerCase() === filters.priority.toLowerCase());
+
+    setFilteredColleges(data);
+    setPage(1); // reset page after filter
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this college?")) return;
+
     try {
       await deleteColleges(id, token);
-      fetchColleges(); // refresh table
+      fetchColleges();
     } catch (err) {
       console.error("Delete error:", err);
     }
   };
 
-  const totalPages = Math.ceil(total / LIMIT);
+  const totalPages = Math.ceil(filteredColleges.length / PAGE_SIZE);
+  const paginatedColleges = filteredColleges.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   return (
     <div className="w-full p-6">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">Colleges</h1>
 
-      {/* Filter */}
+      {/* Live filter */}
       <UniversalFilter
         config={[
           { name: "collegeName", label: "College Name", type: "text", placeholder: "Search by name" },
@@ -62,62 +87,93 @@ const CollegeTable = () => {
             type: "select",
             options: [
               { value: "PRIVATE", label: "Private" },
-              { value: "PUBLIC", label: "Public" },
+              { value: "COMMUNITY", label: "Community" },
+              { value: "GOVERNMENT", label: "Government" },
+            ],
+          },
+          {
+            name: "priority",
+            label: "Priority",
+            type: "select",
+            options: [
+              { value: "HIGH", label: "High" },
+              { value: "MEDIUM", label: "Medium" },
+              { value: "LOW", label: "Low" },
             ],
           },
         ]}
-        onFilter={(newFilters) => {
-          setPage(1);
-          setFilters(newFilters);
-        }}
+        onFilter={handleFilter} // live filter on every input
       />
 
       {/* Table */}
-      <div className="bg-white shadow-md border rounded-xl overflow-hidden">
+      <div className="bg-white shadow-xl rounded-2xl overflow-hidden mt-4">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="p-4 text-left font-medium text-gray-700">Name</th>
-                <th className="p-4 text-left font-medium text-gray-700">Location</th>
-                <th className="p-4 text-left font-medium text-gray-700">Affiliation</th>
-                <th className="p-4 text-left font-medium text-gray-700">Contact</th>
-                <th className="p-4 text-left font-medium text-gray-700">Email</th>
-                <th className="p-4 text-left font-medium text-gray-700">Year</th>
-                <th className="p-4 text-left font-medium text-gray-700">Type</th>
-                <th className="p-4 text-center font-medium text-gray-700">Action</th>
+                {["Name", "Location", "Affiliation", "Priority", "Contact", "Email", "Website", "Year", "Action"].map(
+                  (col) => (
+                    <th
+                      key={col}
+                      className="p-4 text-left font-medium text-gray-700 sticky top-0 bg-gray-50 z-10"
+                    >
+                      {col}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
 
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center p-6 text-gray-500">Loading...</td>
+                  <td colSpan={9} className="text-center p-6 text-gray-500">
+                    Loading...
+                  </td>
                 </tr>
-              ) : colleges.length === 0 ? (
+              ) : paginatedColleges.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center p-6 text-gray-500">No colleges found</td>
+                  <td colSpan={9} className="text-center p-6 text-gray-500">
+                    🔍 No colleges found for selected filters
+                  </td>
                 </tr>
               ) : (
-                colleges.map((college) => (
-                  <tr key={college.id} className="hover:bg-gray-50 transition">
-                    <td className="p-4 text-gray-800 font-medium">{college.collegeName}</td>
+                paginatedColleges.map((college) => (
+                  <tr key={college.collegeId} className="hover:bg-gray-50 transition">
+                    <td className="p-4 font-medium text-gray-800">{college.collegeName}</td>
                     <td className="p-4 text-gray-600">{college.location}</td>
                     <td className="p-4 text-gray-600">{college.affiliation}</td>
+                    <td className="p-4">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-md font-semibold ${
+                          college.priority === "HIGH"
+                            ? "bg-red-100 text-red-700"
+                            : college.priority === "MEDIUM"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {college.priority}
+                      </span>
+                    </td>
                     <td className="p-4 text-gray-600">{college.contact}</td>
                     <td className="p-4 text-gray-600">{college.email}</td>
+                    <td className="p-4 text-blue-600 underline">
+                      <a href={college.website} target="_blank" rel="noreferrer">
+                        Visit
+                      </a>
+                    </td>
                     <td className="p-4 text-gray-600">{college.establishedYear}</td>
-                    <td className="p-4 text-gray-600">{college.collegeType}</td>
-                    <td className="p-4 flex items-center justify-center gap-3">
+                    <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
                       <Link
-                        to={`/edit-college/${college.id}`}
-                        className="px-3 py-1.5 rounded-md text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
+                        to={`/college/edit/${college.collegeId}`}
+                        className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
                       >
                         Edit
                       </Link>
                       <button
-                        onClick={() => handleDelete(college.id)}
-                        className="px-3 py-1.5 rounded-md text-red-700 font-semibold border border-red-200 hover:bg-red-50 transition"
+                        onClick={() => handleDelete(college.collegeId)}
+                        className="px-3 py-1.5 rounded-xl text-red-700 font-semibold border border-red-200 hover:bg-red-50 transition"
                       >
                         Delete
                       </button>
@@ -131,9 +187,11 @@ const CollegeTable = () => {
       </div>
 
       {/* Pagination */}
-      <div className="mt-6 flex justify-center">
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
     </div>
   );
 };

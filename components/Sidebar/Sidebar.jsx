@@ -11,7 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   GraduationCap,
-  BookOpen,FileCheck 
+  BookOpen,FileCheck ,Image ,Folder,Bell 
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -57,6 +57,22 @@ const Sidebar = () => {
         { name: "Add Syllabus", path: "/syllabus/add" },
       ],
     },
+     {
+      name: "Ads",
+      icon: <Image size={20} />,
+      submenu: [
+        { name: "All Ads", path: "/banner/all" },
+        { name: "Add Ads", path: "/banner/add" },
+      ],
+    },
+     {
+      name: "Category",
+      icon: <Folder size={20} />,
+      submenu: [
+        { name: "All Category", path: "/category/all" },
+        { name: "Add Category", path: "/category/add" },
+      ],
+    },
     {
       name: "Question",
       icon: <BookOpen size={20} />,
@@ -65,9 +81,17 @@ const Sidebar = () => {
         { name: "Add Question", path: "/question/add" },
       ],
     }, {
-      name: "Colleges",
-      icon: <GraduationCap size={20} />,
+      name: "Notices",
+      icon: <Bell size={20} />,
       submenu: [
+         { name: "All Notices", path: "/notices/all" },
+        { name: "Add Notices", path: "/notices/add" },
+      ],
+    },{
+      name: "Colleges",
+      icon: <GraduationCap  size={20} />,
+      submenu: [
+       
         { name: "All Colleges", path: "/college/all" },
         { name: "Add Colleges", path: "/college/add" },
       ],

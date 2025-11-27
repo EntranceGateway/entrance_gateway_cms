@@ -8,11 +8,22 @@ export const createCourse = async (Data, token) => {
 };
 
 // Get all courses (with optional params and token)
-export const getCourse = async (params = {}, token) => {
+export const getCourses = async (params = {}, token) => {
   return await api.get("/api/v1/courses", {
     params,
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+};
+
+// Get single college by UUID
+export const getSingleCourse = async (id, token) => {
+  try {
+    return await api.get(`/api/v1/courses/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || err;
+  }
 };
 
 // Update course by id

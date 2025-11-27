@@ -16,6 +16,11 @@ import Login from "./pages/login/Adminlogin";
 import ProtectedRoute from "./Verification/ProtectedRoute";
 import AllCourse from "./pages/course/AllCourse";
 import CollegeAll from "./pages/college/CollegeAll";
+import AddBanner from "./Banner/Form/AddBanner";
+import CategoryForm from "./Category/CategoryForm/CategoryForm";
+import AddCategory from "./Category/CategoryForm/AddCategory";
+import EditCollege from "./pages/college/EditCollege";
+import EditCourse from "./pages/course/EditCourse";
 
 export default function App() {
   return (
@@ -35,11 +40,15 @@ export default function App() {
             <Route path="/notespage" element={<NotePage />} />
             <Route path="/training/add" element={<AddTraning />} />
             <Route path="/college/add" element={<AddCollege />} />
+            <Route path="/college/edit/:id" element={<EditCollege />} />
             <Route path="/college/all" element={<CollegeAll/>}/>
             <Route path="/course/add" element={<AddCourse />} />
+            <Route path="/course/edit/:id" element={<EditCourse/>}/>
             <Route path="/question/add" element={<AddQuestion />} />
             <Route path="/syllabus/add" element={<AddSyllabus />} />
             <Route path="/course/all" element={<AllCourse/>}/>
+            <Route path="/banner/add" element={<AddBanner/>}/>
+            <Route path="/category/add" element={<AddCategory/>}/>
           </Route>
 
         </Routes>

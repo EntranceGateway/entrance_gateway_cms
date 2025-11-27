@@ -2,92 +2,141 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Pagination from "../../../Verification/Pagination";
 import UniversalFilter from "../../../Verification/UniversalFilter";
-import { getCourse } from "../../../http/course";
-
-const LIMIT = 15;
-
+import { deleteCourse, getCourses } from "../../../http/course";
 const CourseTable = () => {
-  const [courses, setCourses] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [allCourses, setAllCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({});
 
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
+
+  const token = localStorage.getItem("token");
+
+  // Fetch Courses
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const params = { page, limit: LIMIT, ...filters };
-      const res = await getCourse(params); // fetch using API module
-      
-      setCourses(res.data.courses || []);
-      setTotal(res.data.total || 0);
-      console.log(res)
+      const res = await getCourses({}, token);
+      const data = res.data.data.content || [];
+      setAllCourses(data);
+      setFilteredCourses(data);
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error("Fetch Course Error:", err);
     }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchCourses();
-  }, [page, filters]);
+  }, []);
 
-  const totalPages = Math.ceil(total / LIMIT);
+  // Live Filtering logic
+  const handleFilter = (filters) => {
+    let data = [...allCourses];
+
+    if (filters.courseName)
+      data = data.filter((c) =>
+        c.courseName.toLowerCase().includes(filters.courseName.toLowerCase())
+      );
+
+    if (filters.description)
+      data = data.filter((c) =>
+        c.description.toLowerCase().includes(filters.description.toLowerCase())
+      );
+
+    if (filters.collegeId)
+      data = data.filter((c) =>
+        c.collegeId.toLowerCase().includes(filters.collegeId.toLowerCase())
+      );
+
+    setFilteredCourses(data);
+    setPage(1);
+  };
+
+  // Delete
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this course?")) return;
+
+    try {
+      await deleteCourse(id, token);
+      fetchCourses();
+    } catch (err) {
+      console.error("Delete Course Error:", err);
+    }
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCourses.length / PAGE_SIZE);
+  const paginatedCourses = filteredCourses.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   return (
     <div className="w-full p-6">
-      <h1 className="text-2xl font-semibold mb-6 tracking-wide">Courses</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Courses</h1>
 
-      {/* Filter */}
+      {/* Filters */}
       <UniversalFilter
         config={[
-          { name: "courseName", label: "Course Name", type: "text", placeholder: "Search by title" },
-          { name: "description", label: "Description", type: "text", placeholder: "Search description" },
+          { name: "courseName", label: "Course Name", type: "text", placeholder: "Search by course name" },
+          { name: "description", label: "Description", type: "text", placeholder: "Search by description" },
+          { name: "collegeId", label: "College ID", type: "text", placeholder: "Search by college ID" },
         ]}
-        onFilter={(newFilters) => {
-          setPage(1);
-          setFilters(newFilters);
-        }}
+        onFilter={handleFilter}
       />
 
       {/* Table */}
-      <div className="bg-white shadow-lg border rounded-2xl overflow-hidden">
+      <div className="bg-white shadow-xl rounded-2xl overflow-hidden mt-4">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="p-4 text-left font-medium text-gray-700">Title</th>
-                <th className="p-4 text-left font-medium text-gray-700">Description</th>
-                <th className="p-4 text-center font-medium text-gray-700">Action</th>
+                {["Course Name", "Description", "College ID", "Action"].map((col) => (
+                  <th
+                    key={col}
+                    className="p-4 text-left font-medium text-gray-700 sticky top-0 bg-gray-50 z-10"
+                  >
+                    {col}
+                  </th>
+                ))}
               </tr>
             </thead>
+
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan={3} className="text-center p-6 text-gray-400 italic">Loading...</td>
+                  <td colSpan={4} className="text-center p-6 text-gray-500">
+                    Loading...
+                  </td>
                 </tr>
-              ) : courses.length === 0 ? (
+              ) : paginatedCourses.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="text-center p-6 text-gray-400 italic">No courses found</td>
+                  <td colSpan={4} className="text-center p-6 text-gray-500">
+                    🔍 No courses found
+                  </td>
                 </tr>
               ) : (
-                courses.map((item) => (
-                  <tr key={item.collegeId} className="hover:bg-gray-50 transition-all duration-200 cursor-pointer">
-                    <td className="p-4 text-gray-800 font-medium">{item.courseName}</td>
-                    <td className="p-4 text-gray-600">{item.description}</td>
-                    <td className="p-4 flex items-center justify-center gap-3">
+                paginatedCourses.map((course) => (
+                  <tr key={course.courseId} className="hover:bg-gray-50 transition">
+                    <td className="p-4 font-medium text-gray-800">{course.courseName}</td>
+                    <td className="p-4 text-gray-600">{course.description}</td>
+                    <td className="p-4 text-gray-600">{course.collegeId}</td>
+
+                    <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
                       <Link
-                        to={`/edit/${item.collegeId}`}
-                        className="px-4 py-2 rounded-lg text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 shadow-sm transition transform hover:scale-105"
+                        to={`/course/edit/${course.courseId}`}
+                        className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
                       >
                         Edit
                       </Link>
-                      <Link
-                        to={`/delete/${item.collegeId}`}
-                        className="px-4 py-2 rounded-lg text-red-700 font-semibold border border-red-200 hover:bg-red-50 shadow-sm transition transform hover:scale-105"
+                      <button
+                        onClick={() => handleDelete(course.courseId)}
+                        className="px-3 py-1.5 rounded-xl text-red-700 font-semibold border border-red-200 hover:bg-red-50 transition"
                       >
                         Delete
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -98,9 +147,7 @@ const CourseTable = () => {
       </div>
 
       {/* Pagination */}
-      <div className="mt-6 flex justify-center">
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-      </div>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 };

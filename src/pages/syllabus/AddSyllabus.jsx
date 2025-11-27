@@ -1,12 +1,16 @@
-import Layout from "../../../components/layout/layout"
-import AdminSyllabusForm from "./component/form/form"
+import React from "react";
+import SyllabusForm from "./component/form/form";
+import Layout from "../../../components/layout/Layout";
 
-function AddSyllabus(){
-    return(
-<Layout>
-   <AdminSyllabusForm/> 
-</Layout>
-    )
+export default function AddSyllabusPage() {
+  const token = localStorage.getItem("token");
+
+  return (
+    <Layout>
+    <SyllabusForm
+      mode="add"
+      token={token}
+    />
+    </Layout>
+  );
 }
-
-export default AddSyllabus

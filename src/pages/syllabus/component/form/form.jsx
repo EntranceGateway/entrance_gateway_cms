@@ -1,273 +1,256 @@
-import { useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import { GraduationCap, Upload, AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { addSyllabus } from "../../../../http/syllabus";
 
-const AdminSyllabusForm = () => {
-  const [form, setForm] = useState({
+const SyllabusForm = ({ mode = "add", initialData = null, token }) => {
+  const navigate = useNavigate();
+
+  const [data, setData] = useState({
+    courseId: "",
     syllabusTitle: "",
     courseCode: "",
+    courseName: "",
     creditHours: "",
     lectureHours: "",
-    tutorialHours: "",
     practicalHours: "",
-    programName: "",
     semester: "",
+    year: "",
     syllabusFile: null,
   });
 
   const [errors, setErrors] = useState({});
+  const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  // -------------------------------
-  // Input change handler
-  // -------------------------------
+  // Handle Inputs
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
+    const { name, value } = e.target;
+    setData({ ...data, [name]: value });
   };
 
+  // Handle File
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setForm({ ...form, syllabusFile: file });
-    setErrors({ ...errors, syllabusFile: "" });
+    setData({ ...data, syllabusFile: file });
+    setFileName(file?.name || "");
   };
 
-  // -------------------------------
-  // VALIDATION
-  // -------------------------------
-  const validate = () => {
-    let temp = {};
+  // Validate
+  const validateForm = () => {
+    const newErrors = {};
 
-    // Syllabus Title (string)
-    if (!form.syllabusTitle.trim()) temp.syllabusTitle = "Syllabus title is required.";
-    else if (typeof form.syllabusTitle !== "string") temp.syllabusTitle = "Syllabus title must be text.";
-    else if (form.syllabusTitle.length < 3) temp.syllabusTitle = "Title must be at least 3 characters.";
+    if (!data.courseId.trim()) newErrors.courseId = "Course ID is required";
+    if (!data.syllabusTitle.trim()) newErrors.syllabusTitle = "Syllabus Title is required";
+    if (!data.courseCode.trim()) newErrors.courseCode = "Course Code is required";
+    if (!data.courseName.trim()) newErrors.courseName = "Course Name is required";
+    if (!data.creditHours) newErrors.creditHours = "Credit Hours required";
+    if (!data.lectureHours) newErrors.lectureHours = "Lecture Hours required";
+    if (!data.semester) newErrors.semester = "Semester required";
 
-    // Course Code (string)
-    if (!form.courseCode.trim()) temp.courseCode = "Course code is required.";
-    else if (typeof form.courseCode !== "string") temp.courseCode = "Course code must be text.";
-    else if (!/^[A-Z]{2,4}\d{3}$/.test(form.courseCode)) temp.courseCode = "Use format like CS499.";
+    if (mode === "add" && !data.syllabusFile)
+      newErrors.syllabusFile = "PDF required";
 
-    // Credit Hours (number)
-    if (form.creditHours === "" || isNaN(form.creditHours)) temp.creditHours = "Credit hours must be a number.";
-    else if (form.creditHours <= 0) temp.creditHours = "Credit hours must be greater than 0.";
-
-    // Lecture Hours (number)
-    if (form.lectureHours === "" || isNaN(form.lectureHours)) temp.lectureHours = "Lecture hours must be a number.";
-    else if (form.lectureHours < 0) temp.lectureHours = "Invalid number.";
-
-    // Tutorial Hours (number)
-    if (form.tutorialHours === "" || isNaN(form.tutorialHours)) temp.tutorialHours = "Tutorial hours must be a number.";
-    else if (form.tutorialHours < 0) temp.tutorialHours = "Invalid number.";
-
-    // Practical Hours (number)
-    if (form.practicalHours === "" || isNaN(form.practicalHours)) temp.practicalHours = "Practical hours must be a number.";
-    else if (form.practicalHours < 0) temp.practicalHours = "Invalid number.";
-
-    // Program Name (string)
-    if (!form.programName.trim()) temp.programName = "Program name is required.";
-    else if (typeof form.programName !== "string") temp.programName = "Program name must be text.";
-
-    // Semester (number)
-    if (form.semester === "" || isNaN(form.semester)) temp.semester = "Semester must be a number.";
-    else if (form.semester < 1 || form.semester > 12) temp.semester = "Semester must be 1–12.";
-
-    // File (PDF)
-    if (!form.syllabusFile) temp.syllabusFile = "Upload a PDF.";
-    else if (form.syllabusFile.type !== "application/pdf") temp.syllabusFile = "Only PDF allowed.";
-
-    setErrors(temp);
-    return Object.keys(temp).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  // -------------------------------
-  // SUBMIT
-  // -------------------------------
+  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    setSubmitError("");
+
+    if (!validateForm()) return;
 
     setLoading(true);
 
-    const formData = new FormData();
-    Object.keys(form).forEach((key) => formData.append(key, form[key]));
-
     try {
-      const response = await axios.post(
-        "http://your-api-url.com/api/v1/syllabus", // <-- change to your backend
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-      console.log(response.data);
-      alert("Syllabus submitted!");
-    } catch (error) {
-      console.error(error);
-      alert("Submission failed!");
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      const res = await addSyllabus(formData, token);
+
+      if (res.status === 201) {
+        navigate("/"); // redirect after success
+      }
+
+    } catch (err) {
+      console.log(err)
+      setSubmitError(err?.response?.data?.message || "Something went wrong");
+
     }
 
     setLoading(false);
   };
 
-  // -------------------------------
-  // Border color logic
-  // -------------------------------
-  const inputBorder = (field) => {
-    if (errors[field]) return "border-red-500";
-    if (form[field] && !errors[field]) return "border-green-500";
-    return "border-gray-300";
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-3xl bg-white shadow-2xl rounded-2xl p-8 space-y-6"
-      >
-        <h2 className="text-3xl font-bold text-blue-700 border-b pb-3">Add New Syllabus</h2>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 flex justify-center">
+      <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3 mb-4">
+          <GraduationCap className="text-blue-600" />
+          {mode === "add" ? "Add Syllabus" : "Edit Syllabus"}
+        </h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {submitError && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            {submitError}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* Course ID */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Course ID *</label>
+            <input
+              type="text"
+              name="courseId"
+              value={data.courseId}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="Enter Course ID"
+            />
+            {errors.courseId && <span className="text-red-600 text-sm">{errors.courseId}</span>}
+          </div>
 
           {/* Syllabus Title */}
           <div>
-            <label className="font-semibold">Syllabus Title</label>
+            <label className="block text-sm font-medium mb-1">Syllabus Title *</label>
             <input
               name="syllabusTitle"
-              value={form.syllabusTitle}
+              value={data.syllabusTitle}
               onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 ${inputBorder(
-                "syllabusTitle"
-              )}`}
-              placeholder="Quantum Computing Fundamentals"
+              className="w-full px-4 py-2 border rounded-lg"
             />
-            {errors.syllabusTitle && <span className="text-red-600 text-sm block">{errors.syllabusTitle}</span>}
+            {errors.syllabusTitle && <span className="text-red-600 text-sm">{errors.syllabusTitle}</span>}
           </div>
 
           {/* Course Code */}
           <div>
-            <label className="font-semibold">Course Code</label>
+            <label className="block text-sm font-medium mb-1">Course Code *</label>
             <input
               name="courseCode"
-              value={form.courseCode}
+              value={data.courseCode}
               onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 ${inputBorder(
-                "courseCode"
-              )}`}
-              placeholder="CS499"
+              className="w-full px-4 py-2 border rounded-lg"
             />
-            {errors.courseCode && <span className="text-red-600 text-sm block">{errors.courseCode}</span>}
+            {errors.courseCode && <span className="text-red-600 text-sm">{errors.courseCode}</span>}
+          </div>
+
+          {/* Course Name */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Course Name *</label>
+            <input
+              name="courseName"
+              value={data.courseName}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+            {errors.courseName && <span className="text-red-600 text-sm">{errors.courseName}</span>}
           </div>
 
           {/* Credit Hours */}
           <div>
-            <label className="font-semibold">Credit Hours</label>
+            <label className="block text-sm font-medium mb-1">Credit Hours *</label>
             <input
               type="number"
               name="creditHours"
-              value={form.creditHours}
+              value={data.creditHours}
               onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 ${inputBorder(
-                "creditHours"
-              )}`}
-              placeholder="4"
+              className="w-full px-4 py-2 border rounded-lg"
             />
-            {errors.creditHours && <span className="text-red-600 text-sm block">{errors.creditHours}</span>}
+            {errors.creditHours && <span className="text-red-600 text-sm">{errors.creditHours}</span>}
           </div>
 
           {/* Lecture Hours */}
           <div>
-            <label className="font-semibold">Lecture Hours</label>
+            <label className="block text-sm font-medium mb-1">Lecture Hours *</label>
             <input
               type="number"
               name="lectureHours"
-              value={form.lectureHours}
+              value={data.lectureHours}
               onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg ${inputBorder("lectureHours")}`}
-              placeholder="3"
+              className="w-full px-4 py-2 border rounded-lg"
             />
-            {errors.lectureHours && <span className="text-red-600 text-sm block">{errors.lectureHours}</span>}
-          </div>
-
-          {/* Tutorial Hours */}
-          <div>
-            <label className="font-semibold">Tutorial Hours</label>
-            <input
-              type="number"
-              name="tutorialHours"
-              value={form.tutorialHours}
-              onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg ${inputBorder("tutorialHours")}`}
-              placeholder="1"
-            />
-            {errors.tutorialHours && <span className="text-red-600 text-sm block">{errors.tutorialHours}</span>}
+            {errors.lectureHours && <span className="text-red-600 text-sm">{errors.lectureHours}</span>}
           </div>
 
           {/* Practical Hours */}
           <div>
-            <label className="font-semibold">Practical Hours</label>
+            <label className="block text-sm font-medium mb-1">Practical Hours</label>
             <input
               type="number"
               name="practicalHours"
-              value={form.practicalHours}
+              value={data.practicalHours}
               onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg ${inputBorder("practicalHours")}`}
-              placeholder="0"
+              className="w-full px-4 py-2 border rounded-lg"
             />
-            {errors.practicalHours && <span className="text-red-600 text-sm block">{errors.practicalHours}</span>}
-          </div>
-
-          {/* Program Name */}
-          <div>
-            <label className="font-semibold">Program Name</label>
-            <input
-              name="programName"
-              value={form.programName}
-              onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg ${inputBorder("programName")}`}
-              placeholder="B.S. Computer Engineering"
-            />
-            {errors.programName && <span className="text-red-600 text-sm block">{errors.programName}</span>}
           </div>
 
           {/* Semester */}
           <div>
-            <label className="font-semibold">Semester</label>
+            <label className="block text-sm font-medium mb-1">Semester *</label>
             <input
-              type="number"
+              type="text"
               name="semester"
-              value={form.semester}
+              value={data.semester}
               onChange={handleChange}
-              className={`w-full mt-1 p-3 rounded-lg ${inputBorder("semester")}`}
-              placeholder="7"
+              placeholder="1-8"
+              className="w-full px-4 py-2 border rounded-lg"
             />
-            {errors.semester && <span className="text-red-600 text-sm block">{errors.semester}</span>}
+            {errors.semester && <span className="text-red-600 text-sm">{errors.semester}</span>}
           </div>
 
-        </div>
+          {/* Year */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Year</label>
+            <input
+              type="number"
+              name="year"
+              value={data.year}
+              onChange={handleChange}
+              placeholder="2025"
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+          </div>
 
-        {/* PDF Upload */}
-        <div>
-          <label className="font-semibold">Upload Syllabus (PDF)</label>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="mt-2"
-          />
-          {errors.syllabusFile && <span className="text-red-600 text-sm block">{errors.syllabusFile}</span>}
-        </div>
+          {/* File */}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              <Upload className="inline w-4 h-4 mr-1" /> Syllabus PDF {mode === "add" && "*"}
+            </label>
+            <input type="file" accept=".pdf" onChange={handleFileChange} />
+            {fileName && <p className="text-sm text-gray-600 mt-1">Selected: {fileName}</p>}
+            {errors.syllabusFile && <span className="text-red-600 text-sm">{errors.syllabusFile}</span>}
+          </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 text-white rounded-lg font-semibold ${
-            loading ? "bg-gray-500" : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {loading ? "Submitting..." : "Submit"}
-        </button>
-      </form>
+          {/* Buttons */}
+          <div className="pt-4 flex gap-3 justify-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
+            >
+              {loading ? "Saving..." : mode === "add" ? "Add Syllabus" : "Update Syllabus"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className="px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+
+        </form>
+      </div>
     </div>
   );
 };
 
-export default AdminSyllabusForm;
+export default SyllabusForm;
