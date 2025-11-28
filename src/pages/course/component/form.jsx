@@ -1,60 +1,71 @@
+// src/components/CourseForm.jsx
 import React, { useState, useEffect } from "react";
 
-const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
-  const [form, setForm] = useState({
-    courseName: "",
-    description: "",
-    collegeId: "",
-    courseType: "SEMESTER",
-    courseLevel: "PLUS_TWO",
-  });
+const defaultForm = {
+  courseName: "",
+  description: "",
+  collegeId: "037c307a-dd76-4d5e-a986-9e8ae59ac8b2", 
+  courseType: "SEMESTER",
+  courseLevel: "PLUS_TWO",
+};
 
+const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
+  const [form, setForm] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({}); // field-specific errors (frontend + backend)
+  const [globalError, setGlobalError] = useState("");
 
-  // Prefill form in edit mode
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setForm({
         courseName: initialData.courseName || "",
         description: initialData.description || "",
-        collegeId: initialData.collegeId || "",
+        collegeId: initialData.collegeId || defaultForm.collegeId,
         courseType: initialData.courseType || "SEMESTER",
         courseLevel: initialData.courseLevel || "PLUS_TWO",
       });
     }
   }, [initialData, mode]);
 
-  // Handle input changes
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" }); // clear field-specific error
-    setMessage(""); // clear general message
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    // Remove specific field error when user types
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+
+    setGlobalError("");
+    setMessage("");
   };
 
-  // Frontend validation
+  // ---------- FRONTEND VALIDATION ----------
   const validate = () => {
     const newErrors = {};
-    if (!form.courseName.trim()) newErrors.courseName = "Course name is required";
+    if (!form.courseName.trim()) newErrors.courseName = "Course name is required.";
     else if (form.courseName.length < 3)
-      newErrors.courseName = "Course name must be at least 3 characters";
+      newErrors.courseName = "Course name must be at least 3 characters.";
 
-    if (!form.description.trim()) newErrors.description = "Description is required";
+    if (!form.description.trim()) newErrors.description = "Description is required.";
     else if (form.description.length < 10)
-      newErrors.description = "Description must be at least 10 characters";
+      newErrors.description = "Description must be at least 10 characters.";
 
-    if (!form.collegeId.trim()) newErrors.collegeId = "College ID is required";
+    if (!form.collegeId.trim()) newErrors.collegeId = "College ID is required.";
     else if (!/^[0-9a-fA-F-]{36}$/.test(form.collegeId))
-      newErrors.collegeId = "College ID must be a valid UUID";
+      newErrors.collegeId = "College ID must be a valid UUID.";
 
     return newErrors;
   };
 
-  // Handle form submission
+  // ---------- SUBMIT ----------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
+    setGlobalError("");
     setMessage("");
 
     const frontendErrors = validate();
@@ -64,106 +75,157 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
     }
 
     setLoading(true);
+
     try {
-      await onSubmit(form); // call parent handler (API)
-      setMessage(
-        mode === "edit"
-          ? "Course updated successfully!"
-          : "Course created successfully!"
-      );
-      if (mode === "add") {
-        setForm({
-          courseName: "",
-          description: "",
-          collegeId: "",
-          courseType: "SEMESTER",
-          courseLevel: "PLUS_TWO",
-        });
-      }
+      await onSubmit(form);
+
+      setMessage(mode === "edit" ? "Course updated successfully!" : "Course created successfully!");
+
+      if (mode === "add") setForm(defaultForm);
     } catch (err) {
-      // Backend errors assumed in { fieldName: "error message" } format
-      if (err && typeof err === "object") setErrors(err);
-      else setMessage("Error: Something went wrong.");
+      console.log("ERR:", err);
+
+      let backendFieldErrors = {};
+      let backendGlobalMessage = "";
+
+      // === Normalize backend errors ===
+      if (err) {
+        // Backend field errors: { errors: { field: "msg" } }
+        if (err.errors && typeof err.errors === "object") {
+          backendFieldErrors = err.errors;
+        }
+
+        // Backend general error: { error: "...message..." }
+        if (err.error) {
+          backendGlobalMessage = err.error;
+
+          // Try to map backend global error to field (smart mapping)
+          if (
+            err.error.toLowerCase().includes("college") &&
+            err.error.toLowerCase().includes("id")
+          ) {
+            backendFieldErrors.collegeId = err.error; // show under collegeId field
+          }
+        }
+
+        if (err.message && !backendGlobalMessage) {
+          backendGlobalMessage = err.message;
+        }
+      }
+
+      setErrors(backendFieldErrors);
+      setGlobalError(backendGlobalMessage);
+
+      if (!backendFieldErrors && !backendGlobalMessage) {
+        setGlobalError("Something went wrong.");
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
+  const fieldError = (name) => errors[name];
+
+  const inputBase =
+    "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition shadow-sm";
+  const labelBase = "block text-gray-900 mb-2 font-medium";
+  const errorText = "text-red-700 text-sm mt-1 block font-medium";
+  const errorBorder = "border-red-500 focus:border-red-500 focus:ring-red-500";
+  const normalBorder = "border-gray-300 focus:border-indigo-500 focus:ring-indigo-500";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white shadow-2xl rounded-xl max-w-lg w-full p-10">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="bg-white shadow-xl rounded-2xl max-w-lg w-full p-8">
+        
+        <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
           {mode === "edit" ? "Edit Course" : "Add New Course"}
         </h1>
 
         {message && (
           <p
-            className={`text-center mb-4 font-medium ${
+            className={`text-center mb-4 font-semibold ${
               message.toLowerCase().includes("success")
-                ? "text-green-600"
-                : "text-red-600"
+                ? "text-green-700"
+                : "text-indigo-700"
             }`}
           >
             {message}
           </p>
         )}
 
+        {globalError && !Object.values(errors).length && (
+          <span role="alert" className="block text-center mb-4 font-semibold text-red-700">
+            {globalError}
+          </span>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Course Name */}
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Course Name</label>
+            <label htmlFor="courseName" className={labelBase}>Course Name *</label>
             <input
+              id="courseName"
               type="text"
               name="courseName"
               value={form.courseName}
               onChange={handleChange}
               placeholder="Software Engineering"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className={`${inputBase} ${
+                fieldError("courseName") ? errorBorder : normalBorder
+              }`}
             />
-            {errors.courseName && (
-              <span className="text-red-600 text-sm mt-1 block">{errors.courseName}</span>
+            {fieldError("courseName") && (
+              <span className={errorText}>{fieldError("courseName")}</span>
             )}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Description</label>
+            <label htmlFor="description" className={labelBase}>Description *</label>
             <textarea
+              id="description"
               name="description"
               value={form.description}
               onChange={handleChange}
               placeholder="Write course description..."
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className={`${inputBase} ${
+                fieldError("description") ? errorBorder : normalBorder
+              }`}
             />
-            {errors.description && (
-              <span className="text-red-600 text-sm mt-1 block">{errors.description}</span>
+            {fieldError("description") && (
+              <span className={errorText}>{fieldError("description")}</span>
             )}
           </div>
 
           {/* College ID */}
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">College ID</label>
+            <label htmlFor="collegeId" className={labelBase}>College ID *</label>
             <input
+              id="collegeId"
               type="text"
               name="collegeId"
               value={form.collegeId}
               onChange={handleChange}
               placeholder="UUID of college"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className={`${inputBase} ${
+                fieldError("collegeId") ? errorBorder : normalBorder
+              }`}
             />
-            {errors.collegeId && (
-              <span className="text-red-600 text-sm mt-1 block">{errors.collegeId}</span>
+            {fieldError("collegeId") && (
+              <span className={errorText}>{fieldError("collegeId")}</span>
             )}
           </div>
 
           {/* Course Type */}
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Course Type</label>
+            <label htmlFor="courseType" className={labelBase}>Course Type</label>
             <select
+              id="courseType"
               name="courseType"
               value={form.courseType}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className={`${inputBase} ${normalBorder}`}
             >
               <option value="SEMESTER">Semester</option>
               <option value="ANNUAL">Annual</option>
@@ -172,12 +234,13 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
 
           {/* Course Level */}
           <div>
-            <label className="block text-gray-700 mb-2 font-medium">Course Level</label>
+            <label htmlFor="courseLevel" className={labelBase}>Course Level</label>
             <select
+              id="courseLevel"
               name="courseLevel"
               value={form.courseLevel}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className={`${inputBase} ${normalBorder}`}
             >
               <option value="PLUS_TWO">Plus Two</option>
               <option value="BACHELOR">Bachelor</option>
@@ -188,7 +251,7 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
             </select>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}

@@ -53,7 +53,7 @@ const Sidebar = () => {
       name: "Syllabus",
       icon: <FileCheck size={20} />,
       submenu: [
-        { name: "All Syllabus", path: "/question" },
+        { name: "All Syllabus", path: "/syllabus/all" },
         { name: "Add Syllabus", path: "/syllabus/add" },
       ],
     },

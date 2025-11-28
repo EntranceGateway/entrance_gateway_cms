@@ -21,6 +21,8 @@ import CategoryForm from "./Category/CategoryForm/CategoryForm";
 import AddCategory from "./Category/CategoryForm/AddCategory";
 import EditCollege from "./pages/college/EditCollege";
 import EditCourse from "./pages/course/EditCourse";
+import AllSyllabus from "./pages/syllabus/AllSyllabus";
+import EditSyllabus from "./pages/syllabus/EditSyllabus";
 
 export default function App() {
   return (
@@ -46,6 +48,8 @@ export default function App() {
             <Route path="/course/edit/:id" element={<EditCourse/>}/>
             <Route path="/question/add" element={<AddQuestion />} />
             <Route path="/syllabus/add" element={<AddSyllabus />} />
+            <Route path="/syllabus/all" element={<AllSyllabus/>}/>
+            <Route path="/syllabus/edit/:id" element={<EditSyllabus/>}/>
             <Route path="/course/all" element={<AllCourse/>}/>
             <Route path="/banner/add" element={<AddBanner/>}/>
             <Route path="/category/add" element={<AddCategory/>}/>

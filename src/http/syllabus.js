@@ -1,43 +1,59 @@
-import axios from "axios";
+import api from "./index"; // your axios instance
 
-export const addSyllabus = async (formData, token) => {
-  return await axios.post(
-    "http://185.177.116.173:8080/api/v1/syllabus",
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-};
-
-
-// Get syllabus by ID (for edit)
+// ----------------------------
+// Get syllabus by ID
+// ----------------------------
 export const getSyllabusById = async (id, token) => {
-  return await API.get(`/api/v1/syllabus/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    return await api.get(`/api/v1/syllabus/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to load syllabus" };
+  }
 };
 
+// ----------------------------
 // Update syllabus
+// ----------------------------
 export const updateSyllabus = async (id, formData, token) => {
-  return await API.put(`/api/v1/syllabus/${id}`, formData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    return await api.put(`/api/v1/syllabus/${id}`, formData, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+        "Content-Type": "multipart/form-data", // force multipart
+      },
+    });
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to update syllabus" };
+  }
 };
 
+
+// ----------------------------
 // Get all syllabus
-export const getSyllabusAll = async (token) => {
-  return await API.get("/api/v1/syllabus", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+// ----------------------------
+export const getSyllabusAll = async (params = {}, token) => {
+  try {
+    return await api.get("/api/v1/syllabus", {
+      params, // auto appended on URL if not empty
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to fetch syllabus list" };
+  }
 };
 
+
+// ----------------------------
 // Delete syllabus
+// ----------------------------
 export const deleteSyllabus = async (id, token) => {
-  return await API.delete(`/api/v1/syllabus/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    return await api.delete(`/api/v1/syllabus/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to delete syllabus" };
+  }
 };

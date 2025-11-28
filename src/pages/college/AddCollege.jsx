@@ -1,4 +1,4 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "../../../components/layout/layout";
 import { createColleges } from "../../http/colleges";
 import CollegeForm from "./components/form/Form";
 

@@ -1,26 +1,54 @@
-const Pagination = ({ page, totalPages, onPageChange }) => {
+import React from "react";
+
+const Pagination = ({
+  page,
+  totalPages,
+  onPageChange,
+  className = "",
+  labels = { prev: "Prev", next: "Next" },
+  showNumbers = true,
+}) => {
+  const handlePrev = () => {
+    if (page > 1) onPageChange(page - 1);
+  };
+
+  const handleNext = () => {
+    if (page < totalPages) onPageChange(page + 1);
+  };
+
   return (
-    <div className="flex justify-center gap-4 mt-4">
+    <nav
+      className={`flex flex-wrap items-center justify-center gap-2 mt-6 ${className}`}
+      aria-label="Pagination"
+    >
+      {/* Prev button */}
       <button
-        className="px-3 py-1 border rounded disabled:opacity-50"
+        onClick={handlePrev}
         disabled={page === 1}
-        onClick={() => onPageChange(page - 1)}
+        className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Prev
+        {labels.prev}
       </button>
 
-      <span className="px-3 py-1 border rounded">
-        {page} / {totalPages || 1}
-      </span>
+      {/* Page numbers */}
+      {showNumbers && (
+        <span
+          className="px-3 py-1.5 rounded-md border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-900"
+          aria-current="page"
+        >
+          {page} / {totalPages || 1}
+        </span>
+      )}
 
+      {/* Next button */}
       <button
-        className="px-3 py-1 border rounded disabled:opacity-50"
+        onClick={handleNext}
         disabled={page === totalPages}
-        onClick={() => onPageChange(page + 1)}
+        className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Next
+        {labels.next}
       </button>
-    </div>
+    </nav>
   );
 };
 
