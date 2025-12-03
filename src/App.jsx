@@ -23,6 +23,7 @@ import EditCollege from "./pages/college/EditCollege";
 import EditCourse from "./pages/course/EditCourse";
 import AllSyllabus from "./pages/syllabus/AllSyllabus";
 import EditSyllabus from "./pages/syllabus/EditSyllabus";
+import RegisterForm from "./pages/Registerform";
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/course/all" element={<AllCourse/>}/>
             <Route path="/banner/add" element={<AddBanner/>}/>
             <Route path="/category/add" element={<AddCategory/>}/>
+            <Route path="/register" element={<RegisterForm/>}/>
           </Route>
 
         </Routes>

@@ -1,4 +1,18 @@
-import api from "./index"; // your axios instance
+// src/http/syllabus.js
+import api from "./index"; // <-- your main axios instance
+
+// ----------------------------
+// Create syllabus
+// ----------------------------
+export const addSyllabus = async (formData, token) => {
+  try {
+    return await api.post("/api/v1/syllabus", formData, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to create syllabus" };
+  }
+};
 
 // ----------------------------
 // Get syllabus by ID
@@ -19,16 +33,12 @@ export const getSyllabusById = async (id, token) => {
 export const updateSyllabus = async (id, formData, token) => {
   try {
     return await api.put(`/api/v1/syllabus/${id}`, formData, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-        "Content-Type": "multipart/form-data", // force multipart
-      },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch (err) {
     throw err.response?.data || { error: "Failed to update syllabus" };
   }
 };
-
 
 // ----------------------------
 // Get all syllabus

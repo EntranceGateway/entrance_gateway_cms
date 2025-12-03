@@ -1,167 +1,248 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
-const NoteForm = ({ onSubmit, mode, initialData }) => {
-  const [form, setForm] = useState({
-    noteName: "",
-    noteDescription: "",
-    syllabusId: "",
-    file: null,
-  });
+const defaultForm = {
+  noteName: "",
+  noteDescription: "",
+  syllabusId: "",
+  file: null,      
+  fileUrl: "",    
+};
 
+const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
+  const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // Load data when editing
+  // ------------------------------
+  // Load initial data for edit
+  // ------------------------------
   useEffect(() => {
-    if (initialData) {
+    if (mode === "edit" && initialData) {
       setForm({
-        noteName: initialData.noteName || "",
-        noteDescription: initialData.noteDescription || "",
-        syllabusId: initialData.syllabusId || "",
-        file: null, // File never comes from backend
+        ...defaultForm,
+        ...Object.fromEntries(
+          Object.entries(initialData).map(([k, v]) => [k, v != null ? String(v) : ""])
+        ),
+        file: null,
+        fileUrl: initialData.fileUrl || "",
       });
+    } else {
+      setForm(defaultForm);
     }
-  }, [initialData]);
+    setErrors({});
+    setSuccessMessage("");
+  }, [mode, initialData]);
 
-  // ---------------------------
+  // ------------------------------
   // Input Handlers
-  // ---------------------------
+  // ------------------------------
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
+    const { name, value, type, files } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "file" ? files[0] || null : String(value),
+    }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-
-    if (!file) {
-      setErrors({ ...errors, file: "PDF file is required." });
-      return;
-    }
-
-    if (file.type !== "application/pdf") {
-      setErrors({ ...errors, file: "Only PDF file allowed." });
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      setErrors({ ...errors, file: "Max file size is 2MB." });
-      return;
-    }
-
-    setForm({ ...form, file });
-    setErrors({ ...errors, file: "" });
-  };
-
-  // ---------------------------
+  // ------------------------------
   // Validation
-  // ---------------------------
+  // ------------------------------
   const validate = () => {
-    let temp = {};
+    const newErrors = {};
+    const requiredFields = ["noteName", "syllabusId"];
+    requiredFields.forEach((field) => {
+      if (!form[field].trim()) {
+        const label = field === "noteName" ? "Note Name" : "Syllabus ID";
+        newErrors[field] = `${label} is required`;
+      }
+    });
 
-    if (!form.noteName.trim()) temp.noteName = "Note name is required.";
+    if (mode === "add" && !form.file) {
+      newErrors.file = "Please upload a PDF file";
+    }
 
-    if (!form.syllabusId.trim())
-      temp.syllabusId = "Syllabus ID (UUID) is required.";
-
-    if (!form.file && mode === "add")
-      temp.file = "PDF file is required for new notes.";
-
-    setErrors(temp);
-    return Object.keys(temp).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  // ---------------------------
+  // ------------------------------
   // Submit Handler
-  // ---------------------------
-  const handleSubmit = (e) => {
+  // ------------------------------
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrors({});
+    setSuccessMessage("");
     if (!validate()) return;
+    setSubmitting(true);
 
-    const fd = new FormData();
-    fd.append("noteName", form.noteName);
-    fd.append("noteDescription", form.noteDescription);
-    fd.append("syllabusId", form.syllabusId);
+    try {
+      const jsonPayload = {
+        noteName: form.noteName.trim(),
+        noteDescription: form.noteDescription.trim(),
+        syllabusId: form.syllabusId.trim(),
+      };
 
-    if (form.file) fd.append("file", form.file);
+      let payload;
+      if (mode === "edit" && !form.file) {
+        payload = jsonPayload;
+      } else {
+        const formData = new FormData();
+        formData.append("note", new Blob([JSON.stringify(jsonPayload)], { type: "application/json" }));
+        if (form.file) formData.append("file", form.file);
+        payload = formData;
+      }
 
-    onSubmit?.(fd);
+      await onSubmit(payload);
+
+      setSuccessMessage(mode === "add" ? "Note added successfully!" : "Note updated successfully!");
+      if (mode === "add") setForm(defaultForm);
+      else setForm((prev) => ({ ...prev, file: null }));
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const inputBorder = (field) => {
-    if (errors[field]) return "border-red-500";
-    if (form[field] && !errors[field]) return "border-green-500";
-    return "border-gray-300";
+  // ------------------------------
+  // Error Handler
+  // ------------------------------
+  const handleError = (err) => {
+    let extractedErrors = {};
+    let generalError = "";
+
+    if (err?.error) {
+      const msg = err.error.toLowerCase();
+      const fieldMap = { name: "noteName", syllabus: "syllabusId", file: "file" };
+      for (const key in fieldMap) if (msg.includes(key)) extractedErrors[fieldMap[key]] = err.error;
+      if (Object.keys(extractedErrors).length === 0) generalError = err.error;
+    }
+
+    if (err?.errors) extractedErrors = err.errors;
+    if (!generalError && err?.message) generalError = err.message;
+    if (typeof err === "string") generalError = err;
+
+    setErrors({ ...extractedErrors, ...(generalError ? { global: generalError } : {}) });
   };
 
+  // ------------------------------
+  // Input class
+  // ------------------------------
+  const inputClass = (field) =>
+    `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+      errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"
+    }`;
+
+  // ------------------------------
+  // JSX
+  // ------------------------------
   return (
-    <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6 mt-6">
-      <h2 className="text-3xl font-bold text-blue-700 mb-6 border-b pb-2">
-        {mode === "add" ? "Create Note" : "Update Note"}
-      </h2>
+    <section className="w-full py-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+          <header className="bg-linear-to-r from-indigo-50 to-white px-6 py-5 border-b">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {mode === "edit" ? "Edit Note" : "Add New Note"}
+            </h1>
+          </header>
 
-      <form className="grid grid-cols-1 sm:grid-cols-2 gap-4" onSubmit={handleSubmit}>
+          <div className="p-6">
+            {successMessage && (
+              <div className="mb-5 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm">
+                {successMessage}
+              </div>
+            )}
+            {errors.global && (
+              <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm">
+                {errors.global}
+              </div>
+            )}
 
-        {/* Note Name */}
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium">Note Name *</label>
-          <input
-            type="text"
-            name="noteName"
-            value={form.noteName}
-            onChange={handleChange}
-            className={`w-full border px-3 py-2 rounded-lg ${inputBorder("noteName")}`}
-          />
-          {errors.noteName && <p className="text-red-600 text-sm">{errors.noteName}</p>}
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="grid gap-5 md:grid-cols-2">
+                {/* Note Name */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium">Note Name *</label>
+                  <input
+                    type="text"
+                    name="noteName"
+                    value={form.noteName}
+                    onChange={handleChange}
+                    className={inputClass("noteName")}
+                  />
+                  {errors.noteName && <p className="text-xs text-red-600 mt-1">{errors.noteName}</p>}
+                </div>
+
+                {/* Syllabus ID */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium">Syllabus ID *</label>
+                  <input
+                    type="text"
+                    name="syllabusId"
+                    value={form.syllabusId}
+                    onChange={handleChange}
+                    placeholder="e.g. 176a8e40-ccb9-478a-9daf-25c1b65b43c1"
+                    className={inputClass("syllabusId")}
+                  />
+                  {errors.syllabusId && <p className="text-xs text-red-600 mt-1">{errors.syllabusId}</p>}
+                </div>
+
+                {/* Description */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium">Note Description</label>
+                  <textarea
+                    name="noteDescription"
+                    value={form.noteDescription}
+                    onChange={handleChange}
+                    className="w-full border px-3 py-2 rounded-lg h-32"
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* File Upload */}
+              <div className="mt-6">
+                {mode === "add" ? (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload PDF *</label>
+                    <label
+                      htmlFor="file"
+                      className={`block border-2 border-dashed rounded-lg px-6 py-10 text-center cursor-pointer transition ${
+                        errors.file ? "border-red-400 bg-red-50" : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                      }`}
+                    >
+                      <p className="text-sm text-gray-600">{form.file ? form.file.name : "Click to upload PDF"}</p>
+                    </label>
+                    <input id="file" name="file" type="file" accept="application/pdf" onChange={handleChange} className="hidden" />
+                    {errors.file && <p className="text-xs text-red-600 mt-1">{errors.file}</p>}
+                  </>
+                ) : (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Uploaded PDF</label>
+                    {form.fileUrl ? (
+                      <a href={form.fileUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                        View Existing PDF
+                      </a>
+                    ) : (
+                      <p className="text-gray-500">No PDF uploaded</p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-8 w-full rounded-lg bg-indigo-600 py-3 text-white font-medium hover:bg-indigo-700 disabled:bg-gray-400 transition"
+              >
+                {submitting ? "Saving..." : mode === "edit" ? "Update Note" : "Add Note"}
+              </button>
+            </form>
+          </div>
         </div>
-
-        {/* Syllabus ID */}
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium">Syllabus ID (UUID) *</label>
-          <input
-            type="text"
-            name="syllabusId"
-            value={form.syllabusId}
-            onChange={handleChange}
-            placeholder="e.g. 176a8e40-ccb9-478a-9daf-25c1b65b43c1"
-            className={`w-full border px-3 py-2 rounded-lg ${inputBorder("syllabusId")}`}
-          />
-          {errors.syllabusId && (
-            <p className="text-red-600 text-sm">{errors.syllabusId}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium">Note Description</label>
-          <textarea
-            name="noteDescription"
-            value={form.noteDescription}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded-lg h-32"
-          ></textarea>
-        </div>
-
-        {/* File Upload */}
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium">Upload PDF *</label>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className={`w-full border px-3 py-2 rounded-lg bg-gray-50 ${inputBorder("file")}`}
-          />
-          {errors.file && <p className="text-red-600 text-sm">{errors.file}</p>}
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          className="sm:col-span-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-lg font-semibold"
-        >
-          {mode === "add" ? "Submit Note" : "Update Note"}
-        </button>
-      </form>
-    </div>
+      </div>
+    </section>
   );
 };
 

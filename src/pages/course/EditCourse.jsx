@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 import { getSingleCourse, updateCourse } from "../../http/course";
 import CourseForm from "./component/form";
-import Layout from "../../../components/layout/layout";
+import Layout from "../../../components/layout/Layout";
 
 export default function EditCourse() {
   const { id } = useParams();

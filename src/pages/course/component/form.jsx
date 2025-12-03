@@ -272,3 +272,4 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
 };
 
 export default CourseForm;
+

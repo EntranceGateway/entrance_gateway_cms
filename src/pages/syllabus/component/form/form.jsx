@@ -1,28 +1,41 @@
 import React, { useState, useEffect } from "react";
 
+// ------------------------------
+// Default Form State
+// ------------------------------
 const defaultForm = {
   courseId: "",
   courseCode: "",
-  courseName: "",
+  subjectName: "",
   syllabusTitle: "",
   creditHours: "",
   lectureHours: "",
   practicalHours: "",
   semester: "",
   year: "",
-  syllabusFile: null,
+  syllabusFile: null,  // new file uploaded
+  fileUrl: "",         // existing file link
 };
 
 const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const [form, setForm] = useState(defaultForm);
-  const [errors, setErrors] = useState({}); // One source of truth for ALL errors
+  const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Reset form when mode or initialData changes
+  // ------------------------------
+  // Load Initial Data for Edit Mode
+  // ------------------------------
   useEffect(() => {
     if (mode === "edit" && initialData) {
-      setForm({ ...defaultForm, ...initialData, syllabusFile: null });
+      setForm({
+        ...defaultForm,
+        ...Object.fromEntries(
+          Object.entries(initialData).map(([k, v]) => [k, v != null ? String(v) : ""])
+        ),
+        syllabusFile: null,
+        fileUrl: initialData.fileUrl || "",
+      });
     } else {
       setForm(defaultForm);
     }
@@ -30,27 +43,30 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
     setSuccessMessage("");
   }, [mode, initialData]);
 
+  // ------------------------------
+  // Input Change Handler
+  // ------------------------------
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
+    const { name, type, files, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === "file" ? files[0] || null : value,
+      [name]: type === "file" ? files[0] || null : String(value),
     }));
-
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  // ------------------------------
+  // Validation
+  // ------------------------------
   const validate = () => {
     const newErrors = {};
-
-    if (!form.courseCode.trim()) newErrors.courseCode = "Course code is required";
-    if (!form.courseName.trim()) newErrors.courseName = "Course name is required";
-    if (!form.syllabusTitle.trim()) newErrors.syllabusTitle = "Syllabus title is required";
-    if (!form.semester.trim()) newErrors.semester = "Semester is required";
-    if (!form.year) newErrors.year = "Year is required";
+    const requiredFields = ["courseCode", "subjectName", "syllabusTitle", "semester", "year"];
+    requiredFields.forEach((field) => {
+      if (!form[field].trim()) {
+        const label = field.charAt(0).toUpperCase() + field.slice(1).replace("courseCode", "Course Code");
+        newErrors[field] = `${label} is required`;
+      }
+    });
 
     if (mode === "add" && !form.syllabusFile) {
       newErrors.syllabusFile = "Please upload a PDF file";
@@ -60,196 +76,158 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ------------------------------
+  // Submit Handler
+  // ------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccessMessage("");
     setErrors({});
-
+    setSuccessMessage("");
     if (!validate()) return;
-
-    const payload = {
-      syllabusTitle: form.syllabusTitle.trim(),
-      subjectName: form.courseName.trim(),
-      courseCode: form.courseCode.trim(),
-      creditHours: form.creditHours ? Number(form.creditHours) : null,
-      lectureHours: form.lectureHours ? Number(form.lectureHours) : null,
-      practicalHours: form.practicalHours ? Number(form.practicalHours) : null,
-      courseId: form.courseId?.trim() || "",
-      semester: form.semester.trim(),
-      year: Number(form.year),
-    };
-
-    const formData = new FormData();
-    formData.append("syllabus", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-    if (form.syllabusFile) formData.append("file", form.syllabusFile);
-
     setSubmitting(true);
 
     try {
-      await onSubmit(formData);
-      setSuccessMessage(mode === "add" ? "Syllabus added successfully!" : "Syllabus updated successfully!");
-      if (mode === "add") setForm(defaultForm);
-    } catch (err) {
-      let fieldErrors = {};
-      let globalError = "";
+      const jsonPayload = {
+        syllabusTitle: form.syllabusTitle.trim(),
+        subjectName: form.subjectName.trim(),
+        courseCode: form.courseCode.trim(),
+        creditHours: form.creditHours ? Number(form.creditHours) : null,
+        lectureHours: form.lectureHours ? Number(form.lectureHours) : null,
+        practicalHours: form.practicalHours ? Number(form.practicalHours) : null,
+        courseId: form.courseId.trim(),
+        semester: form.semester.trim(),
+        year: Number(form.year),
+      };
 
-      // Smart backend error handling — works for ANY field
-      if (err && typeof err === "object") {
-        // Case 1: { error: "Some message about courseCode" }
-        if (err.error && typeof err.error === "string") {
-          const msg = err.error.toLowerCase();
-
-          // Auto-detect which field the error belongs to
-          if (msg.includes("title")) fieldErrors.syllabusTitle = err.error;
-          else if (msg.includes("course code") || msg.includes("code")) fieldErrors.courseCode = err.error;
-          else if (msg.includes("course name") || msg.includes("subject")) fieldErrors.courseName = err.error;
-          else if (msg.includes("semester")) fieldErrors.semester = err.error;
-          else if (msg.includes("year")) fieldErrors.year = err.error;
-          else if (msg.includes("file") || msg.includes("pdf")) fieldErrors.syllabusFile = err.error;
-          else globalError = err.error; // fallback
-        }
-        // Case 2: { errors: { courseCode: "Duplicate", year: "Invalid" } }
-        else if (err.errors && typeof err.errors === "object") {
-          fieldErrors = err.errors;
-        }
-        // Case 3: Direct object like { courseCode: "Already exists" }
-        else {
-          fieldErrors = err;
-        }
-
-        if (err.message && !globalError && Object.keys(fieldErrors).length === 0) {
-          globalError = err.message;
-        }
-      } else if (typeof err === "string") {
-        globalError = err;
+      let payload;
+      if (mode === "edit" && !form.syllabusFile) {
+        // Edit mode, no new file → send JSON only
+        payload = jsonPayload;
+      } else {
+        // Add mode OR Edit mode with new file → FormData
+        const formData = new FormData();
+        formData.append("syllabus", new Blob([JSON.stringify(jsonPayload)], { type: "application/json" }));
+        if (form.syllabusFile) formData.append("file", form.syllabusFile);
+        payload = formData;
       }
 
-      // Always set errors in the same object
-      setErrors({
-        ...fieldErrors,
-        ...(globalError ? { global: globalError } : {}),
-      });
+      await onSubmit(payload);
+
+      setSuccessMessage(mode === "add" ? "Syllabus added successfully!" : "Syllabus updated successfully!");
+      if (mode === "add") setForm(defaultForm);
+      else setForm((prev) => ({ ...prev, syllabusFile: null }));
+    } catch (err) {
+      handleError(err);
     } finally {
       setSubmitting(false);
     }
   };
 
+  // ------------------------------
+  // Error Handling
+  // ------------------------------
+  const handleError = (err) => {
+    let extractedErrors = {};
+    let generalError = "";
+
+    if (err?.error) {
+      const msg = err.error.toLowerCase();
+      const fieldMap = { title: "syllabusTitle", code: "courseCode", name: "subjectName", semester: "semester", year: "year", file: "syllabusFile" };
+      for (const key in fieldMap) if (msg.includes(key)) extractedErrors[fieldMap[key]] = err.error;
+      if (Object.keys(extractedErrors).length === 0) generalError = err.error;
+    }
+
+    if (err?.errors) extractedErrors = err.errors;
+    if (!generalError && err?.message) generalError = err.message;
+    if (typeof err === "string") generalError = err;
+
+    setErrors({ ...extractedErrors, ...(generalError ? { global: generalError } : {}) });
+  };
+
+  // ------------------------------
+  // Input Class
+  // ------------------------------
   const inputClass = (field) =>
     `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-      errors[field] ? "border-red-500 ring-red-500" : "border-gray-300"
+      errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"
     }`;
 
+  // ------------------------------
+  // Render Helpers
+  // ------------------------------
+  const renderTextInput = (label, name) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <input name={name} value={form[name]} onChange={handleChange} className={inputClass(name)} />
+      {errors[name] && <p className="text-xs text-red-600 mt-1">{errors[name]}</p>}
+    </div>
+  );
+
+  const renderNumberInput = (label, name) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <input type="number" name={name} value={form[name]} onChange={handleChange} className={inputClass(name)} />
+      {errors[name] && <p className="text-xs text-red-600 mt-1">{errors[name]}</p>}
+    </div>
+  );
+
+  // ------------------------------
+  // JSX
+  // ------------------------------
   return (
     <section className="w-full py-8">
       <div className="mx-auto max-w-3xl">
         <div className="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
-          <div className="bg-linear-to-r from-indigo-50 to-white px-6 py-5 border-b">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {mode === "edit" ? "Edit Syllabus" : "Add New Syllabus"}
-            </h1>
-          </div>
+          <header className="bg-linear-to-r from-indigo-50 to-white px-6 py-5 border-b">
+            <h1 className="text-2xl font-bold text-gray-900">{mode === "edit" ? "Edit Syllabus" : "Add New Syllabus"}</h1>
+          </header>
 
           <div className="p-6">
-            {successMessage && (
-              <div className="mb-5 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
-                {successMessage}
-              </div>
-            )}
-
-            {errors.global && (
-              <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
-                {errors.global}
-              </div>
-            )}
+            {successMessage && <div className="mb-5 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm">{successMessage}</div>}
+            {errors.global && <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm">{errors.global}</div>}
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Course ID</label>
-                  <input name="courseId" value={form.courseId} onChange={handleChange} className={inputClass("courseId")} />
-                  {errors.courseId && <p className="mt-1 text-xs text-red-600">{errors.courseId}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Course Code *</label>
-                  <input name="courseCode" value={form.courseCode} onChange={handleChange} className={inputClass("courseCode")} placeholder="e.g. CSC-101" />
-                  {errors.courseCode && <p className="mt-1 text-xs text-red-600">{errors.courseCode}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Course Name *</label>
-                  <input name="courseName" value={form.courseName} onChange={handleChange} className={inputClass("courseName")} />
-                  {errors.courseName && <p className="mt-1 text-xs text-red-600">{errors.courseName}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Syllabus Title *</label>
-                  <input name="syllabusTitle" value={form.syllabusTitle} onChange={handleChange} className={inputClass("syllabusTitle")} />
-                  {errors.syllabusTitle && <p className="mt-1 text-xs text-red-600">{errors.syllabusTitle}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Semester *</label>
-                  <input name="semester" value={form.semester} onChange={handleChange} className={inputClass("semester")} />
-                  {errors.semester && <p className="mt-1 text-xs text-red-600">{errors.semester}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Year *</label>
-                  <input type="number" name="year" value={form.year} onChange={handleChange} className={inputClass("year")} min="2000" />
-                  {errors.year && <p className="mt-1 text-xs text-red-600">{errors.year}</p>}
-                </div>
+                {renderTextInput("Course ID", "courseId")}
+                {renderTextInput("Course Code *", "courseCode")}
+                {renderTextInput("Course Name *", "subjectName")}
+                {renderTextInput("Syllabus Title *", "syllabusTitle")}
+                {renderTextInput("Semester *", "semester")}
+                {renderNumberInput("Year *", "year")}
               </div>
 
               <div className="mt-6 grid gap-5 md:grid-cols-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Credit Hours</label>
-                  <input type="number" step="0.5" name="creditHours" value={form.creditHours} onChange={handleChange} className={inputClass("creditHours")} />
-                  {errors.creditHours && <p className="mt-1 text-xs text-red-600">{errors.creditHours}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Lecture Hours</label>
-                  <input type="number" name="lectureHours" value={form.lectureHours} onChange={handleChange} className={inputClass("lectureHours")} />
-                  {errors.lectureHours && <p className="mt-1 text-xs text-red-600">{errors.lectureHours}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Practical Hours</label>
-                  <input type="number" name="practicalHours" value={form.practicalHours} onChange={handleChange} className={inputClass("practicalHours")} />
-                  {errors.practicalHours && <p className="mt-1 text-xs text-red-600">{errors.practicalHours}</p>}
-                </div>
+                {renderNumberInput("Credit Hours", "creditHours")}
+                {renderNumberInput("Lecture Hours", "lectureHours")}
+                {renderNumberInput("Practical Hours", "practicalHours")}
               </div>
 
-              <div className="mt-7">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Syllabus PDF {mode === "edit" ? "(optional)" : "*"}
-                </label>
-                <label
-                  htmlFor="syllabusFile"
-                  className={`block border-2 border-dashed rounded-lg px-6 py-10 text-center cursor-pointer transition ${
-                    errors.syllabusFile ? "border-red-400 bg-red-50" : "border-gray-300 bg-gray-50 hover:bg-gray-100"
-                  }`}
-                >
-                  <p className="text-sm text-gray-600">
-                    {form.syllabusFile ? form.syllabusFile.name : "Click to upload PDF"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">Max 10MB</p>
-                </label>
-                <input
-                  id="syllabusFile"
-                  name="syllabusFile"
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleChange}
-                  className="hidden"
-                />
-                {errors.syllabusFile && <p className="mt-2 text-xs text-red-600">{errors.syllabusFile}</p>}
+              {/* FILE UPLOAD */}
+              <div className="mt-6">
+                {mode === "add" ? (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Syllabus PDF *</label>
+                    <label htmlFor="syllabusFile" className={`block border-2 border-dashed rounded-lg px-6 py-10 text-center cursor-pointer transition ${errors.syllabusFile ? "border-red-400 bg-red-50" : "border-gray-300 bg-gray-50 hover:bg-gray-100"}`}>
+                      <p className="text-sm text-gray-600">{form.syllabusFile ? form.syllabusFile.name : "Click to upload PDF"}</p>
+                    </label>
+                    <input id="syllabusFile" name="syllabusFile" type="file" accept="application/pdf" onChange={handleChange} className="hidden" />
+                    {errors.syllabusFile && <p className="text-xs text-red-600 mt-1">{errors.syllabusFile}</p>}
+                  </>
+                ) : (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Uploaded PDF</label>
+                    {form.fileUrl ? (
+                      <a href={form.fileUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                        View Existing PDF
+                      </a>
+                    ) : (
+                      <p className="text-gray-500">No PDF uploaded</p>
+                    )}
+                  </>
+                )}
               </div>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="mt-8 w-full rounded-lg bg-indigo-600 py-3 text-white font-medium hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
+              <button type="submit" disabled={submitting} className="mt-8 w-full rounded-lg bg-indigo-600 py-3 text-white font-medium hover:bg-indigo-700 disabled:bg-gray-400 transition">
                 {submitting ? "Saving..." : mode === "edit" ? "Update Syllabus" : "Add Syllabus"}
               </button>
             </form>

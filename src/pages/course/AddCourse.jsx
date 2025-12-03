@@ -1,6 +1,6 @@
 // src/pages/course/AddCourse.jsx
 
-import Layout from "../../../components/layout/layout";
+import Layout from "../../../components/layout/Layout";
 import { createCourse } from "../../http/course";
 import CourseForm from "./component/form";
 

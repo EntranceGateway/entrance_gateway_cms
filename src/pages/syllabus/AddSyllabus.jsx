@@ -1,8 +1,8 @@
 // src/pages/syllabus/AddSyllabus.jsx
 import React, { useState } from "react";
-import { addSyllabus } from "../../http/syllabus";
 import Layout from "../../../components/layout/layout";
 import SyllabusForm from "./component/form/form";
+import { addSyllabus } from "../../http/syllabus";
 
 const AddSyllabusPage = () => {
   const [message, setMessage] = useState("");
