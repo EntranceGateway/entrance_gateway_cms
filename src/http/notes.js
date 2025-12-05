@@ -1,12 +1,14 @@
-import api from "./index";
+import api from "./index"; // axios instance
 
-// Create college
-export const createNotes = async (data, token) => {
+// ===============================
+// CREATE NOTE  (JSON + File)
+// ===============================
+export const createNote = async (formData, token) => {
   try {
-    return await api.post("/api/v1/notes", data, {
+    return await api.post("/api/v1/notes", formData, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
+        // ❌ Don't manually set Content-Type for FormData
       },
     });
   } catch (err) {
@@ -14,8 +16,9 @@ export const createNotes = async (data, token) => {
   }
 };
 
-
-// Get all colleges (optional)
+// ===============================
+// GET ALL NOTES
+// ===============================
 export const getNotes = async (params = {}, token) => {
   try {
     return await api.get("/api/v1/notes", {
@@ -27,10 +30,25 @@ export const getNotes = async (params = {}, token) => {
   }
 };
 
-// Get single college by UUID
-export const getSingle = async (id, token) => {
+// ===============================
+// GET SINGLE NOTE (Your custom endpoint)
+// ===============================
+
+export const getSingle = async (noteId, token) => {
   try {
-    return await api.get(`/api/v1/notes/getNotefile/${id}`, {
+    return await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      responseType: "blob", // IMPORTANT: get file as binary
+    });
+  } catch (err) {
+    throw err.response?.data || err;
+  }
+};
+
+
+export const getNotesById = async (noteId, token) => {
+  try {
+    return await api.get(`/api/v1/notes/${noteId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch (err) {
@@ -38,22 +56,51 @@ export const getSingle = async (id, token) => {
   }
 };
 
-// Update college
-export const updateNotes = async (id, Data, token) => {
+// ===============================
+// UPDATE NOTE DETAILS  (JSON)
+// ===============================
+export const updateNoteDetails = async (id, body, token) => {
+  console.log("hii"+body)
   try {
-    return await api.put(`/api/v1/colleges/${id}`, Data, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    return await api.put(`/api/v1/notes/${id}`, body, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     });
   } catch (err) {
     throw err.response?.data || err;
   }
 };
 
-// Delete college
-export const deleteNotes= async (id, token) => {
+// ===============================
+// UPDATE NOTE FILE (PDF Upload)
+// ===============================
+export const updateNoteFile = async (id, file, token) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return await api.put(`/api/v1/notes/${id}/file`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // ❌ No manual Content-Type → browser handles it
+      },
+    });
+  } catch (err) {
+    throw err.response?.data || err;
+  }
+};
+
+// ===============================
+// DELETE NOTE
+// ===============================
+export const deleteNote = async (id, token) => {
   try {
     return await api.delete(`/api/v1/notes/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
   } catch (err) {
     throw err.response?.data || err;

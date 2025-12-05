@@ -1,69 +1,116 @@
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { getSyllabusById, updateSyllabus } from "../../http/syllabus";
-import Layout from "../../../components/layout/layout";
+import Layout from "../../../components/layout/Layout";
 import SyllabusForm from "./component/form/form";
+import { getSyllabusById, updateSyllabus } from "../../http/syllabus";
 
-
-function EditSyllabus() {
+const EditSyllabus = () => {
   const { id } = useParams();
   const token = localStorage.getItem("token");
 
-  const [syllabusData, setSyllabusData] = useState(null);
+  const [syllabus, setSyllabus] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Fetch single syllabus
-  const fetchSyllabus = async () => {
+  // -------------------------------
+  // Load syllabus data
+  // -------------------------------
+  const loadSyllabus = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
     try {
-      const response = await getSyllabusById(id, token);
+      const res = await getSyllabusById(id, token);
+      const data = res?.data?.data;
 
-      if (response.status === 200) {
-        setSyllabusData(response.data.data);
-      } else {
-        setError("Syllabus not found");
-      }
+      if (!data) throw new Error("No syllabus data found");
+
+      setSyllabus({
+        courseId: data.courseId || "",
+        courseCode: data.courseCode || "",
+        subjectName: data.subjectName || "",
+        syllabusTitle: data.syllabusTitle || "",
+        creditHours: data.creditHours != null ? String(data.creditHours) : "",
+        lectureHours: data.lectureHours != null ? String(data.lectureHours) : "",
+        practicalHours: data.practicalHours != null ? String(data.practicalHours) : "",
+        semester: data.semester || "",
+        year: data.year != null ? String(data.year) : "",
+        fileUrl: data.fileUrl || "",
+        syllabusFile: null,
+      });
     } catch (err) {
-      console.error(err);
-      setError("Failed to fetch syllabus data");
+      console.error("Load syllabus error:", err);
+      setError(err?.message || "Failed to load syllabus data.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSyllabus();
-  }, [id]);
+    loadSyllabus();
+  }, [id, token]);
 
-
-  // Handle update submit
+  // -------------------------------
+  // Handle form update
+  // -------------------------------
   const handleUpdate = async (formData) => {
-    try {
-      const res = await updateSyllabus(id, formData, token);
+    setError("");
+    setSuccess("");
 
-      if (res.status === 200) {
-        alert("Syllabus updated successfully");
+    try {
+      let syllabusJson = {};
+      let file = null;
+
+      if (formData instanceof FormData) {
+        const syllabusBlob = formData.get("syllabus");
+        file = formData.get("file");
+
+        if (syllabusBlob) syllabusJson = JSON.parse(await syllabusBlob.text());
       } else {
-        alert("Failed to update syllabus");
+        syllabusJson = formData;
       }
+
+      // Update JSON fields
+      if (Object.keys(syllabusJson).length > 0) {
+        await updateSyllabus(id, syllabusJson, token);
+      }
+
+      // Update file if provided
+      if (file) {
+        await updateSyllabus(id, formData, token); // send FormData with file
+      }
+
+      await loadSyllabus();
+      setSuccess("Syllabus updated successfully!");
     } catch (err) {
-      console.error(err);
-      alert("Error updating syllabus");
+      console.error("Update syllabus error:", err);
+      setError(err?.response?.data?.message || err?.message || "Failed to update syllabus.");
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
+  // -------------------------------
+  // Loading / Error state
+  // -------------------------------
+  if (loading) return <p className="text-center mt-10 text-gray-600">Loading syllabus...</p>;
+  if (error) return <p className="text-center mt-10 text-red-600">{error}</p>;
 
+  // -------------------------------
+  // Render form
+  // -------------------------------
   return (
     <Layout>
+      {success && (
+        <p className="text-center mb-4 text-green-600 font-medium">{success}</p>
+      )}
       <SyllabusForm
         mode="edit"
-        initialData={syllabusData}
+        initialData={syllabus}
         onSubmit={handleUpdate}
       />
     </Layout>
   );
-}
+};
 
 export default EditSyllabus;

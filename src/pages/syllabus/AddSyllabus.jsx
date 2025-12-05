@@ -1,26 +1,19 @@
-// src/pages/syllabus/AddSyllabus.jsx
-import React, { useState } from "react";
-import Layout from "../../../components/layout/layout";
+import React from "react";
+import Layout from "../../../components/layout/Layout";
 import SyllabusForm from "./component/form/form";
 import { addSyllabus } from "../../http/syllabus";
 
 const AddSyllabusPage = () => {
-  const [message, setMessage] = useState("");
+  const token = localStorage.getItem("token");
 
-  const handleSubmit = async (formData) => {
-    setMessage(""); // clear old messages
-    const token = localStorage.getItem("token");
-
+  const handleAddSyllabus = async (formData) => {
     try {
       const res = await addSyllabus(formData, token);
-      const msg = res?.data?.message || "Syllabus added successfully!";
-      setMessage(msg); // show success on page
-      return res.data;  // also pass to SyllabusForm
+      // Optionally return success message
+      return res.data;
     } catch (err) {
-      const errMsg =
-        err?.response?.data?.message || "Failed to add syllabus. Please try again.";
-      setMessage(errMsg); // show error on page
-      throw err; // pass to form for field-level handling
+      // Throw error to SyllabusForm for field-level handling
+      throw err;
     }
   };
 
@@ -28,19 +21,7 @@ const AddSyllabusPage = () => {
     <Layout>
       <div className="p-6 flex justify-center bg-gray-50">
         <div className="w-full max-w-2xl">
-          {message && (
-            <p
-              className={`font-semibold mb-4 ${
-                message.toLowerCase().includes("success")
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
-              {message}
-            </p>
-          )}
-
-          <SyllabusForm mode="add" onSubmit={handleSubmit} />
+          <SyllabusForm mode="add" onSubmit={handleAddSyllabus} />
         </div>
       </div>
     </Layout>

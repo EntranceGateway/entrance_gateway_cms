@@ -2,7 +2,7 @@ import CollegeForm from "./components/form/Form";
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getSingle, updateColleges } from "../../http/colleges";
-import Layout from "../../../components/layout/layout";
+import Layout from "../../../components/layout/Layout";
 
  function EditCollege() {
   const { id } = useParams();

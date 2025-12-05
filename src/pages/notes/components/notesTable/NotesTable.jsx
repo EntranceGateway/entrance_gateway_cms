@@ -1,164 +1,197 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { getNotes, deleteNote, getSingle } from "../../../../http/notes";
+import UniversalFilter from "../../../../Verification/UniversalFilter";
+import Pagination from "../../../../Verification/Pagination";
 
-const NotesTable = () => {
-  const [notes, setNotes] = useState([]);
-  const [search, setSearch] = useState("");
-  const [visibleCount, setVisibleCount] = useState(15); // Show 15 at a time
-  const navigate = useNavigate();
+const NoteTable = () => {
+  const [allNotes, setAllNotes] = useState([]);
+  const [filteredNotes, setFilteredNotes] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch notes
-  useEffect(() => {
-    axios
-      .get("http://185.177.116.173:8080/api/v1/notes")
-      .then((res) => setNotes(res.data))
-      .catch(() => alert("Failed to load notes"));
-  }, []);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
 
-  // Filter by search
-  const filteredNotes = notes.filter((note) => {
-    const query = search.toLowerCase();
-    return (
-      note.subject?.toLowerCase().includes(query) ||
-      note.subjectcode?.toLowerCase().includes(query) ||
-      note.notename?.toLowerCase().includes(query)
-    );
-  });
+  const token = localStorage.getItem("token");
 
-  // Show only some notes (manual lazy load)
-  const notesToShow = filteredNotes.slice(0, visibleCount);
-
-  const loadMore = () => setVisibleCount((c) => c + 15);
-
-  const handleDelete = (id) => {
-    if (!window.confirm("Delete this note?")) return;
-    axios
-      .delete(`https://691c3b293aaeed735c9006f6.mockapi.io/notes/${id}`)
-      .then(() => setNotes(notes.filter((n) => n.id !== id)))
-      .catch(() => alert("Delete failed"));
+  // Fetch all notes
+  const fetchNotes = async () => {
+    setLoading(true);
+    try {
+      const res = await getNotes({}, token);
+      const data = res.data.data.content || [];
+      setAllNotes(data);
+      setFilteredNotes(data);
+    } catch (err) {
+      console.error("Fetch Notes Error:", err);
+    }
+    setLoading(false);
   };
 
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  // Filter notes live
+  const handleFilter = (filters) => {
+    let data = [...allNotes];
+
+    if (filters.noteName)
+      data = data.filter((n) =>
+        n.noteName.toLowerCase().includes(filters.noteName.toLowerCase())
+      );
+
+    if (filters.syllabusId)
+      data = data.filter((n) =>
+        n.syllabusId.toLowerCase().includes(filters.syllabusId.toLowerCase())
+      );
+
+    setFilteredNotes(data);
+    setPage(1);
+  };
+
+  // Delete note
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this note?")) return;
+
+    try {
+      await deleteNote(id, token);
+      fetchNotes();
+    } catch (err) {
+      console.error("Delete Note Error:", err);
+    }
+  };
+
+  // ---------------- VIEW PDF HANDLER ----------------
+   const handleViewPdf = async (noteId) => {
+  try {
+    const response = await getSingle(noteId, token);
+
+   
+      // Create a blob URL from the PDF
+      const fileBlob = response.data;
+      const fileUrl = window.URL.createObjectURL(fileBlob);
+
+      // Open in new tab
+      window.open(fileUrl, "_blank");
+  } catch (err) {
+    console.error("View PDF error:", err);
+    alert("Failed to open PDF.");
+  }
+};
+
+  // Pagination
+  const totalPages = Math.ceil(filteredNotes.length / PAGE_SIZE);
+  const paginatedNotes = filteredNotes.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
+
   return (
-    <div>
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
-          My Notes
-        </h1>
+    <div className="w-full p-6">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Notes</h1>
 
-        {/* Search */}
-        <input
-          type="text"
-          placeholder="Search subject, code or note name..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setVisibleCount(15); // Reset on search
-          }}
-          className="w-full p-4 mb-6 text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500"
-        />
+      {/* Filters */}
+      <UniversalFilter
+        config={[
+          {
+            name: "noteName",
+            label: "Note Name",
+            type: "text",
+            placeholder: "Search by note name",
+          },
+          {
+            name: "syllabusId",
+            label: "Syllabus ID",
+            type: "text",
+            placeholder: "Search by syllabus ID",
+          },
+        ]}
+        onFilter={handleFilter}
+      />
 
-        {/* Desktop Table */}
-        <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-blue-600 text-white">
+      {/* Table */}
+      <div className="bg-white shadow-xl rounded-2xl overflow-x-auto mt-4">
+        <table className="min-w-full text-sm table-auto">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              {["Note Name", "Description", "Syllabus ID", "File", "Action"].map(
+                (col) => (
+                  <th
+                    key={col}
+                    className="p-4 text-left font-medium text-gray-700 sticky top-0 bg-gray-50 z-10"
+                  >
+                    {col}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+
+          <tbody className="divide-y">
+            {loading ? (
               <tr>
-                <th className="px-6 py-4 text-left">Subject</th>
-                <th className="px-6 py-4 text-left">Subject Code</th>
-                <th className="px-6 py-4 text-left">Note Name</th>
-                <th className="px-6 py-4 text-center">Actions</th>
+                <td colSpan={5} className="text-center p-6 text-gray-500">
+                  Loading...
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {notesToShow.map((note) => (
-                <tr key={note.id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium">{note.subject}</td>
-                  <td className="px-6 py-4 font-mono text-blue-600">
-                    {note.subjectcode}
+            ) : paginatedNotes.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center p-6 text-gray-500">
+                  🔍 No notes found
+                </td>
+              </tr>
+            ) : (
+              paginatedNotes.map((note) => (
+                <tr key={note.noteId} className="hover:bg-gray-50 transition">
+                  <td className="p-4 font-medium text-gray-800 wrap-break-word max-w-[120px]">{note.noteName}</td>
+                  <td className="p-4 text-gray-600 wrap-break-word max-w-[150px]">{note.noteDescription}</td>
+                  <td className="p-4 text-gray-600 wrap-break-word max-w-[100px]">{note.syllabusId}</td>
+                  <td className="p-4">
+                    {note.fileUrl ? (
+                      <a
+                        href={note.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline wrap-break-word max-w-20"
+                      >
+                        View PDF
+                      </a>
+                    ) : (
+                      "—"
+                    )}
                   </td>
-                  <td className="px-6 py-4">{note.notename}</td>
-                  <td className="px-6 py-4 text-center space-x-3">
-                    <button
-                      onClick={() => navigate(`/edit-note/${note.id}`)}
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                  <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 flex-wrap">
+                    <Link
+                      to={`/notes/edit/${note.noteId}`}
+                      className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
                     >
                       Edit
-                    </button>
+                    </Link>
                     <button
-                      onClick={() => handleDelete(note.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                      onClick={() => handleDelete(note.noteId)}
+                      className="px-3 py-1.5 rounded-xl text-red-700 font-semibold border border-red-200 hover:bg-red-50 transition"
                     >
                       Delete
                     </button>
+                    <button
+                      onClick={() => handleViewPdf(note.noteId)}     
+                      className="px-3 py-1.5 rounded-xl text-green-700 font-semibold border border-green-200 hover:bg-green-50 transition"
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile Cards */}
-        <div className="md:hidden space-y-4">
-          {notesToShow.map((note) => (
-            <div
-              key={note.id}
-              className="bg-white p-5 rounded-xl shadow-lg border border-gray-200"
-            >
-              <h3 className="text-xl font-bold text-gray-800">
-                {note.subject}
-              </h3>
-              <p className="text-sm text-blue-600 font-mono mt-1">
-                {note.subjectcode}
-              </p>
-              <p className="text-gray-700 mt-2 text-lg">{note.notename}</p>
-
-              <div className="mt-5 flex gap-3">
-                <button
-                  onClick={() => navigate(`/edit-note/${note.id}`)}
-                  className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(note.id)}
-                  className="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredNotes.length === 0 && (
-          <div className="text-center py-16 text-gray-500 text-xl">
-            No notes found
-          </div>
-        )}
-
-        {/* Load More Button */}
-        {visibleCount < filteredNotes.length && (
-          <div className="text-center mt-10">
-            <button
-              onClick={loadMore}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-4 px-10 rounded-full shadow-lg transition"
-            >
-              Load More ({visibleCount} of {filteredNotes.length})
-            </button>
-          </div>
-        )}
-
-        {visibleCount >= filteredNotes.length && filteredNotes.length > 15 && (
-          <p className="text-center mt-6 text-gray-600">
-            All {filteredNotes.length} notes loaded
-          </p>
-        )}
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-    </div>
+
+      {/* Pagination */}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 };
 
-export default NotesTable;
+export default NoteTable;

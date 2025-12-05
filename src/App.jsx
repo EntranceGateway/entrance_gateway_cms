@@ -24,6 +24,7 @@ import EditCourse from "./pages/course/EditCourse";
 import AllSyllabus from "./pages/syllabus/AllSyllabus";
 import EditSyllabus from "./pages/syllabus/EditSyllabus";
 import RegisterForm from "./pages/Registerform";
+import EditNote from "./pages/notes/EditForm";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="/college" element={<CollegeForm />} />
             <Route path="/notes/add" element={<CreateNote />} />
             <Route path="/notespage" element={<NotePage />} />
+            <Route path="/notes/edit/:id" element={<EditNote/>}/>
             <Route path="/training/add" element={<AddTraning />} />
             <Route path="/college/add" element={<AddCollege />} />
             <Route path="/college/edit/:id" element={<EditCollege />} />

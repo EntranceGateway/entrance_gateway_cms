@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Pagination from "../../../../Verification/Pagination";
 import UniversalFilter from "../../../../Verification/UniversalFilter";
-import { deleteSyllabus, getSyllabusAll } from "../../../../http/syllabus";
+import { deleteSyllabus, getSyllabus, getSyllabusFile } from "../../../../http/syllabus";
+
 const PAGE_SIZE = 5;
 
 const SyllabusTable = () => {
   const [allSyllabus, setAllSyllabus] = useState([]);
   const [filteredSyllabus, setFilteredSyllabus] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [page, setPage] = useState(1);
 
   const token = localStorage.getItem("token");
@@ -18,7 +18,7 @@ const SyllabusTable = () => {
   const fetchSyllabus = async () => {
     setLoading(true);
     try {
-      const res = await getSyllabusAll({}, token);
+      const res = await getSyllabus({}, token);
       const data = res.data.data.content || [];
       setAllSyllabus(data);
       setFilteredSyllabus(data);
@@ -70,6 +70,23 @@ const SyllabusTable = () => {
     }
   };
 
+  // ---------------- VIEW PDF HANDLER ----------------
+  const handleViewPdf = async (syllabusId) => {
+    try {
+      const response = await getSyllabusFile(syllabusId, token);
+
+      // Create a blob URL from the PDF
+      const fileBlob = response.data;
+      const fileUrl = window.URL.createObjectURL(fileBlob);
+
+      // Open in new tab
+      window.open(fileUrl, "_blank");
+    } catch (err) {
+      console.error("View PDF error:", err);
+      alert("Failed to open PDF.");
+    }
+  };
+
   // ---------------- PAGINATION ----------------
   const totalPages = Math.ceil(filteredSyllabus.length / PAGE_SIZE);
   const paginated = filteredSyllabus.slice(
@@ -85,30 +102,10 @@ const SyllabusTable = () => {
       {/* -------- FILTER UI -------- */}
       <UniversalFilter
         config={[
-          {
-            name: "courseName",
-            label: "Course Name",
-            type: "text",
-            placeholder: "Search course name",
-          },
-          {
-            name: "syllabusTitle",
-            label: "Title",
-            type: "text",
-            placeholder: "Search syllabus title",
-          },
-          {
-            name: "semester",
-            label: "Semester",
-            type: "text",
-            placeholder: "e.g. First, Second...",
-          },
-          {
-            name: "year",
-            label: "Year",
-            type: "number",
-            placeholder: "Search year",
-          },
+          { name: "courseName", label: "Course Name", type: "text", placeholder: "Search course name" },
+          { name: "syllabusTitle", label: "Title", type: "text", placeholder: "Search syllabus title" },
+          { name: "semester", label: "Semester", type: "text", placeholder: "e.g. First, Second..." },
+          { name: "year", label: "Year", type: "number", placeholder: "Search year" },
         ]}
         onFilter={handleFilter}
       />
@@ -155,10 +152,7 @@ const SyllabusTable = () => {
                 </tr>
               ) : (
                 paginated.map((syllabus) => (
-                  <tr
-                    key={syllabus.syllabusId}
-                    className="hover:bg-gray-50 transition"
-                  >
+                  <tr key={syllabus.syllabusId} className="hover:bg-gray-50 transition">
                     <td className="p-4">{syllabus.courseName}</td>
                     <td className="p-4">{syllabus.courseCode}</td>
                     <td className="p-4">{syllabus.syllabusTitle}</td>
@@ -183,6 +177,13 @@ const SyllabusTable = () => {
                       >
                         Delete
                       </button>
+
+                      <button
+                        onClick={() => handleViewPdf(syllabus.syllabusId)}
+                        className="px-3 py-1.5 rounded-xl text-green-700 border border-green-300 hover:bg-green-50"
+                      >
+                        View PDF
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -193,11 +194,7 @@ const SyllabusTable = () => {
       </div>
 
       {/* -------- PAGINATION -------- */}
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={(p) => setPage(p)}
-      />
+      <Pagination page={page} totalPages={totalPages} onPageChange={(p) => setPage(p)} />
     </div>
   );
 };
