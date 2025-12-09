@@ -25,6 +25,8 @@ import AllSyllabus from "./pages/syllabus/AllSyllabus";
 import EditSyllabus from "./pages/syllabus/EditSyllabus";
 import RegisterForm from "./pages/Registerform";
 import EditNote from "./pages/notes/EditForm";
+import Navbar from "./pages/user/component/nav/navbar";
+import ViewNote from "./pages/notes/components/viewsNotes/ViewNote";
 
 export default function App() {
   return (
@@ -43,6 +45,7 @@ export default function App() {
             <Route path="/notes/add" element={<CreateNote />} />
             <Route path="/notespage" element={<NotePage />} />
             <Route path="/notes/edit/:id" element={<EditNote/>}/>
+            <Route path="/notes/viewnotes/:id" element={<ViewNote/>}/>
             <Route path="/training/add" element={<AddTraning />} />
             <Route path="/college/add" element={<AddCollege />} />
             <Route path="/college/edit/:id" element={<EditCollege />} />
@@ -57,6 +60,7 @@ export default function App() {
             <Route path="/banner/add" element={<AddBanner/>}/>
             <Route path="/category/add" element={<AddCategory/>}/>
             <Route path="/register" element={<RegisterForm/>}/>
+            <Route path="/navbar" element={<Navbar/>}/>
           </Route>
 
         </Routes>

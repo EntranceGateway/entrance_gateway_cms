@@ -14,7 +14,7 @@ const defaultForm = {
 
 const steps = ["Personal Info", "Education & Interest", "Address & Security"];
 
-const MultiStepForm = () => {
+const MultiStepForm = ({onSubmit}) => {
   const [form, setForm] = useState(defaultForm);
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
@@ -73,10 +73,10 @@ const MultiStepForm = () => {
     }`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center p-4">
       <div className="max-w-5xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
         {/* Left Side Image */}
-        <div className="md:w-2/5 bg-gradient-to-br from-indigo-600 to-purple-700 p-8 flex flex-col justify-center items-center text-white">
+        <div className="md:w-2/5 bg-linear-to-br from-indigo-600 to-purple-700 p-8 flex flex-col justify-center items-center text-white">
           <div className="text-center">
             <div className="mb-6">
               <svg className="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

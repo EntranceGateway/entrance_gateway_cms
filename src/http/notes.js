@@ -34,17 +34,60 @@ export const getNotes = async (params = {}, token) => {
 // GET SINGLE NOTE (Your custom endpoint)
 // ===============================
 
-export const getSingle = async (noteId, token) => {
-  try {
-    return await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      responseType: "blob", // IMPORTANT: get file as binary
-    });
-  } catch (err) {
-    throw err.response?.data || err;
-  }
-};
+//export const getSingle = async (noteId, token) => {
+//   try {
+//     return await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
+//       headers: token ? { Authorization: `Bearer ${token}` } : {},
+//       responseType: "blob", // IMPORTANT: get file as binary
+//     });
+//   } catch (err) {
+//     throw err.response?.data || err;
+//   }
+// };
+// export const getSingle = async (noteId, token) => {
+//   try {
+//     return await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
+//       headers: token ? { Authorization: `Bearer ${token}` } : {},
+//       responseType: "blob", // IMPORTANT: get file as binary
+//     });
+//   } catch (err) {
+//     console.error("Error fetching PDF:", err);
+//     throw err.response?.data || err;
+//   }
+// };
 
+
+// src/http/notes/getSingle.js
+
+export const getSingle = async (noteId, token) => {
+  if (!token) {
+    throw new Error("Authentication token is missing");
+  }
+
+  const response = await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    responseType: "blob",
+  });
+
+  const contentType = response.headers["content-type"] || "";
+  if (contentType.includes("application/json")) {
+    const text = await response.data.text();
+    let msg = "Failed to load PDF";
+    try {
+      const json = JSON.parse(text);
+      msg = json.message || json.error || json.detail || "Access denied";
+    } catch {
+      msg = text || msg;
+    }
+    const error = new Error(msg);
+    error.status = response.status;
+    throw error;
+  }
+
+  return response;
+};
 
 export const getNotesById = async (noteId, token) => {
   try {

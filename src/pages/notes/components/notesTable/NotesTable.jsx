@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getNotes, deleteNote, getSingle } from "../../../../http/notes";
+import { getNotes, deleteNote } from "../../../../http/notes"; // removed getSingle import
 import UniversalFilter from "../../../../Verification/UniversalFilter";
 import Pagination from "../../../../Verification/Pagination";
 
@@ -62,24 +62,6 @@ const NoteTable = () => {
     }
   };
 
-  // ---------------- VIEW PDF HANDLER ----------------
-   const handleViewPdf = async (noteId) => {
-  try {
-    const response = await getSingle(noteId, token);
-
-   
-      // Create a blob URL from the PDF
-      const fileBlob = response.data;
-      const fileUrl = window.URL.createObjectURL(fileBlob);
-
-      // Open in new tab
-      window.open(fileUrl, "_blank");
-  } catch (err) {
-    console.error("View PDF error:", err);
-    alert("Failed to open PDF.");
-  }
-};
-
   // Pagination
   const totalPages = Math.ceil(filteredNotes.length / PAGE_SIZE);
   const paginatedNotes = filteredNotes.slice(
@@ -138,7 +120,7 @@ const NoteTable = () => {
             ) : paginatedNotes.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center p-6 text-gray-500">
-                  🔍 No notes found
+                  No notes found
                 </td>
               </tr>
             ) : (
@@ -147,20 +129,13 @@ const NoteTable = () => {
                   <td className="p-4 font-medium text-gray-800 wrap-break-word max-w-[120px]">{note.noteName}</td>
                   <td className="p-4 text-gray-600 wrap-break-word max-w-[150px]">{note.noteDescription}</td>
                   <td className="p-4 text-gray-600 wrap-break-word max-w-[100px]">{note.syllabusId}</td>
+                  
+                  {/* FILE COLUMN: No more direct downloadable link */}
                   <td className="p-4">
-                    {note.fileUrl ? (
-                      <a
-                        href={note.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline wrap-break-word max-w-20"
-                      >
-                        View PDF
-                      </a>
-                    ) : (
-                      "—"
-                    )}
+                    <span className="text-green-600 font-medium">PDF Available</span>
                   </td>
+
+                  {/* ACTION COLUMN */}
                   <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 flex-wrap">
                     <Link
                       to={`/notes/edit/${note.noteId}`}
@@ -174,12 +149,14 @@ const NoteTable = () => {
                     >
                       Delete
                     </button>
-                    <button
-                      onClick={() => handleViewPdf(note.noteId)}     
-                      className="px-3 py-1.5 rounded-xl text-green-700 font-semibold border border-green-200 hover:bg-green-50 transition"
+                   
+                    {/* ONLY secure way to view PDF */}
+                    <Link
+                      to={`/notes/viewnotes/${note.noteId}`}
+                      className="px-3 py-1.5 rounded-xl text-green-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
                     >
                       View
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               ))
