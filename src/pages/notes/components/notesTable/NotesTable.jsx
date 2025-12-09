@@ -97,7 +97,7 @@ const NoteTable = () => {
         <table className="min-w-full text-sm table-auto">
           <thead className="bg-gray-50 border-b">
             <tr>
-              {["Note Name", "Description", "Syllabus ID", "File", "Action"].map(
+              {["Note Name","Subject", "Description", "Syllabus ID", "File", "Action"].map(
                 (col) => (
                   <th
                     key={col}
@@ -127,6 +127,8 @@ const NoteTable = () => {
               paginatedNotes.map((note) => (
                 <tr key={note.noteId} className="hover:bg-gray-50 transition">
                   <td className="p-4 font-medium text-gray-800 wrap-break-word max-w-[120px]">{note.noteName}</td>
+                  <td className="p-4 font-medium text-gray-800 wrap-break-word max-w-[120px]">{note.subject}</td>
+
                   <td className="p-4 text-gray-600 wrap-break-word max-w-[150px]">{note.noteDescription}</td>
                   <td className="p-4 text-gray-600 wrap-break-word max-w-[100px]">{note.syllabusId}</td>
                   

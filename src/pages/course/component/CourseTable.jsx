@@ -82,7 +82,7 @@ const CourseTable = () => {
         config={[
           { name: "courseName", label: "Course Name", type: "text", placeholder: "Search by course name" },
           { name: "description", label: "Description", type: "text", placeholder: "Search by description" },
-          { name: "collegeId", label: "College ID", type: "text", placeholder: "Search by college ID" },
+          { name: "collegeName", label: "College Name", type: "text", placeholder: "Search by college Name" },
         ]}
         onFilter={handleFilter}
       />
@@ -93,7 +93,7 @@ const CourseTable = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {["Course Name", "Description", "College ID", "Action"].map((col) => (
+                {["Course Name", "CollegeName","Description", "College ID", "Action"].map((col) => (
                   <th
                     key={col}
                     className="p-4 text-left font-medium text-gray-700 sticky top-0 bg-gray-50 z-10"
@@ -121,6 +121,7 @@ const CourseTable = () => {
                 paginatedCourses.map((course) => (
                   <tr key={course.courseId} className="hover:bg-gray-50 transition">
                     <td className="p-4 font-medium text-gray-800">{course.courseName}</td>
+                    <td className="p-4 font-medium text-gray-800">{course.collegeName}</td>
                     <td className="p-4 text-gray-600">{course.description}</td>
                     <td className="p-4 text-gray-600">{course.collegeId}</td>
 

@@ -59,34 +59,29 @@ export const getNotes = async (params = {}, token) => {
 
 // src/http/notes/getSingle.js
 
-export const getSingle = async (noteId, token) => {
-  if (!token) {
-    throw new Error("Authentication token is missing");
-  }
+export const getSingle = async (url, token) => {
+ if (!token) throw new Error("Authentication token is missing");
 
-  const response = await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
+  const res = await axios.get(url, {
     headers: {
       Authorization: `Bearer ${token}`,
+      Accept: "application/pdf",
     },
     responseType: "blob",
+    withCredentials: true, // ✅ matches access-control-allow-credentials: true
   });
 
-  const contentType = response.headers["content-type"] || "";
-  if (contentType.includes("application/json")) {
-    const text = await response.data.text();
-    let msg = "Failed to load PDF";
-    try {
-      const json = JSON.parse(text);
-      msg = json.message || json.error || json.detail || "Access denied";
-    } catch {
-      msg = text || msg;
-    }
-    const error = new Error(msg);
-    error.status = response.status;
-    throw error;
+  if (res.status !== 200) {
+    throw new Error(`Unexpected response status: ${res.status}`);
   }
 
-  return response;
+  const contentType = res.headers["content-type"];
+  if (!contentType || !contentType.includes("application/pdf")) {
+    throw new Error("Invalid response: not a PDF file");
+  }
+
+  return res.data; // blob
+
 };
 
 export const getNotesById = async (noteId, token) => {

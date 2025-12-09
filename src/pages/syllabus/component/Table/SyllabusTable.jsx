@@ -70,22 +70,7 @@ const SyllabusTable = () => {
     }
   };
 
-  // ---------------- VIEW PDF HANDLER ----------------
-  const handleViewPdf = async (syllabusId) => {
-    try {
-      const response = await getSyllabusFile(syllabusId, token);
-
-      // Create a blob URL from the PDF
-      const fileBlob = response.data;
-      const fileUrl = window.URL.createObjectURL(fileBlob);
-
-      // Open in new tab
-      window.open(fileUrl, "_blank");
-    } catch (err) {
-      console.error("View PDF error:", err);
-      alert("Failed to open PDF.");
-    }
-  };
+  
 
   // ---------------- PAGINATION ----------------
   const totalPages = Math.ceil(filteredSyllabus.length / PAGE_SIZE);
@@ -178,12 +163,13 @@ const SyllabusTable = () => {
                         Delete
                       </button>
 
-                      <button
-                        onClick={() => handleViewPdf(syllabus.syllabusId)}
+                    
+                     <Link
+                      to={`/syllabus/viewsyllabus/${syllabus.syllabusId}`}
                         className="px-3 py-1.5 rounded-xl text-green-700 border border-green-300 hover:bg-green-50"
                       >
                         View PDF
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))
