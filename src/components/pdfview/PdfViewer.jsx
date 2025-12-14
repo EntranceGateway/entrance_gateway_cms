@@ -1,84 +1,174 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import Layout from "../../../components/layout/Layout";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
-// PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Configure pdfjs worker
+pdfjs.GlobalWorkerOptions.workerSrc =
+  `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-const PdfViewer = ({ noteId, token, fetchPdfBlob, className,suburl }) => {
+// Styled toolbar button
+const ViewerButton = ({ icon: Icon, onClick, disabled = false }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`p-2 rounded-full transition-colors ${
+      disabled
+        ? "text-gray-400 cursor-not-allowed"
+        : "text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+    }`}
+  >
+    <Icon size={20} />
+  </button>
+);
+
+const PdfViewer = ({ noteId, token, fetchPdfBlob, suburl, className }) => {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [numPages, setNumPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageWidth, setPageWidth] = useState(800);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const pdfWrapperRef = useRef(null);
+  const viewerRef = useRef(null);
+  const pageWrapperRef = useRef(null);
+  const pdfUrlRef = useRef(null);
 
-  // Handle responsive width
-  useEffect(() => {
-    const updateWidth = () => {
-      if (pdfWrapperRef.current) {
-        setPageWidth(pdfWrapperRef.current.clientWidth * 0.95);
-      }
-    };
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
+  const STORAGE_KEY = `pdf_note_${noteId}`;
 
-  const onDocumentLoadSuccess = ({ numPages }) => setNumPages(numPages);
+  /* ---------- Helpers ---------- */
+  const blobToBase64 = (blob) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
 
-  // Fetch PDF blob
+  const base64ToBlob = (base64) => {
+    const parts = base64.split(",");
+    const mime = parts[0].match(/:(.*?);/)[1];
+    const binary = atob(parts[1]);
+    const array = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      array[i] = binary.charCodeAt(i);
+    }
+    return new Blob([array], { type: mime });
+  };
+
+  /* ---------- Load PDF ---------- */
   useEffect(() => {
     const loadPdf = async () => {
+      setIsLoading(true);
       try {
-        if (!noteId || !token) return;
+        if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
 
-        const blob = await fetchPdfBlob(`${suburl}/${noteId}`, token);
-        const fileURL = URL.createObjectURL(blob);
-        setPdfUrl(fileURL);
+        const cached = localStorage.getItem(STORAGE_KEY);
+        let blob;
+
+        if (cached) {
+          blob = base64ToBlob(cached);
+        } else {
+          blob = await fetchPdfBlob(`${suburl}/${noteId}`, token);
+          const base64 = await blobToBase64(blob);
+          localStorage.setItem(STORAGE_KEY, base64);
+        }
+
+        const url = URL.createObjectURL(blob);
+        pdfUrlRef.current = url;
+        setPdfUrl(url);
       } catch (err) {
         console.error("PDF load error:", err);
-        setErrorMessage(err.message || "Failed to load PDF");
+        setPdfUrl(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadPdf();
 
     return () => {
-      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+      if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
     };
-  }, [noteId, token, fetchPdfBlob]);
+  }, [noteId, token, fetchPdfBlob, suburl]);
 
-  if (errorMessage) return <p className="text-red-600">{errorMessage}</p>;
-  if (!pdfUrl) return <p className="text-gray-600">Loading PDF...</p>;
+  /* ---------- Responsive Width ---------- */
+  const calculatePageWidth = useCallback(() => {
+    if (pageWrapperRef.current) {
+      setPageWidth(pageWrapperRef.current.clientWidth - 16);
+    }
+  }, []);
+
+  useEffect(() => {
+    calculatePageWidth();
+    window.addEventListener("resize", calculatePageWidth);
+    return () => window.removeEventListener("resize", calculatePageWidth);
+  }, [calculatePageWidth]);
+
+  /* ---------- Navigation ---------- */
+  const goToPrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
+  const goToNextPage = () => setCurrentPage((p) => Math.min(numPages, p + 1));
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-64 text-gray-600">
+        <Loader2 className="animate-spin mr-3" size={28} />
+        Loading document...
+      </div>
+    );
+
+  if (!pdfUrl)
+    return (
+      <p className="text-center py-10 text-xl font-semibold text-red-600">
+        Failed to load PDF document.
+      </p>
+    );
 
   return (
-    <Layout>
     <div
-      ref={pdfWrapperRef}
-      className={className || "w-full h-full overflow-y-auto flex justify-center"}
-      onContextMenu={(e) => e.preventDefault()} // disable right-click
+      ref={viewerRef}
+      className={`flex flex-col h-full bg-white pdf-viewer-container ${className || ""}`}
     >
-      <Document
-        file={pdfUrl}
-        onLoadSuccess={onDocumentLoadSuccess}
-        loading="Loading PDF..."
-        error="Failed to load PDF"
-        noData="No PDF file found"
+      {/* Toolbar */}
+      <div className="flex justify-center items-center p-3 bg-white border-b border-gray-200">
+        <ViewerButton
+          icon={ChevronLeft}
+          onClick={goToPrevPage}
+          disabled={currentPage <= 1}
+        />
+        <span className="mx-3 text-sm font-medium text-gray-700">
+          Page <strong>{currentPage}</strong> / <strong>{numPages}</strong>
+        </span>
+        <ViewerButton
+          icon={ChevronRight}
+          onClick={goToNextPage}
+          disabled={currentPage >= numPages}
+        />
+      </div>
+
+      {/* PDF Content */}
+      <div
+        ref={pageWrapperRef}
+        className="flex-1 flex flex-col items-center py-4 overflow-y-auto bg-gray-100"
       >
-        {Array.from(new Array(numPages), (_, index) => (
-          <Page
-            key={`page_${index + 1}`}
-            pageNumber={index + 1}
-            width={pageWidth}
-            renderTextLayer={false}
-            renderAnnotationLayer={false}
-            onContextMenu={(e) => e.preventDefault()} // disable right-click
-          />
-        ))}
-      </Document>
+        <Document
+          file={pdfUrl}
+          onLoadSuccess={({ numPages }) => {
+            setNumPages(numPages);
+            setCurrentPage(1);
+          }}
+        >
+          {Array.from(new Array(numPages), (_, index) => (
+            <Page
+              key={index}
+              pageNumber={index + 1}
+              width={pageWidth}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              className="shadow-2xl mb-4"
+            />
+          ))}
+        </Document>
+      </div>
     </div>
-    </Layout>
   );
 };
 
