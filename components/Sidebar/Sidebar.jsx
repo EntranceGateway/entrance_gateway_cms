@@ -13,12 +13,13 @@ import {
   GraduationCap,
   BookOpen,FileCheck ,Image ,Folder,Bell 
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -106,6 +107,16 @@ const Sidebar = () => {
 
   const isActive = (path) => location.pathname === path;
   const isParentActive = (submenu) => submenu?.some((sub) => isActive(sub.path));
+
+  const handleLogout = () => {
+    // 1. Remove token (and anything auth-related)
+    localStorage.removeItem("token");
+    localStorage.removeItem("user"); // remove if you store user data
+    sessionStorage.clear(); // optional but clean
+
+    // 2. Redirect to login
+    navigate("/admin/login", { replace: true });
+  };
 
   return (
     <>
@@ -246,7 +257,7 @@ const Sidebar = () => {
         <div className="border-t border-gray-800 p-4">
           <button
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-all duration-200 font-medium shadow-md"
-            onClick={() => console.log("Logging out...")}
+      onClick={handleLogout}
           >
             <LogOut size={20} />
             <span>Logout</span>

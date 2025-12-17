@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const Form = ({ role = "user", type, onSubmit, user,error  }) => {
+const Form = ({ role = "Admin", type, onSubmit, user,error  }) => {
   const [data, setData] = useState({
     email: "",
     password: "",
@@ -23,7 +23,7 @@ const Form = ({ role = "user", type, onSubmit, user,error  }) => {
   };
 
   const isAdmin = role === "admin";
-  const title = isAdmin ? "Admin Portal" : "User Login";
+  const title = isAdmin ? "Admin Portal" : "Admin Login";
   const placeholderEmail = isAdmin ? "admin@example.com" : "user@example.com";
 
   return (
