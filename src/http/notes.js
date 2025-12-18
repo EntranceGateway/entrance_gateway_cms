@@ -98,7 +98,6 @@ export const getNotesById = async (noteId, token) => {
 // UPDATE NOTE DETAILS  (JSON)
 // ===============================
 export const updateNoteDetails = async (id, body, token) => {
-  console.log("hii"+body)
   try {
     return await api.put(`/api/v1/notes/${id}`, body, {
       headers: {

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://185.177.116.173:8080",
+  baseURL: "api.entrancegateway.com",
   // Do NOT set Content-Type here globally
 });
 
