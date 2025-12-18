@@ -61,7 +61,7 @@ export function login(data) {
 
     try {
       const response = await API.post("/api/v1/auth/login", data);
-
+console.log(response)
       if (response.status === 200 && response.data.data.token) {
         const { token, userId, user } = response.data.data;
 
@@ -90,38 +90,6 @@ export function login(data) {
 }
 
 
-export function fetchAuth() {
-  return async function(dispatch) {
-    dispatch(setStatus(STATUSES.LOADING));
-    try {
-      const response = await API.get('/api/v1/notes');
-      if (response.status === 200 && response.data.notes) {
-        dispatch(setUser(response.data.notes)); // store notes or users consistently
-        dispatch(setStatus(STATUSES.SUCCESS));
-      } else {
-        dispatch(setStatus(STATUSES.ERROR));
-      }
-    } catch (error) {
-      dispatch(setStatus(STATUSES.ERROR));
-    }
-  }
-}
 
-export function deleteAuth(id, token) {
-  return async function(dispatch) {
-    dispatch(setStatus(STATUSES.LOADING));
-    try {
-      const response = await API.delete(`notes/${id}`, {
-        headers: { token }
-      });
-      if (response.status === 200) {
-        dispatch(removeUserFromState(id)); // matches reducer name
-        dispatch(setStatus(STATUSES.SUCCESS));
-      } else {
-        dispatch(setStatus(STATUSES.ERROR));
-      }
-    } catch (error) {
-      dispatch(setStatus(STATUSES.ERROR));
-    }
-  }
-}
+
+
