@@ -4,17 +4,18 @@ import { Bell, Settings, LogOut, User, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAdmin } from "../../src/http/adminget";
 
-
-
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [admin, setAdmin] = useState(null);
+  const [admin, setAdmin] = useState(() => {
+    // Load from localStorage if exists
+    const saved = localStorage.getItem("admin");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
   const navigate = useNavigate();
-
   const token = localStorage.getItem("token");
 
   /* =======================
@@ -31,11 +32,11 @@ const Navbar = () => {
     const fetchAdminDetails = async () => {
       try {
         const res = await getAdmin({}, token);
-
-        // Flexible handling depending on backend response shape
         const adminData = res.data?.data || res.data?.admin;
+
         if (adminData && isMounted) {
           setAdmin(adminData);
+          localStorage.setItem("admin", JSON.stringify(adminData));
         } else {
           navigate("/admin/login", { replace: true });
         }
@@ -43,17 +44,16 @@ const Navbar = () => {
         if (error.response?.status === 401) {
           navigate("/admin/login", { replace: true });
         }
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
-    fetchAdminDetails();
+    // Only fetch if admin is not already loaded
+    if (!admin) fetchAdminDetails();
 
     return () => {
       isMounted = false;
     };
-  }, [token, navigate]);
+  }, [token, navigate, admin]);
 
   /* =======================
      CLICK OUTSIDE HANDLER
@@ -81,7 +81,7 @@ const Navbar = () => {
      ======================= */
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("admin");
     sessionStorage.clear();
     navigate("/admin/login", { replace: true });
   };
@@ -89,11 +89,9 @@ const Navbar = () => {
   /* =======================
      RENDER
      ======================= */
-
   return (
     <header className="bg-white border-b border-gray-200 px-4 lg:px-8 py-4 shadow-sm sticky top-0 z-40">
       <div className="flex items-center justify-between">
-
         {/* Left */}
         <div className="flex-1">
           <h2 className="text-xl font-semibold text-gray-800 hidden md:block">
@@ -103,7 +101,6 @@ const Navbar = () => {
 
         {/* Right */}
         <div className="flex items-center gap-3">
-
           {/* Notifications */}
           <div className="relative" ref={notificationsRef}>
             <button
@@ -132,7 +129,7 @@ const Navbar = () => {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition"
             >
-              <div className="w-9 h-9 rounded-full bg-linear-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
                 {admin?.email?.charAt(0)?.toUpperCase() || "A"}
               </div>
 
@@ -140,9 +137,7 @@ const Navbar = () => {
                 <p className="text-sm font-semibold text-gray-800">
                   {admin?.role || "ADMIN"}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {admin?.email || ""}
-                </p>
+                <p className="text-xs text-gray-500">{admin?.email || ""}</p>
               </div>
 
               <ChevronDown
@@ -163,9 +158,7 @@ const Navbar = () => {
                       ? "Super Admin"
                       : "Admin"}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {admin?.email}
-                  </p>
+                  <p className="text-sm text-gray-500">{admin?.email}</p>
                 </div>
 
                 <div className="py-2">
