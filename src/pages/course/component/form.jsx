@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 const defaultForm = {
   courseName: "",
   description: "",
-  collegeId: "037c307a-dd76-4d5e-a986-9e8ae59ac8b2", 
   courseType: "SEMESTER",
   courseLevel: "PLUS_TWO",
 };
@@ -21,7 +20,6 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
       setForm({
         courseName: initialData.courseName || "",
         description: initialData.description || "",
-        collegeId: initialData.collegeId || defaultForm.collegeId,
         courseType: initialData.courseType || "SEMESTER",
         courseLevel: initialData.courseLevel || "PLUS_TWO",
       });
@@ -54,9 +52,6 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
     else if (form.description.length < 10)
       newErrors.description = "Description must be at least 10 characters.";
 
-    if (!form.collegeId.trim()) newErrors.collegeId = "College ID is required.";
-    else if (!/^[0-9a-fA-F-]{36}$/.test(form.collegeId))
-      newErrors.collegeId = "College ID must be a valid UUID.";
 
     return newErrors;
   };
@@ -198,24 +193,7 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
             )}
           </div>
 
-          {/* College ID */}
-          <div>
-            <label htmlFor="collegeId" className={labelBase}>College ID *</label>
-            <input
-              id="collegeId"
-              type="text"
-              name="collegeId"
-              value={form.collegeId}
-              onChange={handleChange}
-              placeholder="UUID of college"
-              className={`${inputBase} ${
-                fieldError("collegeId") ? errorBorder : normalBorder
-              }`}
-            />
-            {fieldError("collegeId") && (
-              <span className={errorText}>{fieldError("collegeId")}</span>
-            )}
-          </div>
+        
 
           {/* Course Type */}
           <div>
