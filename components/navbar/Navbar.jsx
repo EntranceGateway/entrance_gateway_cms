@@ -2,7 +2,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, Settings, LogOut, User, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getAdmin } from "../../src/http/adminget";
+
+
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -20,30 +22,38 @@ const Navbar = () => {
      ======================= */
   useEffect(() => {
     if (!token) {
-      handleLogout();
+      navigate("/admin/login", { replace: true });
       return;
     }
 
+    let isMounted = true;
+
     const fetchAdminDetails = async () => {
       try {
-        const res = await axios.get(
-          "http://185.177.116.173:8080/api/v1/admin/getAdminDetails",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await getAdmin({}, token);
 
-        // API response: { message, data: { name, email, role } }
-        setAdmin(res.data.data);
+        // Flexible handling depending on backend response shape
+        const adminData = res.data?.data || res.data?.admin;
+        if (adminData && isMounted) {
+          setAdmin(adminData);
+        } else {
+          navigate("/admin/login", { replace: true });
+        }
       } catch (error) {
-        handleLogout(); // invalid / expired token
+        if (error.response?.status === 401) {
+          navigate("/admin/login", { replace: true });
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchAdminDetails();
-  }, [token]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token, navigate]);
 
   /* =======================
      CLICK OUTSIDE HANDLER
@@ -79,6 +89,7 @@ const Navbar = () => {
   /* =======================
      RENDER
      ======================= */
+
   return (
     <header className="bg-white border-b border-gray-200 px-4 lg:px-8 py-4 shadow-sm sticky top-0 z-40">
       <div className="flex items-center justify-between">
@@ -121,7 +132,7 @@ const Navbar = () => {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition"
             >
-              <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="w-9 h-9 rounded-full bg-linear-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
                 {admin?.email?.charAt(0)?.toUpperCase() || "A"}
               </div>
 

@@ -39,13 +39,11 @@ const BannerForm = ({ token }) => {
         }
       );
 
-      console.log("API Response:", res.data);
       setLoading(false);
       alert("Banner created successfully");
 
     } catch (err) {
       setLoading(false);
-      console.error("Error:", err);
       alert("Failed to create banner");
     }
   };
