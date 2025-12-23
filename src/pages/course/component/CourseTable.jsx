@@ -126,9 +126,15 @@ const CourseTable = () => {
                     <td className="p-4 text-gray-600">{course.collegeId}</td>
 
                     <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+                         <Link
+                        to={`/syllabus/add/${course.courseId}`}
+                        className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
+                      >
+                        Add syllabus
+                      </Link>
                       <Link
                         to={`/course/edit/${course.courseId}`}
-                        className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
+                        className="px-3 py-1.5 rounded-xl text-amber-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
                       >
                         Edit
                       </Link>

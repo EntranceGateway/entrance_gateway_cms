@@ -75,6 +75,7 @@ export default function App() {
 
               {/* Syllabus Routes */}
               <Route path="/syllabus/add" element={<AddSyllabus />} />
+              <Route path="/syllabus/add/:id" element={<AddSyllabus />} />
               <Route path="/syllabus/edit/:id" element={<EditSyllabus />} />
               <Route path="/syllabus/all" element={<AllSyllabus />} />
               <Route path="/syllabus/viewsyllabus/:id" element={<ViewSyllabus />} />

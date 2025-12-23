@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
 
 // ------------------------------
 // Default Form State
@@ -44,12 +45,14 @@ const validateForm = (form, mode) => {
 //  COMPONENT
 // ==========================================================
 const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
+  const { id } = useParams();
+console.log("SyllabusForm URL courseId:", id);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "" });
 
   // ------------------------------
-  // Load initial data in edit mode
+  // Load initial data in edit mode OR set courseId from URL in add mode
   // ------------------------------
   useEffect(() => {
     if (mode === "edit" && initialData) {
@@ -62,11 +65,14 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
         fileUrl: initialData.fileUrl || "",
       });
     } else {
-      setForm(DEFAULT_FORM);
+      setForm({
+        ...DEFAULT_FORM,
+        courseId: id || "",
+      });
     }
     setErrors({});
     setStatus({ loading: false, success: "" });
-  }, [mode, initialData]);
+  }, [mode, initialData, id]);
 
   // ------------------------------
   // Input Class Generator
