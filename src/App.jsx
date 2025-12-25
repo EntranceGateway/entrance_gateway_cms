@@ -5,6 +5,8 @@ import { Suspense, lazy } from "react";
 
 import ProtectedRoute from "./Verification/ProtectedRoute";
 import Spinner from "../components/Spinner/Spinner";
+import AdminProfile from "./pages/admin/AdminProfile";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 // Lazy load all pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -45,6 +47,7 @@ export default function App() {
             {/* --------------------
                 Public Routes
             -------------------- */}
+
             <Route path="/admin/login" element={<Login />} />
             <Route path="/admin/register" element={<AdminRegister />} />
 
@@ -52,6 +55,8 @@ export default function App() {
                 Protected Routes
             -------------------- */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/admin/profile" element={<AdminProfile />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
 
               {/* Dashboard */}
               <Route path="/" element={<Dashboard />} />
