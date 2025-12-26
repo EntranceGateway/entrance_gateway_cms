@@ -6,6 +6,8 @@ import { Suspense, lazy } from "react";
 import ProtectedRoute from "./Verification/ProtectedRoute";
 import Spinner from "../components/Spinner/Spinner";
 import useAxiosInterceptor from "../src/pages/login/axiosInterceptor"; 
+import AdminProfile from "./pages/admin/AdminProfile";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 // Lazy load all pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -65,6 +67,9 @@ export default function App() {
                 <Route path="/college/add" element={<AddCollege />} />
                 <Route path="/college/edit/:id" element={<EditCollege />} />
                 <Route path="/college/all" element={<CollegeAll />} />
+
+              <Route path="/admin/profile" element={<AdminProfile />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
 
                 {/* Course Routes */}
                 <Route path="/course/add" element={<AddCourse />} />
