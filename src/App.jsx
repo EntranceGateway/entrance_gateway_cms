@@ -7,6 +7,7 @@ import ProtectedRoute from "./Verification/ProtectedRoute";
 import Spinner from "../components/Spinner/Spinner";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminSettings from "./pages/admin/AdminSettings";
+import useAxiosInterceptor from "../src/pages/login/axiosInterceptor"; 
 
 // Lazy load all pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -36,6 +37,12 @@ const ViewSyllabus = lazy(() => import("./pages/syllabus/Viewpdf"));
 const AddBanner = lazy(() => import("./Banner/Form/AddBanner"));
 const AddCategory = lazy(() => import("./Category/CategoryForm/AddCategory"));
 const Navbar = lazy(() => import("../components/navbar/Navbar"));
+
+// Wrapper to run interceptor inside Router
+const AxiosInterceptorWrapper = ({ children }) => {
+  useAxiosInterceptor();
+  return children;
+};
 
 export default function App() {
   return (
@@ -99,8 +106,60 @@ export default function App() {
 
           </Routes>
         </Suspense>
+        <AxiosInterceptorWrapper>
+          <Suspense fallback={<Spinner />}>
+            <Routes>
+
+              {/* Public Routes */}
+              <Route path="/admin/login" element={<Login />} />
+              <Route path="/admin/register" element={<AdminRegister />} />
+
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+
+                {/* Dashboard */}
+                <Route path="/" element={<Dashboard />} />
+
+                {/* College Routes */}
+                <Route path="/college" element={<CollegeForm />} />
+                <Route path="/college/add" element={<AddCollege />} />
+                <Route path="/college/edit/:id" element={<EditCollege />} />
+                <Route path="/college/all" element={<CollegeAll />} />
+
+                {/* Course Routes */}
+                <Route path="/course/add" element={<AddCourse />} />
+                <Route path="/course/edit/:id" element={<EditCourse />} />
+                <Route path="/course/all" element={<AllCourse />} />
+
+                {/* Notes Routes */}
+                <Route path="/notes/add" element={<CreateNote />} />
+                <Route path="/notes/add/:id" element={<CreateNote />} />
+                <Route path="/notes/edit/:id" element={<EditNote />} />
+                <Route path="/notespage" element={<NotePage />} />
+                <Route path="/notes/viewnotes/:id" element={<ViewNote />} />
+
+                {/* Syllabus Routes */}
+                <Route path="/syllabus/add" element={<AddSyllabus />} />
+                <Route path="/syllabus/add/:id" element={<AddSyllabus />} />
+                <Route path="/syllabus/edit/:id" element={<EditSyllabus />} />
+                <Route path="/syllabus/all" element={<AllSyllabus />} />
+                <Route path="/syllabus/viewsyllabus/:id" element={<ViewSyllabus />} />
+
+                {/* Training */}
+                <Route path="/training/add" element={<AddTraning />} />
+
+                {/* Banner & Category */}
+                <Route path="/banner/add" element={<AddBanner />} />
+                <Route path="/category/add" element={<AddCategory />} />
+
+                {/* Navbar */}
+                <Route path="/navbar" element={<Navbar />} />
+
+              </Route>
+            </Routes>
+          </Suspense>
+        </AxiosInterceptorWrapper>
       </BrowserRouter>
     </Provider>
   );
 }
-// --------------------------------------

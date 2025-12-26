@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useParams } from "react-router-dom";
 
 // -----------------------------
 // Default Form Shape
@@ -32,6 +33,7 @@ const validateForm = (form, mode) => {
 //  COMPONENT
 // ==========================================================
 const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
+    const { id } = useParams();
   const [form, setForm] = useState(DEFAULT_FORM);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "" });
@@ -49,7 +51,10 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
         file: null,
       });
     } else {
-      setForm(DEFAULT_FORM);
+      setForm({
+        ...DEFAULT_FORM,
+        syllabusId: id || "",
+      });
     }
     setErrors({});
     setStatus({ loading: false, success: "" });
