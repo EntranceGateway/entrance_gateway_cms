@@ -46,7 +46,6 @@ const validateForm = (form, mode) => {
 // ==========================================================
 const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const { id } = useParams();
-console.log("SyllabusForm URL courseId:", id);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "" });

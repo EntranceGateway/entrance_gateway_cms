@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 const defaultForm = {
   courseName: "",
   description: "",
+  affiliation: "",
   courseType: "SEMESTER",
   courseLevel: "PLUS_TWO",
 };
@@ -20,6 +21,7 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
       setForm({
         courseName: initialData.courseName || "",
         description: initialData.description || "",
+        affiliation: initialData.affiliation || "",
         courseType: initialData.courseType || "SEMESTER",
         courseLevel: initialData.courseLevel || "PLUS_TWO",
       });
@@ -52,7 +54,7 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
     else if (form.description.length < 10)
       newErrors.description = "Description must be at least 10 characters.";
 
-
+    if (!form.affiliation) newErrors.affiliation = "University type is required.";
     return newErrors;
   };
 
@@ -131,7 +133,6 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white shadow-xl rounded-2xl max-w-lg w-full p-8">
-        
         <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
           {mode === "edit" ? "Edit Course" : "Add New Course"}
         </h1>
@@ -149,7 +150,10 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
         )}
 
         {globalError && !Object.values(errors).length && (
-          <span role="alert" className="block text-center mb-4 font-semibold text-red-700">
+          <span
+            role="alert"
+            className="block text-center mb-4 font-semibold text-red-700"
+          >
             {globalError}
           </span>
         )}
@@ -157,7 +161,9 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Course Name */}
           <div>
-            <label htmlFor="courseName" className={labelBase}>Course Name *</label>
+            <label htmlFor="courseName" className={labelBase}>
+              Course Name *
+            </label>
             <input
               id="courseName"
               type="text"
@@ -176,7 +182,9 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className={labelBase}>Description *</label>
+            <label htmlFor="description" className={labelBase}>
+              Description *
+            </label>
             <textarea
               id="description"
               name="description"
@@ -193,11 +201,43 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
             )}
           </div>
 
-        
+          {/* University Type */}
+          <div>
+            <label htmlFor="affiliation" className={labelBase}>
+              University Type
+            </label>
+            <select
+              id="affiliation"
+              name="affiliation"
+              value={form.affiliation}
+              onChange={handleChange}
+              className={`${inputBase} ${normalBorder}`}
+            >
+              <option value="">-- Select University --</option>
+              <option value="TRIBHUVAN_UNIVERSITY">Tribhuvan University</option>
+              <option value="KATHMANDU_UNIVERSITY">Kathmandu University</option>
+              <option value="POKHARA_UNIVERSITY">Pokhara University</option>
+              <option value="LUMBINI_UNIVERSITY">Lumbini University</option>
+              <option value="PURWANCHAL_UNIVERSITY">
+                Purwanchal University
+              </option>
+              <option value="MID_WESTERN_UNIVERSITY">
+                Mid Western University
+              </option>
+              <option value="FAR_WESTERN_UNIVERSITY">
+                Far Western University
+              </option>
+              <option value="CAMPUS_AFFILIATED_TO_FOREIGN_UNIVERSITY">
+                Campus Affiliated to Foreign University
+              </option>
+            </select>
+          </div>
 
           {/* Course Type */}
           <div>
-            <label htmlFor="courseType" className={labelBase}>Course Type</label>
+            <label htmlFor="courseType" className={labelBase}>
+              Course Type
+            </label>
             <select
               id="courseType"
               name="courseType"
@@ -212,7 +252,9 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
 
           {/* Course Level */}
           <div>
-            <label htmlFor="courseLevel" className={labelBase}>Course Level</label>
+            <label htmlFor="courseLevel" className={labelBase}>
+              Course Level
+            </label>
             <select
               id="courseLevel"
               name="courseLevel"

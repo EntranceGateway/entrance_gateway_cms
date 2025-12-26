@@ -87,10 +87,30 @@ const SyllabusTable = () => {
       {/* -------- FILTER UI -------- */}
       <UniversalFilter
         config={[
-          { name: "courseName", label: "Course Name", type: "text", placeholder: "Search course name" },
-          { name: "syllabusTitle", label: "Title", type: "text", placeholder: "Search syllabus title" },
-          { name: "semester", label: "Semester", type: "text", placeholder: "e.g. First, Second..." },
-          { name: "year", label: "Year", type: "number", placeholder: "Search year" },
+          {
+            name: "courseName",
+            label: "Course Name",
+            type: "text",
+            placeholder: "Search course name",
+          },
+          {
+            name: "syllabusTitle",
+            label: "Title",
+            type: "text",
+            placeholder: "Search syllabus title",
+          },
+          {
+            name: "semester",
+            label: "Semester",
+            type: "text",
+            placeholder: "e.g. First, Second...",
+          },
+          {
+            name: "year",
+            label: "Year",
+            type: "number",
+            placeholder: "Search year",
+          },
         ]}
         onFilter={handleFilter}
       />
@@ -137,7 +157,10 @@ const SyllabusTable = () => {
                 </tr>
               ) : (
                 paginated.map((syllabus) => (
-                  <tr key={syllabus.syllabusId} className="hover:bg-gray-50 transition">
+                  <tr
+                    key={syllabus.syllabusId}
+                    className="hover:bg-gray-50 transition"
+                  >
                     <td className="p-4">{syllabus.courseName}</td>
                     <td className="p-4">{syllabus.courseCode}</td>
                     <td className="p-4">{syllabus.syllabusTitle}</td>
@@ -148,6 +171,12 @@ const SyllabusTable = () => {
                     <td className="p-4">{syllabus.practicalHours}</td>
 
                     <td className="p-4 flex gap-3">
+                      <Link
+                        to={`/notes/add/${syllabus.syllabusId}`}
+                        className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
+                      >
+                        Add Notes
+                      </Link>
                       <Link
                         to={`/syllabus/edit/${syllabus.syllabusId}`}
                         state={{ syllabus }}
@@ -163,9 +192,8 @@ const SyllabusTable = () => {
                         Delete
                       </button>
 
-                    
-                     <Link
-                      to={`/syllabus/viewsyllabus/${syllabus.syllabusId}`}
+                      <Link
+                        to={`/syllabus/viewsyllabus/${syllabus.syllabusId}`}
                         className="px-3 py-1.5 rounded-xl text-green-700 border border-green-300 hover:bg-green-50"
                       >
                         View PDF
@@ -180,7 +208,11 @@ const SyllabusTable = () => {
       </div>
 
       {/* -------- PAGINATION -------- */}
-      <Pagination page={page} totalPages={totalPages} onPageChange={(p) => setPage(p)} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
     </div>
   );
 };
