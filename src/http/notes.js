@@ -31,6 +31,20 @@ export const getNotes = async (params = {}, token) => {
 };
 
 // ===============================
+// GET NOTES BY COURSE, SEMESTER & AFFILIATION
+// ===============================
+export const getNotesByFilter = async (params = {}, token) => {
+  try {
+    return await api.get("/api/v1/notes/getNotesBy/courseName/semester/affiliation", {
+      params,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || err;
+  }
+};
+
+// ===============================
 // GET SINGLE NOTE (Your custom endpoint)
 // ===============================
 

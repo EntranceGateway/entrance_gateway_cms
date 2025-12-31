@@ -31,6 +31,48 @@ export const getSyllabus = async (params = {}, token) => {
 };
 
 // ===============================
+// GET SYLLABUS BY AFFILIATION AND COURSE
+// ===============================
+export const getSyllabusByAffiliationAndCourse = async (params = {}, token) => {
+  try {
+    return await api.get("/api/v1/syllabus/by-affiliation/by-course", {
+      params,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || err;
+  }
+};
+
+// ===============================
+// GET SYLLABUS BY AFFILIATION, COURSE, AND SEMESTER
+// ===============================
+export const getSyllabusByAffiliationCourseAndSemester = async (params = {}, token) => {
+  try {
+    return await api.get("/api/v1/syllabus/by-affiliation/by-course/semester", {
+      params,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || err;
+  }
+};
+
+// ===============================
+// GET SYLLABUS BY COURSE ID
+// ===============================
+export const getSyllabusByCourseId = async (courseId, params = {}, token) => {
+  try {
+    return await api.get(`/api/v1/syllabus/course/courseId`, {
+      params: { courseId, ...params },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || err;
+  }
+};
+
+// ===============================
 // GET SINGLE SYLLABUS
 // ===============================
 export const getSyllabusById = async (id, token) => {

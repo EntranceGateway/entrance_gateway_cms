@@ -1,10 +1,24 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { getCourses } from "../../../../http/course";
+
+// Affiliation options
+const AFFILIATIONS = [
+  { value: "TRIBHUVAN_UNIVERSITY", label: "Tribhuvan University" },
+  { value: "POKHARA_UNIVERSITY", label: "Pokhara University" },
+  { value: "KATHMANDU_UNIVERSITY", label: "Kathmandu University" },
+  { value: "PURWANCHAL_UNIVERSITY", label: "Purwanchal University" },
+  { value: "MID_WESTERN_UNIVERSITY", label: "Mid Western University" },
+  { value: "FAR_WESTERN_UNIVERSITY", label: "Far Western University" },
+  { value: "LUMBINI_UNIVERSITY", label: "Lumbini University" },
+  { value: "CAMPUS_AFFILIATED_TO_FOREIGN_UNIVERSITY", label: "Foreign University" },
+];
 
 // ------------------------------
 // Default Form State
 // ------------------------------
 const DEFAULT_FORM = Object.freeze({
+  affiliation: "",
   courseId: "",
   courseCode: "",
   subjectName: "",
@@ -14,8 +28,8 @@ const DEFAULT_FORM = Object.freeze({
   practicalHours: "",
   semester: "",
   year: "",
-  syllabusFile: null, // new file uploaded
-  fileUrl: "",        // existing file link
+  syllabusFile: null,
+  fileUrl: "",
 });
 
 // ------------------------------
@@ -23,16 +37,34 @@ const DEFAULT_FORM = Object.freeze({
 // ------------------------------
 const validateForm = (form, mode) => {
   const errors = {};
-  const requiredFields = ["courseCode", "subjectName", "syllabusTitle", "semester", "year"];
 
-  requiredFields.forEach((field) => {
-    if (!form[field].trim()) {
-      const label = field
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (str) => str.toUpperCase());
-      errors[field] = `${label} is required`;
-    }
-  });
+  if (!form.courseId) {
+    errors.courseId = "Course is required";
+  }
+
+  if (!form.courseCode.trim()) {
+    errors.courseCode = "Course code is required";
+  }
+
+  if (!form.subjectName.trim()) {
+    errors.subjectName = "Subject name is required";
+  }
+
+  if (!form.syllabusTitle.trim()) {
+    errors.syllabusTitle = "Syllabus title is required";
+  }
+
+  if (!form.creditHours || parseFloat(form.creditHours) < 0) {
+    errors.creditHours = "Credit hours is required and must be non-negative";
+  }
+
+  if (!form.lectureHours || parseInt(form.lectureHours) < 0) {
+    errors.lectureHours = "Lecture hours is required and must be non-negative";
+  }
+
+  if (!form.practicalHours || parseInt(form.practicalHours) < 0) {
+    errors.practicalHours = "Practical hours is required and must be non-negative";
+  }
 
   if (mode === "add" && !form.syllabusFile) {
     errors.syllabusFile = "Please upload a PDF file";
@@ -46,20 +78,60 @@ const validateForm = (form, mode) => {
 // ==========================================================
 const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [form, setForm] = useState(DEFAULT_FORM);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "" });
+
+  // Dropdown data
+  const [allCourses, setAllCourses] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+
+  const token = localStorage.getItem("token");
+
+  // Fetch all courses on mount
+  useEffect(() => {
+    const fetchAllCourses = async () => {
+      setLoadingCourses(true);
+      try {
+        const res = await getCourses({ size: 100 }, token);
+        const data = res.data.data?.content || res.data.data || [];
+        setAllCourses(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+        setAllCourses([]);
+      }
+      setLoadingCourses(false);
+    };
+    fetchAllCourses();
+  }, [token]);
+
+  // Filter courses when affiliation changes
+  useEffect(() => {
+    if (!form.affiliation) {
+      setCourses([]);
+      return;
+    }
+    const filtered = allCourses.filter(
+      (c) => c.affiliation === form.affiliation
+    );
+    setCourses(filtered);
+  }, [form.affiliation, allCourses]);
 
   // ------------------------------
   // Load initial data in edit mode OR set courseId from URL in add mode
   // ------------------------------
   useEffect(() => {
     if (mode === "edit" && initialData) {
+      // Find the course to get its affiliation
+      const course = allCourses.find(c => c.courseId === initialData.courseId);
       setForm({
         ...DEFAULT_FORM,
         ...Object.fromEntries(
           Object.entries(initialData).map(([k, v]) => [k, v != null ? String(v) : ""])
         ),
+        affiliation: course?.affiliation || initialData.affiliation || "",
         syllabusFile: null,
         fileUrl: initialData.fileUrl || "",
       });
@@ -71,7 +143,7 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
     }
     setErrors({});
     setStatus({ loading: false, success: "" });
-  }, [mode, initialData, id]);
+  }, [mode, initialData, id, allCourses]);
 
   // ------------------------------
   // Input Class Generator
@@ -89,10 +161,21 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // ------------------------------
   const handleChange = (e) => {
     const { name, type, files, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "file" ? files[0] || null : String(value),
-    }));
+    
+    if (name === "affiliation") {
+      // Reset courseId when affiliation changes
+      setForm((prev) => ({
+        ...prev,
+        affiliation: value,
+        courseId: "",
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: type === "file" ? files[0] || null : String(value),
+      }));
+    }
+    
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -101,15 +184,15 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // ------------------------------
   const buildPayload = useCallback(() => {
     const jsonPayload = {
-      courseId: form.courseId.trim(),
+      courseId: form.courseId,
       courseCode: form.courseCode.trim(),
       subjectName: form.subjectName.trim(),
       syllabusTitle: form.syllabusTitle.trim(),
-      creditHours: form.creditHours ? Number(form.creditHours) : null,
-      lectureHours: form.lectureHours ? Number(form.lectureHours) : null,
-      practicalHours: form.practicalHours ? Number(form.practicalHours) : null,
-      semester: form.semester.trim(),
-      year: Number(form.year),
+      creditHours: form.creditHours ? Number(form.creditHours) : 0,
+      lectureHours: form.lectureHours ? Number(form.lectureHours) : 0,
+      practicalHours: form.practicalHours ? Number(form.practicalHours) : 0,
+      semester: form.semester ? Number(form.semester) : null,
+      year: form.year ? Number(form.year) : null,
     };
 
     if (mode === "add" || form.syllabusFile) {
@@ -146,9 +229,10 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
         success: mode === "add" ? "Syllabus added successfully!" : "Syllabus updated successfully!",
       });
 
-      // Reset logic
-      if (mode === "add") setForm(DEFAULT_FORM);
-      else setForm((prev) => ({ ...prev, syllabusFile: null }));
+      // Redirect to syllabus list after success
+      setTimeout(() => {
+        navigate("/syllabus/all");
+      }, 1500);
     } catch (err) {
       // Standardized error handling
       setErrors((prev) => ({
@@ -208,19 +292,71 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
             )}
 
             <form onSubmit={handleSubmit} noValidate>
+              {/* Affiliation & Course Selection */}
+              <div className="grid gap-5 md:grid-cols-2 mb-6">
+                {/* Affiliation */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Affiliation <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="affiliation"
+                    value={form.affiliation}
+                    onChange={handleChange}
+                    className={inputClass("affiliation")}
+                  >
+                    <option value="">Select an affiliation</option>
+                    {AFFILIATIONS.map((aff) => (
+                      <option key={aff.value} value={aff.value}>
+                        {aff.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.affiliation && <p className="text-xs text-red-600 mt-1">{errors.affiliation}</p>}
+                </div>
+
+                {/* Course */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Course <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="courseId"
+                    value={form.courseId}
+                    onChange={handleChange}
+                    disabled={!form.affiliation || loadingCourses}
+                    className={inputClass("courseId")}
+                  >
+                    <option value="">
+                      {!form.affiliation
+                        ? "Select affiliation first"
+                        : loadingCourses
+                        ? "Loading courses..."
+                        : "Select a course"}
+                    </option>
+                    {courses.map((course) => (
+                      <option key={course.courseId} value={course.courseId}>
+                        {course.courseName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.courseId && <p className="text-xs text-red-600 mt-1">{errors.courseId}</p>}
+                </div>
+              </div>
+
+              {/* Course Details */}
               <div className="grid gap-5 md:grid-cols-2">
-                {renderTextInput("Course ID", "courseId")}
                 {renderTextInput("Course Code *", "courseCode")}
-                {renderTextInput("Course Name *", "subjectName")}
+                {renderTextInput("Subject Name *", "subjectName")}
                 {renderTextInput("Syllabus Title *", "syllabusTitle")}
-                {renderTextInput("Semester *", "semester")}
-                {renderNumberInput("Year *", "year")}
+                {renderNumberInput("Semester", "semester")}
+                {renderNumberInput("Year", "year")}
               </div>
 
               <div className="mt-6 grid gap-5 md:grid-cols-3">
-                {renderNumberInput("Credit Hours", "creditHours")}
-                {renderNumberInput("Lecture Hours", "lectureHours")}
-                {renderNumberInput("Practical Hours", "practicalHours")}
+                {renderNumberInput("Credit Hours *", "creditHours")}
+                {renderNumberInput("Lecture Hours *", "lectureHours")}
+                {renderNumberInput("Practical Hours *", "practicalHours")}
               </div>
 
               {/* FILE UPLOAD */}

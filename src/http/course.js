@@ -28,6 +28,20 @@ export const getCourses = async (params = {}, token) => {
 };
 
 // --------------------------------------
+// Get Courses By Affiliation
+// --------------------------------------
+export const getCoursesByAffiliation = async (params = {}, token) => {
+  try {
+    return await api.get("/api/v1/courses/by-affiliation", {
+      params,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to fetch courses by affiliation." };
+  }
+};
+
+// --------------------------------------
 // Get Single Course
 // --------------------------------------
 export const getSingleCourse = async (id, token) => {

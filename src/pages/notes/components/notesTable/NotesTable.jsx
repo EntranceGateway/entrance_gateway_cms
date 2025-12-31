@@ -1,16 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getNotes, deleteNote } from "../../../../http/notes"; // removed getSingle import
-import UniversalFilter from "../../../../Verification/UniversalFilter";
+import { getNotes, deleteNote, getNotesByFilter } from "../../../../http/notes";
 import Pagination from "../../../../Verification/Pagination";
 
 const NoteTable = () => {
-  const [allNotes, setAllNotes] = useState([]);
-  const [filteredNotes, setFilteredNotes] = useState([]);
+  const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(0); // API uses 0-based indexing
+  const [totalPages, setTotalPages] = useState(0);
+  const PAGE_SIZE = 10;
+
+  const [sortField, setSortField] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  // Filter states
+  const [affiliation, setAffiliation] = useState("");
+  const [courseName, setCourseName] = useState("");
+  const [semester, setSemester] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -18,10 +25,36 @@ const NoteTable = () => {
   const fetchNotes = async () => {
     setLoading(true);
     try {
-      const res = await getNotes({}, token);
+      let res;
+      
+      const trimmedAffiliation = affiliation?.trim();
+      const trimmedCourseName = courseName?.trim();
+      const trimmedSemester = semester?.trim();
+      
+      if (trimmedAffiliation && trimmedCourseName && trimmedSemester) {
+        // Use filtered endpoint when all filters are set
+        const params = {
+          affiliation: trimmedAffiliation,
+          courseName: trimmedCourseName,
+          semester: parseInt(trimmedSemester),
+          page,
+          size: PAGE_SIZE,
+          ...(sortField && { sortBy: sortField, sortDir: sortOrder }),
+        };
+        res = await getNotesByFilter(params, token);
+      } else {
+        // Use default endpoint
+        const params = {
+          page,
+          size: PAGE_SIZE,
+          ...(sortField && { sortBy: sortField, sortDir: sortOrder }),
+        };
+        res = await getNotes(params, token);
+      }
+      
       const data = res.data.data.content || [];
-      setAllNotes(data);
-      setFilteredNotes(data);
+      setNotes(data);
+      setTotalPages(res.data.data.page?.totalPages || 0);
     } catch (err) {
       console.error("Fetch Notes Error:", err);
     }
@@ -30,24 +63,13 @@ const NoteTable = () => {
 
   useEffect(() => {
     fetchNotes();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, sortField, sortOrder, affiliation, courseName, semester]);
 
-  // Filter notes live
-  const handleFilter = (filters) => {
-    let data = [...allNotes];
-
-    if (filters.noteName)
-      data = data.filter((n) =>
-        n.noteName.toLowerCase().includes(filters.noteName.toLowerCase())
-      );
-
-    if (filters.syllabusId)
-      data = data.filter((n) =>
-        n.syllabusId.toLowerCase().includes(filters.syllabusId.toLowerCase())
-      );
-
-    setFilteredNotes(data);
-    setPage(1);
+  // Handle filter changes and reset to first page
+  const handleFilterChange = (setter) => (value) => {
+    setter(value);
+    setPage(0);
   };
 
   // Delete note
@@ -62,42 +84,121 @@ const NoteTable = () => {
     }
   };
 
-  // Pagination
-  const totalPages = Math.ceil(filteredNotes.length / PAGE_SIZE);
-  const paginatedNotes = filteredNotes.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
-  );
+  // Handle page change (convert from 1-based display to 0-based API)
+  const handlePageChange = (newPage) => {
+    setPage(newPage - 1);
+  };
 
   return (
     <div className="w-full p-6">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">Notes</h1>
 
-      {/* Filters */}
-      <UniversalFilter
-        config={[
-          {
-            name: "noteName",
-            label: "Note Name",
-            type: "text",
-            placeholder: "Search by note name",
-          },
-          {
-            name: "syllabusId",
-            label: "Syllabus ID",
-            type: "text",
-            placeholder: "Search by syllabus ID",
-          },
-        ]}
-        onFilter={handleFilter}
-      />
+      {/* Filter Controls */}
+      <div className="bg-white shadow-md rounded-lg p-4 mb-4 space-y-4">
+        <h3 className="font-semibold text-gray-700">Filters</h3>
+        <p className="text-xs text-gray-500 italic">All three filters (Affiliation, Course Name, Semester) are required to filter notes</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Affiliation Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Affiliation</label>
+            <select
+              value={affiliation}
+              onChange={(e) => handleFilterChange(setAffiliation)(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select Affiliation</option>
+              <option value="TRIBHUVAN_UNIVERSITY">Tribhuvan University</option>
+              <option value="POKHARA_UNIVERSITY">Pokhara University</option>
+              <option value="KATHMANDU_UNIVERSITY">Kathmandu University</option>
+              <option value="PURWANCHAL_UNIVERSITY">Purwanchal University</option>
+              <option value="MID_WESTERN_UNIVERSITY">Mid Western University</option>
+              <option value="FAR_WESTERN_UNIVERSITY">Far Western University</option>
+              <option value="LUMBINI_UNIVERSITY">Lumbini University</option>
+              <option value="CAMPUS_AFFILIATED_TO_FOREIGN_UNIVERSITY">Campus Affiliated to Foreign University</option>
+            </select>
+          </div>
+
+          {/* Course Name Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
+            <input
+              type="text"
+              value={courseName}
+              onChange={(e) => handleFilterChange(setCourseName)(e.target.value)}
+              placeholder="e.g., CSIT, BCA"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Semester Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+            <input
+              type="number"
+              value={semester}
+              onChange={(e) => handleFilterChange(setSemester)(e.target.value)}
+              placeholder="e.g., 1, 2, 3"
+              min="1"
+              max="8"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        
+        {/* Clear Filters Button */}
+        {(affiliation || courseName || semester) && (
+          <button
+            onClick={() => {
+              setAffiliation("");
+              setCourseName("");
+              setSemester("");
+              setPage(0);
+            }}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition"
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      {/* Sort Controls */}
+      <div className="bg-white shadow-md rounded-lg p-4 mt-4 flex flex-wrap gap-4 items-center">
+        <span className="font-medium text-gray-700">Sort By:</span>
+        <select
+          value={sortField}
+          onChange={(e) => {
+            setSortField(e.target.value);
+            setPage(0);
+          }}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Default (noteName)</option>
+          <option value="noteName">Note Name</option>
+          <option value="subject">Subject</option>
+          <option value="subjectCode">Subject Code</option>
+          <option value="courseName">Course Name</option>
+          <option value="semester">Semester</option>
+        </select>
+
+        <select
+          value={sortOrder}
+          onChange={(e) => {
+            setSortOrder(e.target.value);
+            setPage(0);
+          }}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
 
       {/* Table */}
       <div className="bg-white shadow-xl rounded-2xl overflow-x-auto mt-4">
         <table className="min-w-full text-sm table-auto">
           <thead className="bg-gray-50 border-b">
             <tr>
-              {["Note Name","Subject", "Description", "Syllabus ID", "File", "Action"].map(
+              {["Subject", "Subject Code", "Course", "Semester", "Year", "Affiliation", "Description", "Action"].map(
                 (col) => (
                   <th
                     key={col}
@@ -113,28 +214,39 @@ const NoteTable = () => {
           <tbody className="divide-y">
             {loading ? (
               <tr>
-                <td colSpan={5} className="text-center p-6 text-gray-500">
+                <td colSpan={8} className="text-center p-6 text-gray-500">
                   Loading...
                 </td>
               </tr>
-            ) : paginatedNotes.length === 0 ? (
+              ) : notes.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center p-6 text-gray-500">
+                <td colSpan={8} className="text-center p-6 text-gray-500">
                   No notes found
                 </td>
               </tr>
             ) : (
-              paginatedNotes.map((note) => (
+              notes.map((note) => (
                 <tr key={note.noteId} className="hover:bg-gray-50 transition">
-                  <td className="p-4 font-medium text-gray-800 wrap-break-word max-w-[120px]">{note.noteName}</td>
-                  <td className="p-4 font-medium text-gray-800 wrap-break-word max-w-[120px]">{note.subject}</td>
-
-                  <td className="p-4 text-gray-600 wrap-break-word max-w-[150px]">{note.noteDescription}</td>
-                  <td className="p-4 text-gray-600 wrap-break-word max-w-[100px]">{note.syllabusId}</td>
-                  
-                  {/* FILE COLUMN: No more direct downloadable link */}
+                  <td className="p-4 font-medium text-gray-800">{note.subject}</td>
                   <td className="p-4">
-                    <span className="text-green-600 font-medium">PDF Available</span>
+                    <span className="px-2 py-1 text-xs font-semibold rounded-md bg-purple-100 text-purple-700">
+                      {note.subjectCode || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-md bg-green-100 text-green-700">
+                      {note.courseName || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="p-4 text-gray-600">{note.semester}</td>
+                  <td className="p-4 text-gray-600">{note.year}</td>
+                  <td className="p-4">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-700">
+                      {note.affiliation?.replace(/_/g, ' ') || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="p-4 text-gray-600 max-w-[150px] truncate" title={note.noteDescription}>
+                    {note.noteDescription}
                   </td>
 
                   {/* ACTION COLUMN */}
@@ -168,7 +280,7 @@ const NoteTable = () => {
       </div>
 
       {/* Pagination */}
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page + 1} totalPages={totalPages} onPageChange={handlePageChange} />
     </div>
   );
 };

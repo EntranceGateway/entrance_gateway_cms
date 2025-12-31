@@ -28,13 +28,14 @@ const Pagination = ({
   };
 
   const handleNext = () => {
-    if (page < totalPages) onPageChange(page + 1);
+    if (page < totalPages && totalPages > 0) onPageChange(page + 1);
   };
 
   const handleJump = () => {
     const target = Number(jumpPage);
-    if (!isNaN(target) && target >= 1 && target <= totalPages) {
+    if (!isNaN(target) && target >= 1 && target <= totalPages && totalPages > 0) {
       onPageChange(target);
+      setJumpPage("");
     }
   };
 
@@ -92,7 +93,7 @@ const Pagination = ({
       {/* Next button */}
       <button
         onClick={handleNext}
-        disabled={page === totalPages}
+        disabled={page === totalPages || totalPages === 0}
         className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {labels.next}

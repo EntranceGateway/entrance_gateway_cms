@@ -38,6 +38,11 @@ const AddBanner = lazy(() => import("./Banner/Form/AddBanner"));
 const AddCategory = lazy(() => import("./Category/CategoryForm/AddCategory"));
 const Navbar = lazy(() => import("../components/navbar/Navbar"));
 
+// Old Questions
+const AllOldQuestions = lazy(() => import("./pages/oldQuestions/AllOldQuestions"));
+const AddOldQuestion = lazy(() => import("./pages/oldQuestions/AddOldQuestion"));
+const EditOldQuestion = lazy(() => import("./pages/oldQuestions/EditOldQuestion"));
+
 // Wrapper to run interceptor inside Router
 const AxiosInterceptorWrapper = ({ children }) => {
   useAxiosInterceptor();
@@ -96,6 +101,11 @@ export default function App() {
                 {/* Banner & Category */}
                 <Route path="/banner/add" element={<AddBanner />} />
                 <Route path="/category/add" element={<AddCategory />} />
+
+                {/* Old Questions */}
+                <Route path="/old-questions/all" element={<AllOldQuestions />} />
+                <Route path="/old-questions/add" element={<AddOldQuestion />} />
+                <Route path="/old-questions/edit/:id" element={<EditOldQuestion />} />
 
                 {/* Navbar */}
                 <Route path="/navbar" element={<Navbar />} />

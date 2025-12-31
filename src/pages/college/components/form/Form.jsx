@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Building2,
   University,
@@ -24,6 +25,7 @@ const defaultForm = {
 };
 
 const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState(defaultForm);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -103,7 +105,11 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
           ? "College added successfully!"
           : "College updated successfully!"
       );
-      if (mode === "add") setFormData(defaultForm);
+      
+      // Redirect to colleges list after success
+      setTimeout(() => {
+        navigate("/college/all");
+      }, 1500);
     } catch (err) {
       const backendErrors = err || {};
       setErrors((prev) => ({ ...prev, ...backendErrors }));

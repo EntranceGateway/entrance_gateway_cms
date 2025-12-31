@@ -1,5 +1,6 @@
 // src/components/CourseForm.jsx
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const defaultForm = {
   courseName: "",
@@ -10,6 +11,7 @@ const defaultForm = {
 };
 
 const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
+  const navigate = useNavigate();
   const [form, setForm] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -78,7 +80,10 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
 
       setMessage(mode === "edit" ? "Course updated successfully!" : "Course created successfully!");
 
-      if (mode === "add") setForm(defaultForm);
+      // Redirect to courses list after success
+      setTimeout(() => {
+        navigate("/course/all");
+      }, 1500);
     } catch (err) {
       console.log("ERR:", err);
 

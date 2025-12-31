@@ -81,7 +81,16 @@ const Sidebar = () => {
         { name: "All Question", path: "/question" },
         { name: "Add Question", path: "/question/add" },
       ],
-    }, {
+    },
+    {
+      name: "Old Questions",
+      icon: <FileText size={20} />,
+      submenu: [
+        { name: "All Old Questions", path: "/old-questions/all" },
+        { name: "Add Old Question", path: "/old-questions/add" },
+      ],
+    },
+    {
       name: "Notices",
       icon: <Bell size={20} />,
       submenu: [

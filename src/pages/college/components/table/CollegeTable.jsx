@@ -5,22 +5,35 @@ import UniversalFilter from "../../../../Verification/UniversalFilter";
 import Pagination from "../../../../Verification/Pagination";
 
 const CollegeTable = () => {
-  const [allColleges, setAllColleges] = useState([]);
-  const [filteredColleges, setFilteredColleges] = useState([]);
+  const [colleges, setColleges] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(0); // API uses 0-based indexing
+  const [totalPages, setTotalPages] = useState(0);
+  const PAGE_SIZE = 10;
+
+  const [sortField, setSortField] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  // Filter states
+  const [filters, setFilters] = useState({});
 
   const token = localStorage.getItem("token");
 
   const fetchColleges = async () => {
     setLoading(true);
     try {
-      const res = await getColleges({}, token);
+      const params = {
+        page,
+        size: PAGE_SIZE,
+        ...(sortField && { sortBy: sortField, sortDir: sortOrder }),
+        ...filters,
+      };
+      
+      const res = await getColleges(params, token);
       const data = res.data.data.content || [];
-      setAllColleges(data);
-      setFilteredColleges(data);
+      setColleges(data);
+      setTotalPages(res.data.data.page?.totalPages || 0);
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -29,30 +42,12 @@ const CollegeTable = () => {
 
   useEffect(() => {
     fetchColleges();
-  }, []);
+  }, [page, sortField, sortOrder, filters]);
 
-  // Live, case-insensitive filter
-  const handleFilter = (filters) => {
-    let data = [...allColleges];
-
-    if (filters.collegeName)
-      data = data.filter((c) =>
-        c.collegeName.toLowerCase().includes(filters.collegeName.toLowerCase())
-      );
-
-    if (filters.location)
-      data = data.filter((c) =>
-        c.location.toLowerCase().includes(filters.location.toLowerCase())
-      );
-
-    if (filters.collegeType)
-      data = data.filter((c) => c.collegeType.toLowerCase() === filters.collegeType.toLowerCase());
-
-    if (filters.priority)
-      data = data.filter((c) => c.priority.toLowerCase() === filters.priority.toLowerCase());
-
-    setFilteredColleges(data);
-    setPage(1); // reset page after filter
+  // Update filters and reset to first page
+  const handleFilter = (newFilters) => {
+    setFilters(newFilters);
+    setPage(0); // reset to first page
   };
 
   const handleDelete = async (id) => {
@@ -66,11 +61,10 @@ const CollegeTable = () => {
     }
   };
 
-  const totalPages = Math.ceil(filteredColleges.length / PAGE_SIZE);
-  const paginatedColleges = filteredColleges.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
-  );
+  // Handle page change (convert from 1-based display to 0-based API)
+  const handlePageChange = (newPage) => {
+    setPage(newPage - 1);
+  };
 
   return (
     <div className="w-full p-6">
@@ -105,6 +99,38 @@ const CollegeTable = () => {
         onFilter={handleFilter} // live filter on every input
       />
 
+      {/* Sort Controls */}
+      <div className="bg-white shadow-md rounded-lg p-4 mt-4 flex flex-wrap gap-4 items-center">
+        <span className="font-medium text-gray-700">Sort By:</span>
+        <select
+          value={sortField}
+          onChange={(e) => {
+            setSortField(e.target.value);
+            setPage(0);
+          }}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">None</option>
+          <option value="collegeName">Name</option>
+          <option value="location">Location</option>
+          <option value="priority">Priority</option>
+          <option value="establishedYear">Year</option>
+        </select>
+
+        <select
+          value={sortOrder}
+          onChange={(e) => {
+            setSortOrder(e.target.value);
+            setPage(0);
+          }}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={!sortField}
+        >
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
+
       {/* Table */}
       <div className="bg-white shadow-xl rounded-2xl overflow-hidden mt-4">
         <div className="overflow-x-auto">
@@ -131,14 +157,14 @@ const CollegeTable = () => {
                     Loading...
                   </td>
                 </tr>
-              ) : paginatedColleges.length === 0 ? (
+              ) : colleges.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="text-center p-6 text-gray-500">
                     🔍 No colleges found for selected filters
                   </td>
                 </tr>
               ) : (
-                paginatedColleges.map((college) => (
+                colleges.map((college) => (
                   <tr key={college.collegeId} className="hover:bg-gray-50 transition">
                     <td className="p-4 font-medium text-gray-800">{college.collegeName}</td>
                     <td className="p-4 text-gray-600">{college.location}</td>
@@ -188,9 +214,9 @@ const CollegeTable = () => {
 
       {/* Pagination */}
       <Pagination
-        page={page}
+        page={page + 1}
         totalPages={totalPages}
-        onPageChange={(p) => setPage(p)}
+        onPageChange={handlePageChange}
       />
     </div>
   );

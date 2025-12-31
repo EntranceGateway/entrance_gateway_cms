@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 // -----------------------------
 // Default Form Shape
@@ -34,6 +34,7 @@ const validateForm = (form, mode) => {
 // ==========================================================
 const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
     const { id } = useParams();
+  const navigate = useNavigate();
   const [form, setForm] = useState(DEFAULT_FORM);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "" });
@@ -137,12 +138,10 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
         success: mode === "add" ? "Note created successfully!" : "Note updated successfully!",
       });
 
-      // Reset logic
-      if (mode === "add") {
-        setForm(DEFAULT_FORM);
-      } else {
-        setForm((prev) => ({ ...prev, file: null }));
-      }
+      // Redirect to notes list after success
+      setTimeout(() => {
+        navigate("/notespage");
+      }, 1500);
     } catch (err) {
       // Standardized backend error handling
       setErrors((prev) => ({
