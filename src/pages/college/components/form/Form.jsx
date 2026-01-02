@@ -9,6 +9,9 @@ import {
   Calendar,
   MapPin,
   ListChecks,
+  Image,
+  Upload,
+  X,
 } from "lucide-react";
 
 const defaultForm = {
@@ -30,15 +33,75 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+  
+  // File states
+  const [logo, setLogo] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   useEffect(() => {
-    if (initialData) setFormData({ ...defaultForm, ...initialData });
+    if (initialData) {
+      setFormData({ ...defaultForm, ...initialData });
+      // Set existing logo preview if available
+      if (initialData.logoName) {
+        setLogoPreview(initialData.logoName);
+      }
+      // Set existing images previews if available
+      if (initialData.collegePictureName?.length > 0) {
+        setImagePreviews(initialData.collegePictureName);
+      }
+    }
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({ ...prev, logo: "Logo must be less than 5MB" }));
+        return;
+      }
+      setLogo(file);
+      setLogoPreview(URL.createObjectURL(file));
+      setErrors((prev) => ({ ...prev, logo: "" }));
+    }
+  };
+
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + images.length > 10) {
+      setErrors((prev) => ({ ...prev, images: "Maximum 10 images allowed" }));
+      return;
+    }
+    
+    const validFiles = files.filter((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({ ...prev, images: "Each image must be less than 5MB" }));
+        return false;
+      }
+      return true;
+    });
+    
+    setImages((prev) => [...prev, ...validFiles]);
+    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+    setErrors((prev) => ({ ...prev, images: "" }));
+  };
+
+  const removeLogo = () => {
+    setLogo(null);
+    setLogoPreview(null);
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = () => {
@@ -54,6 +117,16 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
       newErrors.affiliation = "Affiliation is required";
     if (!formData.description.trim())
       newErrors.description = "Description is required";
+
+    // Logo required for add mode
+    if (mode === "add" && !logo) {
+      newErrors.logo = "Logo is required";
+    }
+
+    // At least one image required for add mode
+    if (mode === "add" && images.length === 0) {
+      newErrors.images = "At least one image is required";
+    }
 
     // Contact: must be 10 digits
     if (formData.contact && !/^\d{10}$/.test(formData.contact)) {
@@ -99,7 +172,7 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
 
     try {
       setLoading(true);
-      await onSubmit(formData);
+      await onSubmit(formData, logo, images);
       setSuccess(
         mode === "add"
           ? "College added successfully!"
@@ -335,6 +408,97 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
                 <span className="text-red-600 text-sm">
                   {getError("description")}
                 </span>
+              )}
+            </div>
+
+            {/* Logo Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1">
+                <Image className="inline w-4 h-4 mr-1" /> College Logo {mode === "add" && "*"}
+              </label>
+              <div className="flex items-start gap-4">
+                {logoPreview ? (
+                  <div className="relative">
+                    <img
+                      src={typeof logoPreview === "string" && logoPreview.startsWith("blob:") 
+                        ? logoPreview 
+                        : logoPreview}
+                      alt="Logo preview"
+                      className="w-24 h-24 object-cover rounded-lg border"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <Upload className="w-6 h-6 text-gray-400" />
+                    <span className="text-xs text-gray-500 mt-1">Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+                <div className="text-sm text-gray-500">
+                  <p>Upload college logo</p>
+                  <p className="text-xs">Max size: 5MB</p>
+                </div>
+              </div>
+              {getError("logo") && (
+                <span className="text-red-600 text-sm">{getError("logo")}</span>
+              )}
+            </div>
+
+            {/* College Images Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1">
+                <Image className="inline w-4 h-4 mr-1" /> College Images {mode === "add" && "*"}
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={typeof preview === "string" && preview.startsWith("blob:") 
+                        ? preview 
+                        : preview}
+                      alt={`Image ${index + 1}`}
+                      className="w-20 h-20 object-cover rounded-lg border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {images.length < 10 && (
+                  <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <Upload className="w-5 h-5 text-gray-400" />
+                    <span className="text-xs text-gray-500">Add</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImagesChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Upload up to 10 images (max 5MB each)
+              </p>
+              {getError("images") && (
+                <span className="text-red-600 text-sm">{getError("images")}</span>
               )}
             </div>
           </div>

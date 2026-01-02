@@ -18,8 +18,7 @@ import Layout from "../../../components/layout/Layout";
       const response = await getSingle(id, token);
       if (response.status === 200) {
         setCollegeData(response.data.data);
-        console.log("shiva")
-        console.log(collegeData) // assuming API sends data in response.data
+        console.log("College data loaded");
       } else {
         setError("College not found");
       }
@@ -35,13 +34,12 @@ import Layout from "../../../components/layout/Layout";
     fetchCollege();
   }, [id]);
 
-  // Handle form submission
-  const handleUpdate = async (data) => {
+  // Handle form submission (edit mode doesn't update logo/images - use JSON)
+  const handleUpdate = async (formData, logo, images) => {
     try {
-      const res = await updateColleges(id, data, token);
+      const res = await updateColleges(id, formData, token);
       if (res.status === 200) {
         alert("College updated successfully");
-        // optionally redirect or update UI
       } else {
         alert("Failed to update college");
       }

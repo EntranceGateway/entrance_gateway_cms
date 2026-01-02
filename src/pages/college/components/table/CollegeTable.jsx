@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { deleteColleges, getColleges } from "../../../../http/colleges";
 import UniversalFilter from "../../../../Verification/UniversalFilter";
 import Pagination from "../../../../Verification/Pagination";
+import { BookOpen, Plus } from "lucide-react";
 
 const CollegeTable = () => {
   const [colleges, setColleges] = useState([]);
@@ -137,7 +138,7 @@ const CollegeTable = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {["Name", "Location", "Affiliation", "Priority", "Contact", "Email", "Website", "Year", "Action"].map(
+                {["Name", "Location", "Affiliation", "Priority", "Courses", "Contact", "Email", "Website", "Year", "Action"].map(
                   (col) => (
                     <th
                       key={col}
@@ -153,13 +154,13 @@ const CollegeTable = () => {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="text-center p-6 text-gray-500">
+                  <td colSpan={10} className="text-center p-6 text-gray-500">
                     Loading...
                   </td>
                 </tr>
               ) : colleges.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center p-6 text-gray-500">
+                  <td colSpan={10} className="text-center p-6 text-gray-500">
                     🔍 No colleges found for selected filters
                   </td>
                 </tr>
@@ -168,7 +169,7 @@ const CollegeTable = () => {
                   <tr key={college.collegeId} className="hover:bg-gray-50 transition">
                     <td className="p-4 font-medium text-gray-800">{college.collegeName}</td>
                     <td className="p-4 text-gray-600">{college.location}</td>
-                    <td className="p-4 text-gray-600">{college.affiliation}</td>
+                    <td className="p-4 text-gray-600">{college.affiliation?.replace(/_/g, " ")}</td>
                     <td className="p-4">
                       <span
                         className={`px-2 py-1 text-xs rounded-md font-semibold ${
@@ -182,6 +183,30 @@ const CollegeTable = () => {
                         {college.priority}
                       </span>
                     </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
+                          <BookOpen className="w-3 h-3" />
+                          {college.courses?.length || 0}
+                        </span>
+                        {college.courses?.length > 0 && (
+                          <div className="relative group">
+                            <span className="cursor-help text-gray-400 hover:text-gray-600">ℹ️</span>
+                            <div className="absolute z-20 hidden group-hover:block left-0 top-6 w-64 p-3 bg-white border border-gray-200 rounded-lg shadow-lg">
+                              <p className="text-xs font-semibold text-gray-700 mb-2">Courses:</p>
+                              <ul className="text-xs text-gray-600 space-y-1">
+                                {college.courses.slice(0, 5).map((c) => (
+                                  <li key={c.courseId} className="truncate">• {c.courseName}</li>
+                                ))}
+                                {college.courses.length > 5 && (
+                                  <li className="text-blue-600">+{college.courses.length - 5} more</li>
+                                )}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-4 text-gray-600">{college.contact}</td>
                     <td className="p-4 text-gray-600">{college.email}</td>
                     <td className="p-4 text-blue-600 underline">
@@ -191,6 +216,14 @@ const CollegeTable = () => {
                     </td>
                     <td className="p-4 text-gray-600">{college.establishedYear}</td>
                     <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+                      <Link
+                        to={`/college/${college.collegeId}/courses`}
+                        className="px-3 py-1.5 rounded-xl text-green-700 font-semibold border border-green-200 hover:bg-green-50 transition flex items-center gap-1"
+                        title="Manage Courses"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Courses
+                      </Link>
                       <Link
                         to={`/college/edit/${college.collegeId}`}
                         className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"

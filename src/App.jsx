@@ -22,6 +22,7 @@ const CollegeForm = lazy(() => import("./pages/college/components/form/Form"));
 const AddCollege = lazy(() => import("./pages/college/AddCollege"));
 const EditCollege = lazy(() => import("./pages/college/EditCollege"));
 const CollegeAll = lazy(() => import("./pages/college/CollegeAll"));
+const AddCourseToCollege = lazy(() => import("./pages/college/AddCourseToCollege"));
 
 const AddCourse = lazy(() => import("./pages/course/AddCourse"));
 const EditCourse = lazy(() => import("./pages/course/EditCourse"));
@@ -86,6 +87,7 @@ export default function App() {
                 <Route path="/college/add" element={<AddCollege />} />
                 <Route path="/college/edit/:id" element={<EditCollege />} />
                 <Route path="/college/all" element={<CollegeAll />} />
+                <Route path="/college/:id/courses" element={<AddCourseToCollege />} />
 
               <Route path="/admin/profile" element={<AdminProfile />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
