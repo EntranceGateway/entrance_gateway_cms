@@ -9,6 +9,9 @@ import useAxiosInterceptor from "../src/pages/login/axiosInterceptor";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminSettings from "./pages/admin/AdminSettings";
 
+// Import Quiz CSS
+import "./quiz/quiz.css";
+
 // Lazy load all pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminRegister = lazy(() => import("./pages/admin/admin/Register"));
@@ -42,6 +45,17 @@ const Navbar = lazy(() => import("../components/navbar/Navbar"));
 const AllOldQuestions = lazy(() => import("./pages/oldQuestions/AllOldQuestions"));
 const AddOldQuestion = lazy(() => import("./pages/oldQuestions/AddOldQuestion"));
 const EditOldQuestion = lazy(() => import("./pages/oldQuestions/EditOldQuestion"));
+
+// MCQ Questions
+const AddQuestion = lazy(() => import("./pages/question/AddQuestion"));
+
+// Quiz CMS Pages
+const QuizDashboard = lazy(() => import("./quiz/pages/QuizDashboard"));
+const QuizCategories = lazy(() => import("./quiz/pages/QuizCategories"));
+const QuizCourses = lazy(() => import("./quiz/pages/QuizCourses"));
+const QuizQuestionSets = lazy(() => import("./quiz/pages/QuizQuestionSets"));
+const QuizQuestions = lazy(() => import("./quiz/pages/QuizQuestions"));
+const QuizResults = lazy(() => import("./quiz/pages/QuizResults"));
 
 // Wrapper to run interceptor inside Router
 const AxiosInterceptorWrapper = ({ children }) => {
@@ -106,6 +120,17 @@ export default function App() {
                 <Route path="/old-questions/all" element={<AllOldQuestions />} />
                 <Route path="/old-questions/add" element={<AddOldQuestion />} />
                 <Route path="/old-questions/edit/:id" element={<EditOldQuestion />} />
+
+                {/* MCQ Questions */}
+                <Route path="/question/add" element={<AddQuestion />} />
+
+                {/* Quiz CMS Routes */}
+                <Route path="/quiz" element={<QuizDashboard />} />
+                <Route path="/quiz/categories" element={<QuizCategories />} />
+                <Route path="/quiz/courses" element={<QuizCourses />} />
+                <Route path="/quiz/question-sets" element={<QuizQuestionSets />} />
+                <Route path="/quiz/questions" element={<QuizQuestions />} />
+                <Route path="/quiz/results" element={<QuizResults />} />
 
                 {/* Navbar */}
                 <Route path="/navbar" element={<Navbar />} />

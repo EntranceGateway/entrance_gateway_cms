@@ -11,7 +11,8 @@ import {
   ChevronDown,
   ChevronUp,
   GraduationCap,
-  BookOpen,FileCheck ,Image ,Folder,Bell 
+  BookOpen,FileCheck ,Image ,Folder,Bell,
+  HelpCircle
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -108,6 +109,7 @@ const Sidebar = () => {
     },
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
     { name: "Training", icon: <BookOpen size={18} />, path: "/training/add" },
+    { name: "Quiz Management", icon: <HelpCircle size={20} />, path: "/quiz" },
   ];
 
   const toggleSubmenu = (name) => {
