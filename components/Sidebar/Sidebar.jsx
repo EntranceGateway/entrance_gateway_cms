@@ -12,7 +12,8 @@ import {
   ChevronUp,
   GraduationCap,
   BookOpen,FileCheck ,Image ,Folder,Bell,
-  HelpCircle
+  HelpCircle,
+  Newspaper
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -98,7 +99,16 @@ const Sidebar = () => {
          { name: "All Notices", path: "/notices/all" },
         { name: "Add Notices", path: "/notices/add" },
       ],
-    },{
+    },
+    {
+      name: "Blogs",
+      icon: <Newspaper size={20} />,
+      submenu: [
+        { name: "All Blogs", path: "/blogs" },
+        { name: "Add Blog", path: "/blogs/add" },
+      ],
+    },
+    {
       name: "Colleges",
       icon: <GraduationCap  size={20} />,
       submenu: [

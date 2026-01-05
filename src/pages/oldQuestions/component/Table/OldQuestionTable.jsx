@@ -104,9 +104,11 @@ const OldQuestionTable = () => {
         );
       }
 
-      const data = res.data.content || res.data.data?.content || [];
+      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
+      const responseData = res.data.data || res.data;
+      const data = responseData.content || [];
       setQuestions(data);
-      setTotalPages(res.data.totalPages || res.data.page?.totalPages || res.data.data?.page?.totalPages || 0);
+      setTotalPages(responseData.totalPages || 0);
     } catch (err) {
       console.error("Fetch old questions error:", err);
     }

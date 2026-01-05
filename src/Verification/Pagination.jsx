@@ -23,17 +23,21 @@ const Pagination = ({
 }) => {
   const [jumpPage, setJumpPage] = useState("");
 
+  // Ensure we have valid numbers
+  const currentPage = Math.max(1, Number(page) || 1);
+  const total = Math.max(0, Number(totalPages) || 0);
+
   const handlePrev = () => {
-    if (page > 1) onPageChange(page - 1);
+    if (currentPage > 1) onPageChange(currentPage - 1);
   };
 
   const handleNext = () => {
-    if (page < totalPages && totalPages > 0) onPageChange(page + 1);
+    if (currentPage < total && total > 0) onPageChange(currentPage + 1);
   };
 
   const handleJump = () => {
     const target = Number(jumpPage);
-    if (!isNaN(target) && target >= 1 && target <= totalPages && totalPages > 0) {
+    if (!isNaN(target) && target >= 1 && target <= total && total > 0) {
       onPageChange(target);
       setJumpPage("");
     }
@@ -74,7 +78,7 @@ const Pagination = ({
       {/* Prev button */}
       <button
         onClick={handlePrev}
-        disabled={page === 1}
+        disabled={currentPage <= 1}
         className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {labels.prev}
@@ -86,14 +90,14 @@ const Pagination = ({
           className="px-3 py-1.5 rounded-md border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-900"
           aria-current="page"
         >
-          {page} / {totalPages || 1}
+          {currentPage} / {total || 1}
         </span>
       )}
 
       {/* Next button */}
       <button
         onClick={handleNext}
-        disabled={page === totalPages || totalPages === 0}
+        disabled={currentPage >= total || total === 0}
         className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {labels.next}
@@ -104,7 +108,7 @@ const Pagination = ({
         <input
           type="number"
           min="1"
-          max={totalPages}
+          max={total}
           value={jumpPage}
           onChange={(e) => setJumpPage(e.target.value)}
           className="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm"

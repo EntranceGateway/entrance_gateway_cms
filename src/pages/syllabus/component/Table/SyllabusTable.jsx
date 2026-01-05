@@ -68,9 +68,12 @@ const SyllabusTable = () => {
       }
       
       console.log("Response:", res.data);
-      const data = res.data.data.content || [];
+      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
+      const responseData = res.data.data || res.data;
+      const data = responseData.content || [];
       setSyllabus(data);
-      setTotalPages(res.data.data.page?.totalPages || 0);
+      setTotalPages(responseData.totalPages || 0);
+      console.log("Total pages:", responseData.totalPages);
     } catch (err) {
       console.error("Fetch syllabus error:", err);
     }

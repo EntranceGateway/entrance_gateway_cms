@@ -34,7 +34,9 @@ const CollegeTable = () => {
       const res = await getColleges(params, token);
       const data = res.data.data.content || [];
       setColleges(data);
-      setTotalPages(res.data.data.page?.totalPages || 0);
+      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
+      const responseData = res.data.data || res.data;
+      setTotalPages(responseData.totalPages || 0);
     } catch (err) {
       console.error("Fetch error:", err);
     }

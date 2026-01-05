@@ -43,7 +43,9 @@ const CourseTable = () => {
       
       const data = res.data.data.content || [];
       setCourses(data);
-      setTotalPages(res.data.data.page?.totalPages || 0);
+      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
+      const responseData = res.data.data || res.data;
+      setTotalPages(responseData.totalPages || 0);
     } catch (err) {
       console.error("Fetch Course Error:", err);
     }
@@ -162,7 +164,7 @@ const CourseTable = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {["Course Name", "Description", "Course Level", "Course Type", "Affiliation", "Action"].map((col) => (
+                {["Course Name", "Description", "Course Level", "Course Type", "Criteria", "Affiliation", "Action"].map((col) => (
                   <th
                     key={col}
                     className="p-4 text-left font-medium text-gray-700 sticky top-0 bg-gray-50 z-10"
@@ -176,13 +178,13 @@ const CourseTable = () => {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center p-6 text-gray-500">
+                  <td colSpan={7} className="text-center p-6 text-gray-500">
                     Loading...
                   </td>
                 </tr>
               ) : courses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center p-6 text-gray-500">
+                  <td colSpan={7} className="text-center p-6 text-gray-500">
                     🔍 No courses found
                   </td>
                 </tr>
@@ -200,6 +202,9 @@ const CourseTable = () => {
                       <span className="px-2 py-1 text-xs font-semibold rounded-md bg-green-100 text-green-700">
                         {course.courseType?.replace(/_/g, ' ') || 'N/A'}
                       </span>
+                    </td>
+                    <td className="p-4 text-gray-600 max-w-xs truncate" title={course.criteria}>
+                      {course.criteria || 'N/A'}
                     </td>
                     <td className="p-4">
                       <span className="px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-700">

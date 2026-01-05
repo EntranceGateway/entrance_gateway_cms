@@ -47,6 +47,18 @@ const AllOldQuestions = lazy(() => import("./pages/oldQuestions/AllOldQuestions"
 const AddOldQuestion = lazy(() => import("./pages/oldQuestions/AddOldQuestion"));
 const EditOldQuestion = lazy(() => import("./pages/oldQuestions/EditOldQuestion"));
 
+// Blog
+const BlogPage = lazy(() => import("./pages/blog/BlogPage"));
+const AddBlog = lazy(() => import("./pages/blog/AddBlog"));
+const EditBlog = lazy(() => import("./pages/blog/EditBlog"));
+const ViewBlog = lazy(() => import("./pages/blog/ViewBlog"));
+
+// Notice
+const NoticePage = lazy(() => import("./pages/notice/NoticePage"));
+const AddNotice = lazy(() => import("./pages/notice/AddNotice"));
+const EditNotice = lazy(() => import("./pages/notice/EditNotice"));
+const ViewNotice = lazy(() => import("./pages/notice/ViewNotice"));
+
 // MCQ Questions
 const AddQuestion = lazy(() => import("./pages/question/AddQuestion"));
 
@@ -122,6 +134,18 @@ export default function App() {
                 <Route path="/old-questions/all" element={<AllOldQuestions />} />
                 <Route path="/old-questions/add" element={<AddOldQuestion />} />
                 <Route path="/old-questions/edit/:id" element={<EditOldQuestion />} />
+
+                {/* Blog Routes */}
+                <Route path="/blogs" element={<BlogPage />} />
+                <Route path="/blogs/add" element={<AddBlog />} />
+                <Route path="/blogs/edit/:id" element={<EditBlog />} />
+                <Route path="/blogs/view/:id" element={<ViewBlog />} />
+
+                {/* Notice Routes */}
+                <Route path="/notices/all" element={<NoticePage />} />
+                <Route path="/notices/add" element={<AddNotice />} />
+                <Route path="/notices/edit/:id" element={<EditNotice />} />
+                <Route path="/notices/view/:id" element={<ViewNotice />} />
 
                 {/* MCQ Questions */}
                 <Route path="/question/add" element={<AddQuestion />} />

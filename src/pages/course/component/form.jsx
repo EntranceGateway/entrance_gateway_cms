@@ -5,9 +5,11 @@ import { useNavigate } from "react-router-dom";
 const defaultForm = {
   courseName: "",
   description: "",
+  collegeId: "",
   affiliation: "",
   courseType: "SEMESTER",
   courseLevel: "PLUS_TWO",
+  criteria: "",
 };
 
 const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
@@ -23,9 +25,11 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
       setForm({
         courseName: initialData.courseName || "",
         description: initialData.description || "",
+        collegeId: initialData.collegeId || "",
         affiliation: initialData.affiliation || "",
         courseType: initialData.courseType || "SEMESTER",
         courseLevel: initialData.courseLevel || "PLUS_TWO",
+        criteria: initialData.criteria || "",
       });
     }
   }, [initialData, mode]);
@@ -52,11 +56,10 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
     else if (form.courseName.length < 3)
       newErrors.courseName = "Course name must be at least 3 characters.";
 
-    if (!form.description.trim()) newErrors.description = "Description is required.";
-    else if (form.description.length < 10)
-      newErrors.description = "Description must be at least 10 characters.";
-
-    if (!form.affiliation) newErrors.affiliation = "University type is required.";
+    if (!form.courseType) newErrors.courseType = "Course type is required.";
+    if (!form.courseLevel) newErrors.courseLevel = "Course level is required.";
+    if (!form.criteria.trim()) newErrors.criteria = "Criteria is required.";
+    if (!form.affiliation) newErrors.affiliation = "Affiliation is required.";
     return newErrors;
   };
 
@@ -206,17 +209,40 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
             )}
           </div>
 
-          {/* University Type */}
+          {/* Criteria */}
+          <div>
+            <label htmlFor="criteria" className={labelBase}>
+              Criteria *
+            </label>
+            <input
+              id="criteria"
+              type="text"
+              name="criteria"
+              value={form.criteria}
+              onChange={handleChange}
+              placeholder="Enter criteria..."
+              className={`${inputBase} ${
+                fieldError("criteria") ? errorBorder : normalBorder
+              }`}
+            />
+            {fieldError("criteria") && (
+              <span className={errorText}>{fieldError("criteria")}</span>
+            )}
+          </div>
+
+          {/* Affiliation */}
           <div>
             <label htmlFor="affiliation" className={labelBase}>
-              University Type
+              Affiliation *
             </label>
             <select
               id="affiliation"
               name="affiliation"
               value={form.affiliation}
               onChange={handleChange}
-              className={`${inputBase} ${normalBorder}`}
+              className={`${inputBase} ${
+                fieldError("affiliation") ? errorBorder : normalBorder
+              }`}
             >
               <option value="">-- Select University --</option>
               <option value="TRIBHUVAN_UNIVERSITY">Tribhuvan University</option>
@@ -236,37 +262,49 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
                 Campus Affiliated to Foreign University
               </option>
             </select>
+            {fieldError("affiliation") && (
+              <span className={errorText}>{fieldError("affiliation")}</span>
+            )}
           </div>
 
           {/* Course Type */}
           <div>
             <label htmlFor="courseType" className={labelBase}>
-              Course Type
+              Course Type *
             </label>
             <select
               id="courseType"
               name="courseType"
               value={form.courseType}
               onChange={handleChange}
-              className={`${inputBase} ${normalBorder}`}
+              className={`${inputBase} ${
+                fieldError("courseType") ? errorBorder : normalBorder
+              }`}
             >
+              <option value="">-- Select Course Type --</option>
               <option value="SEMESTER">Semester</option>
               <option value="ANNUAL">Annual</option>
             </select>
+            {fieldError("courseType") && (
+              <span className={errorText}>{fieldError("courseType")}</span>
+            )}
           </div>
 
           {/* Course Level */}
           <div>
             <label htmlFor="courseLevel" className={labelBase}>
-              Course Level
+              Course Level *
             </label>
             <select
               id="courseLevel"
               name="courseLevel"
               value={form.courseLevel}
               onChange={handleChange}
-              className={`${inputBase} ${normalBorder}`}
+              className={`${inputBase} ${
+                fieldError("courseLevel") ? errorBorder : normalBorder
+              }`}
             >
+              <option value="">-- Select Course Level --</option>
               <option value="PLUS_TWO">Plus Two</option>
               <option value="BACHELOR">Bachelor</option>
               <option value="MASTER">Master</option>
@@ -274,6 +312,9 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
               <option value="DIPLOMA">Diploma</option>
               <option value="M_PHIL">M.Phil</option>
             </select>
+            {fieldError("courseLevel") && (
+              <span className={errorText}>{fieldError("courseLevel")}</span>
+            )}
           </div>
 
           {/* Submit */}

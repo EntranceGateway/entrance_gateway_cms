@@ -52,9 +52,11 @@ const NoteTable = () => {
         res = await getNotes(params, token);
       }
       
-      const data = res.data.data.content || [];
+      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
+      const responseData = res.data.data || res.data;
+      const data = responseData.content || [];
       setNotes(data);
-      setTotalPages(res.data.data.page?.totalPages || 0);
+      setTotalPages(responseData.totalPages || 0);
     } catch (err) {
       console.error("Fetch Notes Error:", err);
     }
