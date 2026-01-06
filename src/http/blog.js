@@ -90,6 +90,6 @@ export const downloadBlogFile = async (id, token) => {
 // --------------------------------------
 // Get Blog File URL (for inline viewing)
 // --------------------------------------
-export const getBlogFileUrl = (id) => {
-  return `https://api.entrancegateway.com/api/v1/blogs/${id}/download`;
+export const getBlogFileUrl = (blogId) => {
+  return `https://api.entrancegateway.com/api/v1/blogs/getBlogFile/${blogId}`;
 };

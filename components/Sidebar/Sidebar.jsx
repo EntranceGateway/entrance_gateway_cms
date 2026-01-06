@@ -68,14 +68,6 @@ const Sidebar = () => {
         { name: "Add Ads", path: "/banner/add" },
       ],
     },
-     {
-      name: "Category",
-      icon: <Folder size={20} />,
-      submenu: [
-        { name: "All Category", path: "/category/all" },
-        { name: "Add Category", path: "/category/add" },
-      ],
-    },
     {
       name: "Question",
       icon: <BookOpen size={20} />,
