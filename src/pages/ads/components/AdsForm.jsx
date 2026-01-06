@@ -149,7 +149,7 @@ const AdsForm = ({ mode = "create", initialData = null, adId = null }) => {
   const validate = () => {
     const newErrors = {};
     if (!form.title.trim()) newErrors.title = "Title is required";
-    if (!form.banner.trim()) newErrors.banner = "Banner URL is required";
+    if (!form.banner.trim()) newErrors.banner = "Banner name is required";
     if (!form.position) newErrors.position = "Position is required";
     if (!form.createdBy.trim()) newErrors.createdBy = "Created by is required";
     if (mode === "create" && images.length === 0) {
@@ -257,14 +257,14 @@ const AdsForm = ({ mode = "create", initialData = null, adId = null }) => {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <Target size={16} />
-                  Banner Link URL <span className="text-red-500">*</span>
+                  Banner Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="banner"
                   value={form.banner}
                   onChange={handleChange}
-                  placeholder="https://example.com/landing-page"
+                  placeholder="e.g., ACHS, KMC, etc."
                   className={inputClass("banner")}
                 />
                 {errors.banner && (

@@ -63,12 +63,13 @@ export const deleteAd = async (id, token) => {
 // Ad Position Options
 // --------------------------------------
 export const AD_POSITIONS = [
-  { value: "TOP_BANNER", label: "Top Banner" },
-  { value: "SIDEBAR_LEFT", label: "Sidebar Left" },
-  { value: "SIDEBAR_RIGHT", label: "Sidebar Right" },
-  { value: "BOTTOM_BANNER", label: "Bottom Banner" },
-  { value: "POPUP", label: "Popup" },
-  { value: "INLINE", label: "Inline" },
+  { value: "horizontal_1", label: "Horizontal 1" },
+  { value: "horizontal_2", label: "Horizontal 2" },
+  { value: "horizontal_3", label: "Horizontal 3" },
+  { value: "vertical_1", label: "Vertical 1" },
+  { value: "vertical_2", label: "Vertical 2" },
+  { value: "vertical_3", label: "Vertical 3" },
+  { value: "vertical_4", label: "Vertical 4" },
 ];
 
 // --------------------------------------
