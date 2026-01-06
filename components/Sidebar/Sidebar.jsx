@@ -30,11 +30,11 @@ const Sidebar = () => {
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, path: "/" },
     {
-      name: "Users",
+      name: "Admin Users",
       icon: <Users size={20} />,
       submenu: [
-        { name: "All Users", path: "/admin/users" },
-        { name: "Add User", path: "/admin/users/add" },
+        { name: "All Admin Users", path: "/admin/users" },
+        { name: "Add Admin User", path: "/admin/users/add" },
       ],
     },
     {

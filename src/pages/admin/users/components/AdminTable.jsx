@@ -5,8 +5,8 @@ import {
   deleteAdmin,
   updateAdminRole,
   ADMIN_ROLES,
-} from "../../../http/adminget";
-import Pagination from "../../../Verification/Pagination";
+} from "../../../../http/adminget";
+import Pagination from "../../../../Verification/Pagination";
 import { Plus, Trash2, Shield, Mail, User, ChevronDown } from "lucide-react";
 
 const AdminTable = () => {
@@ -15,7 +15,8 @@ const AdminTable = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [editingRole, setEditingRole] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [sortBy, setSortBy] = useState("adminId");
+  const [sortDir, setSortDir] = useState("asc");
   const PAGE_SIZE = 10;
 
   const token = localStorage.getItem("token");
@@ -28,7 +29,12 @@ const AdminTable = () => {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      const res = await getAllAdmins({ page, size: PAGE_SIZE }, token);
+      const res = await getAllAdmins({ 
+        page, 
+        size: PAGE_SIZE,
+        sortBy,
+        sortDir 
+      }, token);
       const responseData = res.data?.data || res.data;
       const data = Array.isArray(responseData) 
         ? responseData 
@@ -45,7 +51,7 @@ const AdminTable = () => {
 
   useEffect(() => {
     fetchAdmins();
-  }, [page]);
+  }, [page, sortBy, sortDir]);
 
   // Delete Admin
   const handleDelete = async (adminId) => {
@@ -87,7 +93,7 @@ const AdminTable = () => {
     <div className="w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Admin Management</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Admin Users Management</h1>
           <p className="text-gray-500 text-sm mt-1">
             Manage admin users and their roles
           </p>
@@ -98,7 +104,7 @@ const AdminTable = () => {
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-all duration-200"
           >
             <Plus size={20} />
-            Add New Admin
+            Add New Admin User
           </Link>
         )}
       </div>
@@ -158,12 +164,16 @@ const AdminTable = () => {
                       {/* Name */}
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <User size={20} className="text-indigo-600" />
+                          <div className="h-10 w-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                            {admin.name 
+                              ? admin.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                              : admin.role === 'SUPER_ADMIN' 
+                                ? 'SA' 
+                                : admin.email?.charAt(0)?.toUpperCase() || 'A'}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">
-                              {admin.name || "-"}
+                              {admin.name || (admin.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : '-')}
                             </div>
                             {admin.email === user?.email && (
                               <span className="text-xs text-indigo-600">(You)</span>

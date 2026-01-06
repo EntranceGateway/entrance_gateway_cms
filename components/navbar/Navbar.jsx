@@ -31,29 +31,31 @@ const Navbar = () => {
 
     const fetchAdminDetails = async () => {
       try {
-        const res = await getAdmin({}, token);
-        const adminData = res.data?.data || res.data?.admin;
+        const res = await getAdmin(token);
+        const adminData = res.data?.data || res.data?.admin || res.data;
 
         if (adminData && isMounted) {
           setAdmin(adminData);
           localStorage.setItem("admin", JSON.stringify(adminData));
-        } else {
-          navigate("/admin/login", { replace: true });
         }
       } catch (error) {
-        if (error.response?.status === 401) {
+        console.error("Failed to fetch admin details:", error);
+        // Only redirect on 401 unauthorized
+        if (error?.response?.status === 401 || error?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("admin");
           navigate("/admin/login", { replace: true });
         }
       }
     };
 
-    // Only fetch if admin is not already loaded
-    if (!admin) fetchAdminDetails();
+    // Fetch admin data on mount
+    fetchAdminDetails();
 
     return () => {
       isMounted = false;
     };
-  }, [token, navigate, admin]);
+  }, [token, navigate]);
 
   /* =======================
      CLICK OUTSIDE HANDLER
@@ -130,12 +132,16 @@ const Navbar = () => {
               className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition"
             >
               <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                {admin?.email?.charAt(0)?.toUpperCase() || "A"}
+                {admin?.name 
+                  ? admin.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                  : admin?.role === 'SUPER_ADMIN' 
+                    ? 'SA' 
+                    : admin?.email?.charAt(0)?.toUpperCase() || 'A'}
               </div>
 
               <div className="hidden md:block text-left">
                 <p className="text-sm font-semibold text-gray-800">
-                  {admin?.role || "ADMIN"}
+                  {admin?.name || (admin?.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : admin?.role || 'ADMIN')}
                 </p>
                 <p className="text-xs text-gray-500">{admin?.email || ""}</p>
               </div>

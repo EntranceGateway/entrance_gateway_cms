@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Layout from "../../../../components/layout/Layout";
 import { registerAdmin } from "../../../http/adminget";
-import { AlertCircle, User, Mail, Lock, ArrowLeft } from "lucide-react";
+import { AlertCircle, User, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 const AdminRegister = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const AdminRegister = () => {
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "", error: "" });
 
@@ -54,6 +55,7 @@ const AdminRegister = () => {
     if (!validate()) return;
 
     setStatus({ loading: true, success: "", error: "" });
+    setErrors({});
 
     try {
       await registerAdmin(form, token);
@@ -64,11 +66,22 @@ const AdminRegister = () => {
       });
       setTimeout(() => navigate("/admin/users"), 1500);
     } catch (err) {
-      setStatus({
-        loading: false,
-        success: "",
-        error: err.message || err.error || "Failed to create admin",
-      });
+      // Handle field-specific validation errors from backend
+      if (err && typeof err === "object" && !err.message && !err.error) {
+        // Backend returned field-specific errors like { name: "...", password: "..." }
+        setErrors(err);
+        setStatus({
+          loading: false,
+          success: "",
+          error: "Please fix the validation errors below.",
+        });
+      } else {
+        setStatus({
+          loading: false,
+          success: "",
+          error: err.message || err.error || "Failed to create admin",
+        });
+      }
     }
   };
 
@@ -155,14 +168,23 @@ const AdminRegister = () => {
                 <Lock size={16} />
                 Password <span className="text-red-500">*</span>
               </label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Min 8 characters"
-                className={inputClass("password")}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Min 8 characters"
+                  className={inputClass("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-500">{errors.password}</p>
               )}

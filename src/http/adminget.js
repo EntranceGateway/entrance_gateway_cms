@@ -18,7 +18,7 @@ export const getAdmin = async (token) => {
 // --------------------------------------
 export const getAllAdmins = async (params = {}, token) => {
   try {
-    return await api.get("/api/v1/admin/getAllAdmins", {
+    return await api.get("/api/v1/admin/allAdmins", {
       params,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
