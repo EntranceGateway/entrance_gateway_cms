@@ -67,6 +67,10 @@ const ViewNotice = lazy(() => import("./pages/notice/ViewNotice"));
 // MCQ Questions
 const AddQuestion = lazy(() => import("./pages/question/AddQuestion"));
 
+// Admin Users Management
+const AdminUsers = lazy(() => import("./pages/admin/users/AdminUsers"));
+const AddAdmin = lazy(() => import("./pages/admin/users/AddAdmin"));
+
 // Quiz CMS Pages
 const QuizDashboard = lazy(() => import("./quiz/pages/QuizDashboard"));
 const QuizCategories = lazy(() => import("./quiz/pages/QuizCategories"));
@@ -108,6 +112,10 @@ export default function App() {
 
               <Route path="/admin/profile" element={<AdminProfile />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              
+                {/* Admin Users Management */}
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/users/add" element={<AddAdmin />} />
 
                 {/* Course Routes */}
                 <Route path="/course/add" element={<AddCourse />} />

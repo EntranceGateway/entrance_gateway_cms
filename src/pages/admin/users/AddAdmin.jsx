@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Layout from "../../../../components/layout/Layout";
 import { registerAdmin } from "../../../http/adminget";
 import { AlertCircle, User, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const AdminRegister = () => {
+const AddAdmin = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -203,4 +204,4 @@ const AdminRegister = () => {
   );
 };
 
-export default AdminRegister;
+export default AddAdmin;
