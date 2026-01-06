@@ -42,6 +42,11 @@ const AddBanner = lazy(() => import("./Banner/Form/AddBanner"));
 const AddCategory = lazy(() => import("./Category/CategoryForm/AddCategory"));
 const Navbar = lazy(() => import("../components/navbar/Navbar"));
 
+// Ads
+const AllAds = lazy(() => import("./pages/ads/AllAds"));
+const AddAd = lazy(() => import("./pages/ads/AddAd"));
+const EditAd = lazy(() => import("./pages/ads/EditAd"));
+
 // Old Questions
 const AllOldQuestions = lazy(() => import("./pages/oldQuestions/AllOldQuestions"));
 const AddOldQuestion = lazy(() => import("./pages/oldQuestions/AddOldQuestion"));
@@ -126,8 +131,14 @@ export default function App() {
                 {/* Training */}
                 <Route path="/training/add" element={<AddTraning />} />
 
-                {/* Banner & Category */}
+                {/* Ads Management */}
+                <Route path="/ads/all" element={<AllAds />} />
+                <Route path="/ads/add" element={<AddAd />} />
+                <Route path="/ads/edit/:id" element={<EditAd />} />
+
+                {/* Banner & Category (Legacy) */}
                 <Route path="/banner/add" element={<AddBanner />} />
+                <Route path="/banner/all" element={<AllAds />} />
                 <Route path="/category/add" element={<AddCategory />} />
 
                 {/* Old Questions */}

@@ -64,8 +64,8 @@ const Sidebar = () => {
       name: "Ads",
       icon: <Image size={20} />,
       submenu: [
-        { name: "All Ads", path: "/banner/all" },
-        { name: "Add Ads", path: "/banner/add" },
+        { name: "All Ads", path: "/ads/all" },
+        { name: "Add Ad", path: "/ads/add" },
       ],
     },
     {
