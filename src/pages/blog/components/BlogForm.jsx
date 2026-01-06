@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, Image, FileText, Mail, Phone, Hash, Tag } from "lucide-react";
+import { getBlogFileUrl } from "../../../http/blog";
 
 // -----------------------------
 // Default Form Shape
@@ -71,7 +72,7 @@ const BlogForm = ({ mode = "add", initialData = null, onSubmit }) => {
         keywords: initialData.keywords || "",
       });
       if (initialData.imageName) {
-        setImagePreview(`https://api.entrancegateway.com/images/${initialData.imageName}`);
+        setImagePreview(getBlogFileUrl(initialData.blogId));
       }
     } else {
       setForm(DEFAULT_FORM);
