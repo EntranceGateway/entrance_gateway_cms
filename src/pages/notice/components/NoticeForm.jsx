@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Image, FileText } from "lucide-react";
+import { AlertCircle, Image, FileText, File } from "lucide-react";
 
 // -----------------------------
 // Default Form Shape
@@ -8,8 +8,21 @@ import { AlertCircle, Image, FileText } from "lucide-react";
 const DEFAULT_FORM = Object.freeze({
   title: "",
   description: "",
-  image: null,
+  file: null,
 });
+
+// Helper to check if file is PDF
+const isPdfFile = (filename) => {
+  if (!filename) return false;
+  return filename.toLowerCase().endsWith(".pdf");
+};
+
+// Helper to check if file is image
+const isImageFile = (filename) => {
+  if (!filename) return false;
+  const ext = filename.toLowerCase();
+  return ext.endsWith(".jpg") || ext.endsWith(".jpeg") || ext.endsWith(".png") || ext.endsWith(".gif") || ext.endsWith(".webp");
+};
 
 // -----------------------------
 // Validation Logic
@@ -31,7 +44,8 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "" });
-  const [imagePreview, setImagePreview] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [fileType, setFileType] = useState(null); // 'image' or 'pdf'
 
   // -----------------------------
   // Load initial data in edit mode
@@ -41,14 +55,17 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
       setForm({
         title: initialData.title || "",
         description: initialData.description || "",
-        image: null,
+        file: null,
       });
       if (initialData.imageName) {
-        setImagePreview(`https://api.entrancegateway.com/images/${initialData.imageName}`);
+        const fileUrl = `https://api.entrancegateway.com/api/v1/notices/getNoticeFile/${initialData.noticeId}`;
+        setFilePreview(fileUrl);
+        setFileType(isPdfFile(initialData.imageName) ? "pdf" : "image");
       }
     } else {
       setForm(DEFAULT_FORM);
-      setImagePreview(null);
+      setFilePreview(null);
+      setFileType(null);
     }
     setErrors({});
     setStatus({ loading: false, success: "" });
@@ -74,11 +91,23 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
       const file = files[0] || null;
       setForm((prev) => ({ ...prev, [name]: file }));
       
-      // Create preview for image
+      // Create preview based on file type
       if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setImagePreview(reader.result);
-        reader.readAsDataURL(file);
+        if (file.type === "application/pdf") {
+          setFileType("pdf");
+          setFilePreview(file.name);
+        } else if (file.type.startsWith("image/")) {
+          setFileType("image");
+          const reader = new FileReader();
+          reader.onloadend = () => setFilePreview(reader.result);
+          reader.readAsDataURL(file);
+        } else {
+          setFileType("other");
+          setFilePreview(file.name);
+        }
+      } else {
+        setFilePreview(null);
+        setFileType(null);
       }
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
@@ -98,8 +127,8 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
     formData.append("title", form.title.trim());
     if (form.description) formData.append("description", form.description.trim());
     
-    if (form.image) {
-      formData.append("image", form.image);
+    if (form.file) {
+      formData.append("image", form.file);
     }
 
     return formData;
@@ -214,28 +243,60 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
             />
           </div>
 
-          {/* Image Upload */}
+          {/* File Upload (Image or PDF) */}
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-              <Image size={18} className="text-indigo-600" />
-              Notice Image
+              <File size={18} className="text-indigo-600" />
+              Attachment (Image or PDF)
             </label>
             <div className="mt-1">
               <input
                 type="file"
-                name="image"
-                accept="image/*"
+                name="file"
+                accept="image/*,.pdf,application/pdf"
                 onChange={handleChange}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
               />
+              <p className="mt-1 text-xs text-gray-500">Supported formats: JPG, PNG, GIF, WebP, PDF</p>
             </div>
-            {imagePreview && (
+            {filePreview && (
               <div className="mt-3">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="h-40 w-auto object-cover rounded-lg border border-gray-200"
-                />
+                {fileType === "image" ? (
+                  <img
+                    src={filePreview}
+                    alt="Preview"
+                    className="h-40 w-auto object-cover rounded-lg border border-gray-200"
+                  />
+                ) : fileType === "pdf" ? (
+                  <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div className="p-2 bg-red-100 rounded-lg">
+                      <FileText size={24} className="text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">PDF Document</p>
+                      <p className="text-sm text-gray-500">
+                        {typeof filePreview === "string" && filePreview.startsWith("http") 
+                          ? initialData?.imageName 
+                          : filePreview}
+                      </p>
+                    </div>
+                    {typeof filePreview === "string" && filePreview.startsWith("http") && (
+                      <a
+                        href={filePreview}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto px-3 py-1 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                      >
+                        View PDF
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <File size={24} className="text-gray-600" />
+                    <span className="text-gray-700">{filePreview}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

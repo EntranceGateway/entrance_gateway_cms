@@ -27,8 +27,10 @@ export const getSingle = async (url, token) => {
 
 const noteFile="/api/v1/notes/getNotefile"
 const syllabusFile="/api/v1/syllabus/getSyllabusFile"
+const noticeFile="/api/v1/notices/getNoticeFile"
 
 export {
     noteFile,
-    syllabusFile
+    syllabusFile,
+    noticeFile
 }

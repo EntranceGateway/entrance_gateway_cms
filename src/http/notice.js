@@ -35,7 +35,7 @@ export const createNotice = async (formData, token) => {
     return await api.post("/api/v1/notices", formData, {
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
-        "Content-Type": "multipart/form-data",
+        // Don't manually set Content-Type for FormData - browser will set it with correct boundary
       },
     });
   } catch (err) {
@@ -51,7 +51,7 @@ export const updateNotice = async (id, formData, token) => {
     return await api.put(`/api/v1/notices/${id}`, formData, {
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
-        "Content-Type": "multipart/form-data",
+        // Don't manually set Content-Type for FormData - browser will set it with correct boundary
       },
     });
   } catch (err) {
@@ -70,4 +70,26 @@ export const deleteNotice = async (id, token) => {
   } catch (err) {
     throw err.response?.data || { error: "Failed to delete notice." };
   }
+};
+
+// --------------------------------------
+// Download Notice File/Image
+// --------------------------------------
+export const downloadNoticeFile = async (id, token) => {
+  try {
+    const response = await api.get(`/api/v1/notices/getNoticeFile/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      responseType: "blob",
+    });
+    return response;
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to download notice file." };
+  }
+};
+
+// --------------------------------------
+// Get Notice File URL (for inline viewing)
+// --------------------------------------
+export const getNoticeFileUrl = (id) => {
+  return `https://api.entrancegateway.com/api/v1/notices/getNoticeFile/${id}`;
 };

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "../../../components/layout/Layout";
-import { getBlogById } from "../../http/blog";
+import { getBlogById, downloadBlogFile, getBlogFileUrl } from "../../http/blog";
 import Spinner from "../../../components/Spinner/Spinner";
-import { ArrowLeft, Calendar, Mail, Phone, Tag, Hash, Edit } from "lucide-react";
+import { ArrowLeft, Calendar, Mail, Phone, Tag, Hash, Edit, Download, ExternalLink } from "lucide-react";
 
 const ViewBlog = () => {
   const { id } = useParams();
@@ -36,6 +36,30 @@ const ViewBlog = () => {
       month: "long",
       day: "numeric",
     });
+  };
+
+  // Handle file download
+  const handleDownload = async () => {
+    try {
+      const response = await downloadBlogFile(id, token);
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = blog?.imageName || `blog_${id}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert("Failed to download file");
+    }
+  };
+
+  // Open file in new tab
+  const handleOpenInNewTab = () => {
+    window.open(getBlogFileUrl(id), "_blank");
   };
 
   if (loading) {
@@ -85,12 +109,31 @@ const ViewBlog = () => {
         <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Featured Image */}
           {blog?.imageName && (
-            <div className="w-full h-64 md:h-80">
-              <img
-                src={`https://api.entrancegateway.com/images/${blog.imageName}`}
-                alt={blog.title}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative">
+              <div className="w-full h-64 md:h-80">
+                <img
+                  src={getBlogFileUrl(id)}
+                  alt={blog.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              {/* Image Actions */}
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button
+                  onClick={handleOpenInNewTab}
+                  className="p-2 bg-white/90 hover:bg-white text-gray-700 rounded-lg shadow-md transition-all duration-200 flex items-center gap-1"
+                  title="Open in new tab"
+                >
+                  <ExternalLink size={18} />
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="p-2 bg-white/90 hover:bg-white text-gray-700 rounded-lg shadow-md transition-all duration-200 flex items-center gap-1"
+                  title="Download"
+                >
+                  <Download size={18} />
+                </button>
+              </div>
             </div>
           )}
 

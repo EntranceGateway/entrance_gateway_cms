@@ -112,6 +112,7 @@ const PdfViewer = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [goToPageInput, setGoToPageInput] = useState("");
 
   const viewerRef = useRef(null);
   const pageWrapperRef = useRef(null);
@@ -234,6 +235,35 @@ const PdfViewer = ({
       currentPageRef.current = newPage;
       return newPage;
     });
+  }, []);
+
+  // Go to specific page
+  const goToPage = useCallback((pageNum) => {
+    const page = parseInt(pageNum, 10);
+    if (!isNaN(page) && page >= 1 && page <= numPagesRef.current) {
+      setCurrentPage(page);
+      currentPageRef.current = page;
+      setGoToPageInput("");
+      // Scroll to top when jumping to a page
+      if (pageWrapperRef.current) {
+        pageWrapperRef.current.scrollTop = 0;
+      }
+    }
+  }, []);
+
+  // Handle go to page input submission
+  const handleGoToPageSubmit = useCallback((e) => {
+    e.preventDefault();
+    goToPage(goToPageInput);
+  }, [goToPageInput, goToPage]);
+
+  // Handle input change for go to page
+  const handleGoToPageInputChange = useCallback((e) => {
+    const value = e.target.value;
+    // Only allow numbers
+    if (value === "" || /^\d+$/.test(value)) {
+      setGoToPageInput(value);
+    }
   }, []);
 
   /* ---------- Scroll/Wheel-based Navigation ---------- */
@@ -386,25 +416,52 @@ const PdfViewer = ({
       ref={viewerRef}
       className={`flex flex-col h-full bg-white pdf-viewer-container ${className || ""}`}
     >
-      {/* Page Indicator */}
-      <div className="flex justify-center items-center p-3 bg-white border-b border-gray-200">
+      {/* Page Indicator & Navigation */}
+      <div className="flex flex-wrap justify-center items-center gap-3 p-3 bg-white border-b border-gray-200">
+        {/* Previous Button */}
         <button 
           onClick={goToPrevPage} 
           disabled={currentPage <= 1}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed mr-3"
+          className="px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
         >
           ← Prev
         </button>
+
+        {/* Current Page Display */}
         <span className="text-sm font-medium text-gray-700">
           Page <strong>{currentPage}</strong> / <strong>{numPages}</strong>
         </span>
+
+        {/* Next Button */}
         <button 
           onClick={goToNextPage} 
           disabled={currentPage >= numPages}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed ml-3"
+          className="px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
         >
           Next →
         </button>
+
+        {/* Divider */}
+        <div className="hidden sm:block w-px h-6 bg-gray-300 mx-2"></div>
+
+        {/* Go to Page Input */}
+        <form onSubmit={handleGoToPageSubmit} className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Go to:</label>
+          <input
+            type="text"
+            value={goToPageInput}
+            onChange={handleGoToPageInputChange}
+            placeholder={`1-${numPages}`}
+            className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={!goToPageInput || parseInt(goToPageInput, 10) < 1 || parseInt(goToPageInput, 10) > numPages}
+            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Go
+          </button>
+        </form>
       </div>
 
       {/* PDF Content - Single page with scroll navigation */}

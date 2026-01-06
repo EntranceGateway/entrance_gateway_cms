@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getNotices, deleteNotice } from "../../../http/notice";
+import { getNotices, deleteNotice, getNoticeFileUrl } from "../../../http/notice";
 import Pagination from "../../../Verification/Pagination";
-import { Plus, Edit, Trash2, Eye, Calendar } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Calendar, Download, FileText } from "lucide-react";
+
+// Helper to check if file is PDF
+const isPdfFile = (filename) => {
+  if (!filename) return false;
+  return filename.toLowerCase().endsWith(".pdf");
+};
 
 const NoticeTable = () => {
   const [notices, setNotices] = useState([]);
@@ -187,17 +193,23 @@ const NoticeTable = () => {
                     key={notice.noticeId}
                     className="border-b hover:bg-gray-50 transition-colors"
                   >
-                    {/* Image */}
+                    {/* File (Image or PDF) */}
                     <td className="p-4">
                       {notice.imageName ? (
-                        <img
-                          src={`https://api.entrancegateway.com/images/${notice.imageName}`}
-                          alt={notice.title}
-                          className="h-12 w-16 object-cover rounded-md"
-                        />
+                        isPdfFile(notice.imageName) ? (
+                          <div className="h-12 w-16 bg-red-50 rounded-md flex items-center justify-center border border-red-200">
+                            <FileText size={24} className="text-red-600" />
+                          </div>
+                        ) : (
+                          <img
+                            src={getNoticeFileUrl(notice.noticeId)}
+                            alt={notice.title}
+                            className="h-12 w-16 object-cover rounded-md"
+                          />
+                        )
                       ) : (
                         <div className="h-12 w-16 bg-gray-100 rounded-md flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No image</span>
+                          <span className="text-gray-400 text-xs">No file</span>
                         </div>
                       )}
                     </td>

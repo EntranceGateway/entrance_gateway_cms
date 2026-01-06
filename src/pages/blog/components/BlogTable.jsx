@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getBlogs, deleteBlog } from "../../../http/blog";
+import { getBlogs, deleteBlog, getBlogFileUrl } from "../../../http/blog";
 import Pagination from "../../../Verification/Pagination";
-import { Plus, Edit, Trash2, Eye, Calendar, Mail, Phone } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Calendar, Mail, Phone, Download } from "lucide-react";
 
 const BlogTable = () => {
   const [blogs, setBlogs] = useState([]);
@@ -191,7 +191,7 @@ const BlogTable = () => {
                     <td className="p-4">
                       {blog.imageName ? (
                         <img
-                          src={`https://api.entrancegateway.com/images/${blog.imageName}`}
+                          src={getBlogFileUrl(blog.blogId)}
                           alt={blog.title}
                           className="h-12 w-16 object-cover rounded-md"
                         />

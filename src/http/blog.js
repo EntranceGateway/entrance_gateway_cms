@@ -71,3 +71,25 @@ export const deleteBlog = async (id, token) => {
     throw err.response?.data || { error: "Failed to delete blog." };
   }
 };
+
+// --------------------------------------
+// Download Blog File/Image
+// --------------------------------------
+export const downloadBlogFile = async (id, token) => {
+  try {
+    const response = await api.get(`/api/v1/blogs/${id}/download`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      responseType: "blob",
+    });
+    return response;
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to download blog file." };
+  }
+};
+
+// --------------------------------------
+// Get Blog File URL (for inline viewing)
+// --------------------------------------
+export const getBlogFileUrl = (id) => {
+  return `https://api.entrancegateway.com/api/v1/blogs/${id}/download`;
+};
