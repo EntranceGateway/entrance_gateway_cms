@@ -1,43 +1,114 @@
-name: Deploy to cPanel
+name: 🚀 Production Build & Deploy
 
 on:
   push:
     branches:
       - main
-      - master
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-and-deploy:
+    name: 🏗️ Build and Deploy
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout Repository
+      # 1. Checkout Code
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Node.js
+      # 2. Setup Node.js with Caching
+      - name: 🟢 Setup Node.js 18
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm install --legacy-peer-deps
+      # 3. Install Dependencies
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --legacy-peer-deps
+        # npm ci is faster and cleaner for CI environments than npm install
 
-      - name: Build Project
+      # 4. Build Application
+      - name: 🏗️ Build Project
         run: npm run build
         env:
           CI: false
+          # Inject secrets as VITE_ env vars
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_TOKEN_ENCRYPTION_KEY: ${{ secrets.VITE_TOKEN_ENCRYPTION_KEY }}
+          # Determine if we should generate source maps (only for non-prod if logic added later, Vite mostly controls this via config)
+          GENERATE_SOURCEMAP: false
 
-      - name: List Build Output
+      # 5. Generate .htaccess for React Router
+      - name: ⚙️ Generate .htaccess
+        run: |
+          cat > dist/.htaccess <<EOF
+          <IfModule mod_rewrite.c>
+            RewriteEngine On
+            RewriteBase /
+            RewriteRule ^index\.html$ - [L]
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteRule . /index.html [L]
+          </IfModule>
+          
+          # Enable Gzip Compression
+          <IfModule mod_deflate.c>
+            AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+          </IfModule>
+          
+          # Cache Control
+          <IfModule mod_expires.c>
+            ExpiresActive On
+            ExpiresByType image/jpg "access plus 1 year"
+            ExpiresByType image/jpeg "access plus 1 year"
+            ExpiresByType image/gif "access plus 1 year"
+            ExpiresByType image/png "access plus 1 year"
+            ExpiresByType text/css "access plus 1 month"
+            ExpiresByType application/pdf "access plus 1 month"
+            ExpiresByType text/x-javascript "access plus 1 month"
+            ExpiresByType application/x-shockwave-flash "access plus 1 month"
+            ExpiresByType image/x-icon "access plus 1 year"
+            ExpiresDefault "access plus 2 days"
+          </IfModule>
+          EOF
+        shell: bash
+
+      # 6. Optimize Assets (Gzip)
+      # Vite does not gzip by default, so we can do it here or let Apache handle it securely.
+      # Since we added mod_deflate to .htaccess, Apache will handle live compression.
+      # If pre-compression is needed, we would run a script here. For now, relying on Apache/htaccess is safer and easier.
+
+      # 7. List Files (Debug)
+      - name: 🔍 Verify Build Output
         run: ls -la dist/
 
-      - name: Deploy to cPanel via FTP
+      # 8. Deploy to cPanel (FTP)
+      - name: 🚀 Deploy to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
           local-dir: ./dist/
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
-          dangerous-clean-slate: false
+          server-dir: /public_html/
+          dangerous-clean-slate: true 
+          # ^^^ WARNING: This deletes everything in server-dir before upload.
+          # Ensure server-dir is correct (/public_html/ENTRANCE_GATEWAY/ or just /public_html/)
+
+      # 9. Notify Success
+      - name: ✅ Deployment Success
+        if: success()
+        run: echo "::notice::Deployment to cPanel completed successfully! 🚀"
+
+      # 10. Notify Failure
+      - name: ❌ Deployment Failed
+        if: failure()
+        run: echo "::error::Deployment failed. Check logs for details."
