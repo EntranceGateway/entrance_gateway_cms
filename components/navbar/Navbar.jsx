@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { Bell, Settings, LogOut, User, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAdmin } from "../../src/http/adminget";
+import authService from "../../src/auth/services/authService";
+import tokenService from "../../src/auth/services/tokenService";
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -16,13 +18,15 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  // Use tokenService to get token, ensuring consistency with other auth checks
+  const token = tokenService.getAccessToken();
 
   /* =======================
      AUTH + ADMIN FETCH
      ======================= */
   useEffect(() => {
     if (!token) {
+      // delay redirect slightly to ensure state is settled
       navigate("/admin/login", { replace: true });
       return;
     }
@@ -42,8 +46,7 @@ const Navbar = () => {
         console.error("Failed to fetch admin details:", error);
         // Only redirect on 401 unauthorized
         if (error?.response?.status === 401 || error?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("admin");
+          await authService.logout();
           navigate("/admin/login", { replace: true });
         }
       }
@@ -81,10 +84,8 @@ const Navbar = () => {
   /* =======================
      LOGOUT
      ======================= */
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("admin");
-    sessionStorage.clear();
+  const handleLogout = async () => {
+    await authService.logout();
     navigate("/admin/login", { replace: true });
   };
 

@@ -5,7 +5,7 @@ import api from "./index";
 // --------------------------------------
 export const getAdmin = async (token) => {
   try {
-    return await api.get("/api/v1/admin/getAdminDetails", {
+    return await api.get("/api/v1/admin/me", {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch (err) {

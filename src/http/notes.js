@@ -48,41 +48,19 @@ export const getNotesByFilter = async (params = {}, token) => {
 // GET SINGLE NOTE (Your custom endpoint)
 // ===============================
 
-//export const getSingle = async (noteId, token) => {
-//   try {
-//     return await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
-//       headers: token ? { Authorization: `Bearer ${token}` } : {},
-//       responseType: "blob", // IMPORTANT: get file as binary
-//     });
-//   } catch (err) {
-//     throw err.response?.data || err;
-//   }
-// };
-// export const getSingle = async (noteId, token) => {
-//   try {
-//     return await api.get(`/api/v1/notes/getNotefile/${noteId}`, {
-//       headers: token ? { Authorization: `Bearer ${token}` } : {},
-//       responseType: "blob", // IMPORTANT: get file as binary
-//     });
-//   } catch (err) {
-//     console.error("Error fetching PDF:", err);
-//     throw err.response?.data || err;
-//   }
-// };
-
-
-// src/http/notes/getSingle.js
-
+// ===============================
+// GET SINGLE NOTE (PDF file)
+// ===============================
 export const getSingle = async (url, token) => {
- if (!token) throw new Error("Authentication token is missing");
+  if (!token) throw new Error("Authentication token is missing");
 
-  const res = await axios.get(url, {
+  const res = await api.get(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/pdf",
     },
     responseType: "blob",
-    withCredentials: true, // ✅ matches access-control-allow-credentials: true
+    withCredentials: true,
   });
 
   if (res.status !== 200) {
@@ -95,7 +73,6 @@ export const getSingle = async (url, token) => {
   }
 
   return res.data; // blob
-
 };
 
 export const getNotesById = async (noteId, token) => {

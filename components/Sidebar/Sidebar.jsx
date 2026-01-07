@@ -13,9 +13,12 @@ import {
   GraduationCap,
   BookOpen,FileCheck ,Image ,Folder,Bell,
   HelpCircle,
-  Newspaper
+  Newspaper,
+  Shield
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import tokenService from "../../src/auth/services/tokenService";
+import authService from "../../src/auth/services/authService";
 
 const Sidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,6 +32,19 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, path: "/" },
+    // Audit Logs - Only for SUPER_ADMIN
+    ...((() => {
+      const role = tokenService.getUserRole();
+      if (Array.isArray(role)) {
+        return role.some(r => String(r).toLowerCase() === 'super_admin');
+      }
+      return String(role || '').toLowerCase() === 'super_admin';
+    })() ? [{
+      name: "Audit Logs",
+      icon: <Shield size={20} />,
+      path: "/admin/audit-logs"
+    }] : []),
+
     {
       name: "Admin Users",
       icon: <Users size={20} />,
@@ -111,7 +127,18 @@ const Sidebar = () => {
     },
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
     { name: "Training", icon: <BookOpen size={18} />, path: "/training/add" },
-    { name: "Quiz Management", icon: <HelpCircle size={20} />, path: "/quiz" },
+    {
+      name: "Quiz Management",
+      icon: <HelpCircle size={20} />,
+      submenu: [
+        { name: "Quiz Dashboard", path: "/quiz" },
+        { name: "Categories", path: "/quiz/categories" },
+        { name: "Courses", path: "/quiz/courses" },
+        { name: "Question Sets", path: "/quiz/question-sets" },
+        { name: "Questions", path: "/quiz/questions" },
+        { name: "Quiz Results", path: "/quiz/results" },
+      ],
+    },
   ];
 
   const toggleSubmenu = (name) => {
@@ -121,13 +148,11 @@ const Sidebar = () => {
   const isActive = (path) => location.pathname === path;
   const isParentActive = (submenu) => submenu?.some((sub) => isActive(sub.path));
 
-  const handleLogout = () => {
-    // 1. Remove token (and anything auth-related)
-    localStorage.removeItem("token");
-    localStorage.removeItem("user"); // remove if you store user data
-    sessionStorage.clear(); // optional but clean
+  const handleLogout = async () => {
+    // Use authService to clear ALL token storage (memory, encrypted LS, legacy)
+    await authService.logout();
 
-    // 2. Redirect to login
+    // Redirect to login
     navigate("/admin/login", { replace: true });
   };
 

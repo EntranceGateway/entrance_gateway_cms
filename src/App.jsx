@@ -9,8 +9,7 @@ import useAxiosInterceptor from "../src/pages/login/axiosInterceptor";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminSettings from "./pages/admin/AdminSettings";
 
-// Import Quiz CSS
-import "./quiz/quiz.css";
+
 
 // Lazy load all pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -70,6 +69,7 @@ const AddQuestion = lazy(() => import("./pages/question/AddQuestion"));
 // Admin Users Management
 const AdminUsers = lazy(() => import("./pages/admin/users/AdminUsers"));
 const AddAdmin = lazy(() => import("./pages/admin/users/AddAdmin"));
+const AuditLogs = lazy(() => import("./pages/admin/audit/AuditLogs"));
 
 // Quiz CMS Pages
 const QuizDashboard = lazy(() => import("./quiz/pages/QuizDashboard"));
@@ -179,6 +179,9 @@ export default function App() {
 
                 {/* Navbar */}
                 <Route path="/navbar" element={<Navbar />} />
+
+                {/* Audit Logs - SUPER_ADMIN ONLY */}
+                <Route path="/admin/audit-logs" element={<AuditLogs />} />
 
               </Route>
             </Routes>
