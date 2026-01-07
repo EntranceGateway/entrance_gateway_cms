@@ -98,7 +98,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            <span className="font-bold">{log.action.replace(/_/g, " ")}:</span> {log.entityName || "Unknown Entity"}
+                            <span className="font-bold">{log.action.replace(/_/g, " ")}:</span> {log.entityName || `${log.entityType} #${log.entityId}`}
                           </p>
                           <p className="text-xs text-gray-500">
                             by {log.adminEmail} • {new Date(log.timestamp).toLocaleString()}
