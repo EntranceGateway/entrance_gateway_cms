@@ -77,7 +77,7 @@ export const deleteBlog = async (id, token) => {
 // --------------------------------------
 export const downloadBlogFile = async (id, token) => {
   try {
-    const response = await api.get(`/api/v1/blogs/${id}/download`, {
+    const response = await api.get(`/api/v1/blogs/${id}/file`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       responseType: "blob",
     });
@@ -91,5 +91,5 @@ export const downloadBlogFile = async (id, token) => {
 // Get Blog File URL (for inline viewing)
 // --------------------------------------
 export const getBlogFileUrl = (blogId) => {
-  return `https://api.entrancegateway.com/api/v1/blogs/getBlogFile/${blogId}`;
+  return `https://api.entrancegateway.com/api/v1/blogs/${blogId}/file`;
 };

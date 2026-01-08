@@ -1,7 +1,7 @@
 import React from "react";
-import PdfViewer from "../../../../components/pdfview/PdfViewer";
-import { getSingle, noteFile } from "../../../../http/fetchpdf";
 import { useParams } from "react-router-dom";
+import { noteFile } from "../../../../http/fetchpdf";
+import FileViewer from "../../../../components/FileViewer/FileViewer";
 import Layout from "../../../../../components/layout/Layout";
 
 const ViewNotePage = () => {
@@ -9,15 +9,17 @@ const ViewNotePage = () => {
   
   const token = localStorage.getItem("token");
 
+  // Build the complete URL using the noteFile function
+  const pdfUrl = noteFile(id);
+
   return (
     <Layout>
-    <div className="w-full h-screen">
-      <PdfViewer
-        noteId={id}
+    <div className="w-full h-screen bg-gray-100 p-4">
+      <FileViewer
+        fileUrl={pdfUrl}
         token={token}
-        fetchPdfBlob={getSingle} // pass your reusable API function
-        suburl={noteFile}
-        className="w-full h-screen"
+        fileName={`note-${id}`}
+        className="h-full bg-white rounded-lg shadow-sm"
       />
     </div>
     </Layout>

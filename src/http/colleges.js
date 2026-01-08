@@ -84,10 +84,9 @@ export const deleteColleges = async (id, token) => {
 export const addCourseToCollege = async (collegeId, courseId, token) => {
   try {
     return await api.post(
-      `/api/v1/colleges/college/add-course`,
+      `/api/v1/colleges/${collegeId}/courses/${courseId}`,
       null,
       {
-        params: { collegeId, courseId },
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
     );
@@ -111,8 +110,8 @@ export const searchColleges = async (params = {}, token) => {
 // Get colleges by course ID
 export const getCollegesByCourse = async (courseId, params = {}, token) => {
   try {
-    return await api.get("/api/v1/colleges/by-course", {
-      params: { courseId, ...params },
+    return await api.get(`/api/v1/colleges/by-course/${courseId}`, {
+      params,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch (err) {

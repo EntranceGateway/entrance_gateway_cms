@@ -63,7 +63,7 @@ export const getSyllabusByAffiliationCourseAndSemester = async (params = {}, tok
 // ===============================
 export const getSyllabusByCourseId = async (courseId, params = {}, token) => {
   try {
-    return await api.get(`/api/v1/syllabus/course/courseId`, {
+    return await api.get(`/api/v1/syllabus/by-course`, {
       params: { courseId, ...params },
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
@@ -92,7 +92,7 @@ export const getSyllabusById = async (id, token) => {
 // Get syllabus file (PDF)
 export const getSyllabusFile = async (syllabusId, token) => {
   try {
-    return await api.get(`/api/v1/syllabus/getSyllabusFile/${syllabusId}`, {
+    return await api.get(`/api/v1/syllabus/${syllabusId}/file`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       responseType: "blob", // PDF blob
     });

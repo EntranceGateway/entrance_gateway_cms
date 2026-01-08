@@ -4,17 +4,22 @@ import {
   getAllAdmins,
   deleteAdmin,
   updateAdminRole,
+  updateAdminDetails,
   ADMIN_ROLES,
 } from "../../../../http/adminget";
 import Pagination from "../../../../Verification/Pagination";
-import { Plus, Trash2, Shield, Mail, User, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Shield, Mail, User, ChevronDown, Edit2, X, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
+/**
+ * Main AdminTable Component
+ */
 const AdminTable = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [editingRole, setEditingRole] = useState(null);
+  const [editingAdmin, setEditingAdmin] = useState(null); // For Edit Modal
   const [sortBy, setSortBy] = useState("adminId");
   const [sortDir, setSortDir] = useState("asc");
   const PAGE_SIZE = 10;
@@ -23,7 +28,7 @@ const AdminTable = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // Check if current user is SUPER_ADMIN
-  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const isSuperAdmin = user?.role?.toUpperCase() === "SUPER_ADMIN";
 
   // Fetch Admins
   const fetchAdmins = async () => {
@@ -43,7 +48,6 @@ const AdminTable = () => {
       setTotalPages(responseData?.totalPages || 1);
     } catch (err) {
       console.error("Fetch Admins Error:", err);
-      // If getAllAdmins endpoint doesn't exist, show empty
       setAdmins([]);
     }
     setLoading(false);
@@ -54,11 +58,11 @@ const AdminTable = () => {
   }, [page, sortBy, sortDir]);
 
   // Delete Admin
-  const handleDelete = async (adminId) => {
-    if (!window.confirm("Are you sure you want to delete this admin?")) return;
+  const handleDelete = async (email) => {
+    if (!window.confirm(`Are you sure you want to delete admin with email: ${email}?`)) return;
 
     try {
-      await deleteAdmin(adminId, token);
+      await deleteAdmin(email, token);
       fetchAdmins();
     } catch (err) {
       console.error("Delete Admin Error:", err);
@@ -116,6 +120,19 @@ const AdminTable = () => {
             <strong>Note:</strong> Only Super Admins can add or delete admin users.
           </p>
         </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingAdmin && (
+        <EditAdminModal
+          admin={editingAdmin}
+          token={token}
+          onClose={() => setEditingAdmin(null)}
+          onSuccess={() => {
+            setEditingAdmin(null);
+            fetchAdmins();
+          }}
+        />
       )}
 
       {/* Table */}
@@ -233,9 +250,19 @@ const AdminTable = () => {
                       {isSuperAdmin && (
                         <td className="p-4">
                           <div className="flex items-center justify-center gap-2">
+                            {/* Edit Button */}
+                            <button
+                                onClick={() => setEditingAdmin(admin)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Edit Admin"
+                              >
+                                <Edit2 size={18} />
+                            </button>
+
+                            {/* Delete Button */}
                             {admin.email !== user?.email && (
                               <button
-                                onClick={() => handleDelete(admin.id || admin.adminId)}
+                                onClick={() => handleDelete(admin.email)} // Passing email for deletion
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Delete Admin"
                               >
@@ -266,6 +293,146 @@ const AdminTable = () => {
       </div>
     </div>
   );
+};
+
+/**
+ * Edit Admin Modal Component
+ */
+const EditAdminModal = ({ admin, token, onClose, onSuccess }) => {
+    const [form, setForm] = useState({
+        name: admin?.name || "",
+        email: admin?.email || "",
+        password: "", // Password is optional or required depending on validaton logic, but usually required for full update if API demands it. Based on prompt: data: "name, email, password".
+        // Assuming password is required for this specific update endpoint based on "request body: name, email, password" description.
+    });
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+
+        // Basic validation
+        if (!form.name || !form.email || !form.password) {
+            setError("All fields are required.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await updateAdminDetails(form, token);
+            onSuccess();
+        } catch (err) {
+             setError(typeof err === 'string' ? err : (err.message || "Failed to update admin"));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                {/* Header */}
+                <div className="flex justify-between items-center p-4 border-b bg-gray-50">
+                    <h3 className="text-lg font-semibold text-gray-800">Edit Admin User</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {error && (
+                        <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-start gap-2">
+                             <AlertCircle size={16} className="mt-0.5 shrink-0"/>
+                             <span>{error}</span>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <User size={16} />
+                            </span>
+                            <input
+                                type="text"
+                                name="name"
+                                value={form.name}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                                placeholder="Full Name"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                         <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <Mail size={16} />
+                            </span>
+                            <input
+                                type="email"
+                                name="email"
+                                value={form.email}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                                placeholder="Email Address"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <div className="relative">
+                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <Lock size={16} />
+                            </span>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                value={form.password}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                                placeholder="New Password"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Required for update</p>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {loading ? "Updating..." : "Update Admin"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
 };
 
 export default AdminTable;

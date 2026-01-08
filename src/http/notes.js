@@ -35,7 +35,7 @@ export const getNotes = async (params = {}, token) => {
 // ===============================
 export const getNotesByFilter = async (params = {}, token) => {
   try {
-    return await api.get("/api/v1/notes/getNotesBy/courseName/semester/affiliation", {
+    return await api.get("/api/v1/notes/by-course-semester-affiliation", {
       params,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });

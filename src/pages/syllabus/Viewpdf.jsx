@@ -1,20 +1,20 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import { getSingle, syllabusFile } from "../../http/fetchpdf";
-import PdfViewer from "../../components/pdfview/PdfViewer";
+import { syllabusFile } from "../../http/fetchpdf";
+import FileViewer from "../../components/FileViewer/FileViewer";
 
 const ViewSyllabus = () => {
-    const { id } = useParams();
+  const { id } = useParams();
   
   const token = localStorage.getItem("token");
+  const pdfUrl = syllabusFile(id);
 
   return (
-    <div className="w-full h-screen">
-      <PdfViewer
-        noteId={id}
+    <div className="w-full h-screen bg-gray-100">
+      <FileViewer
+        fileUrl={pdfUrl}
         token={token}
-        fetchPdfBlob={getSingle} // pass your reusable API function
-        suburl={syllabusFile}
+        fileName={`syllabus-${id}`}
         className="w-full h-screen"
       />
     </div>

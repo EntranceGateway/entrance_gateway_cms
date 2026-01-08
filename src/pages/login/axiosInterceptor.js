@@ -67,14 +67,17 @@ const useAxiosInterceptor = () => {
 
         // SECURITY: Set secure headers
         config.headers['X-Requested-With'] = 'XMLHttpRequest';
-        config.headers['Accept'] = 'application/json';
+        if (!config.headers['Accept']) {
+          config.headers['Accept'] = 'application/json';
+        }
 
         // SECURITY: Sanitize request body for non-GET requests
-        // Skip for FormData (file uploads)
+        // Skip for FormData (file uploads) and Blobs
         if (
           config.data && 
           typeof config.data === 'object' && 
-          !(config.data instanceof FormData)
+          !(config.data instanceof FormData) &&
+          !(config.data instanceof Blob)
         ) {
           // Don't sanitize password fields
           const { password, confirmPassword, ...rest } = config.data;
@@ -107,15 +110,14 @@ const useAxiosInterceptor = () => {
      */
     const responseInterceptor = API.interceptors.response.use(
       (response) => {
-        // SECURITY: Validate response content type
         const contentType = response.headers['content-type'];
-        if (contentType && !contentType.includes('application/json')) {
-          console.warn('Unexpected response content type:', contentType);
-        }
-
+        
         // SECURITY: Sanitize response data
-        // Only sanitize if it's JSON object data
+        // Only sanitize if it's JSON object data and NOT a Blob/File
+        const isJson = contentType && contentType.includes('application/json');
+        
         if (
+          isJson &&
           response.data && 
           typeof response.data === 'object' &&
           response.config?.url && 
@@ -136,6 +138,13 @@ const useAxiosInterceptor = () => {
 
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401) {
+          // IMPORTANT: Skip token refresh for auth endpoints (login, register, refresh)
+          // These should pass errors directly to the calling service
+          const isAuthEndpoint = originalRequest?.url?.includes('/auth/');
+          if (isAuthEndpoint) {
+            return Promise.reject(error);
+          }
+
           // Check if this is already a retry
           if (originalRequest._retry) {
             // Token refresh already tried - force logout

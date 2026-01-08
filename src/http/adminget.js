@@ -43,9 +43,10 @@ export const registerAdmin = async (data, token) => {
 // --------------------------------------
 // Delete Admin (SUPER_ADMIN only)
 // --------------------------------------
-export const deleteAdmin = async (adminId, token) => {
+export const deleteAdmin = async (email, token) => {
   try {
-    return await api.delete(`/api/v1/admin/deleteAdmin/${adminId}`, {
+    return await api.delete("/api/v1/admin/", {
+      data: { email },
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch (err) {
@@ -63,6 +64,19 @@ export const updateAdminRole = async (adminId, role, token) => {
     });
   } catch (err) {
     throw err.response?.data || { error: "Failed to update admin role." };
+  }
+};
+
+// --------------------------------------
+// Update Admin Details (SUPER_ADMIN only)
+// --------------------------------------
+export const updateAdminDetails = async (data, token) => {
+  try {
+    return await api.put("/api/v1/admin/", data, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (err) {
+    throw err.response?.data || { error: "Failed to update admin details." };
   }
 };
 

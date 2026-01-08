@@ -87,7 +87,8 @@ export const RBAC_CONFIG = {
 
 // API endpoints configuration
 export const API_ENDPOINTS = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://api.entrancegateway.com',
+  // Use relative path in DEV to use Vite proxy, absolute URL in PROD
+  baseUrl: import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || 'https://api.entrancegateway.com'),
   auth: {
     login: '/api/v1/auth/login',
     logout: '/api/v1/auth/logout',

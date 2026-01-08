@@ -101,7 +101,8 @@ const PdfViewer = ({
   noteId,
   token,
   fetchPdfBlob,
-  suburl,
+  pdfFileUrl,  // New: Complete URL (preferred)
+  suburl,      // Legacy: Base URL that gets noteId appended
   className,
   enableOfflineCache = false, // Only cache if explicitly enabled
 }) => {
@@ -158,7 +159,9 @@ const PdfViewer = ({
 
         // If not cached, fetch via streaming
         if (!blob) {
-          blob = await fetchPdfBlob(`${suburl}/${noteId}`, token);
+          // Use pdfFileUrl if provided, otherwise fall back to legacy suburl format
+          const fetchUrl = pdfFileUrl || `${suburl}/${noteId}`;
+          blob = await fetchPdfBlob(fetchUrl, token);
 
           if (!isMounted) return;
 
@@ -205,7 +208,7 @@ const PdfViewer = ({
         pdfUrlRef.current = null;
       }
     };
-  }, [noteId, token, fetchPdfBlob, suburl, enableOfflineCache]);
+  }, [noteId, token, fetchPdfBlob, pdfFileUrl, suburl, enableOfflineCache]);
 
   /* ---------- Responsive Width ---------- */
   const calculatePageWidth = useCallback(() => {

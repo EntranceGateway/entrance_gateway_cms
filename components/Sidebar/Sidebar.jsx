@@ -158,32 +158,7 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Custom Scrollbar Styles - Add this inside your component or in globals */}
-      <style jsx>{`
-        @layer utilities {
-          .scrollbar::-webkit-scrollbar {
-            width: 8px;
-          }
-          .scrollbar::-webkit-scrollbar-track {
-            background: #111827;
-            border-radius: 4px;
-          }
-          .scrollbar::-webkit-scrollbar-thumb {
-            background: #4b5563;
-            border-radius: 4px;
-            border: 2px solid #111827;
-            transition: all 0.3s ease;
-          }
-          .scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #6b7280;
-            box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
-          }
-          .scrollbar {
-            scrollbar-width: thin;
-            scrollbar-color: #4b5563 #111827;
-          }
-        }
-      `}</style>
+
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-900 text-white shadow-2xl border-b border-gray-800">

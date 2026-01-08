@@ -77,7 +77,7 @@ export const deleteNotice = async (id, token) => {
 // --------------------------------------
 export const downloadNoticeFile = async (id, token) => {
   try {
-    const response = await api.get(`/api/v1/notices/getNoticeFile/${id}`, {
+    const response = await api.get(`/api/v1/notices/${id}/file`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       responseType: "blob",
     });
@@ -91,5 +91,5 @@ export const downloadNoticeFile = async (id, token) => {
 // Get Notice File URL (for inline viewing)
 // --------------------------------------
 export const getNoticeFileUrl = (id) => {
-  return `https://api.entrancegateway.com/api/v1/notices/getNoticeFile/${id}`;
+  return `https://api.entrancegateway.com/api/v1/notices/${id}/file`;
 };
