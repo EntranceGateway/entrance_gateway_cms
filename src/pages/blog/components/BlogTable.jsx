@@ -1,81 +1,48 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getBlogs, deleteBlog, getBlogFileUrl } from "../../../http/blog";
-import Pagination from "../../../Verification/Pagination";
-import { Plus, Edit, Trash2, Eye, Calendar, Mail, Phone, Download } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useBlogs, useDeleteBlog } from "@/hooks/useBlogs";
+import { getBlogFileUrl } from "@/http/blog";
+import DataTable from "@/components/common/DataTable";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
+import { Plus, Edit, Trash2, Eye, Calendar, Mail, Phone, Search } from "lucide-react";
 
 const BlogTable = () => {
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const PAGE_SIZE = 10;
-
+  const [pageSize] = useState(10);
   const [sortField, setSortField] = useState("createdDate");
   const [sortOrder, setSortOrder] = useState("desc");
-
-  // Search filter
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteId, setDeleteId] = useState(null);
 
-  const token = localStorage.getItem("token");
+  // Fetch Blogs using hook
+  const { data, isLoading, error } = useBlogs({
+    page,
+    size: pageSize,
+    sortBy: sortField,
+    sortDir: sortOrder,
+  });
 
-  // Fetch Blogs
-  const fetchBlogs = async () => {
-    setLoading(true);
+  const deleteMutation = useDeleteBlog();
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      const params = {
-        page,
-        size: PAGE_SIZE,
-        sortBy: sortField,
-        sortDir: sortOrder,
-      };
-
-      const res = await getBlogs(params, token);
-      const responseData = res.data.data || res.data;
-      const data = responseData.content || [];
-      setBlogs(data);
-      setTotalPages(responseData.totalPages || 0);
-    } catch (err) {
-      console.error("Fetch Blogs Error:", err);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchBlogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sortField, sortOrder]);
-
-  // Delete Blog
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this blog?")) return;
-
-    try {
-      await deleteBlog(id, token);
-      fetchBlogs();
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
     } catch (err) {
       console.error("Delete Blog Error:", err);
     }
   };
 
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    setPage(newPage - 1);
-  };
-
-  // Filter blogs by search term (client-side)
-  const filteredBlogs = blogs.filter((blog) =>
-    blog.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Truncate text helper
+  // Helper logic
   const truncate = (text, maxLength = 50) => {
     if (!text) return "-";
     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   };
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -85,211 +52,182 @@ const BlogTable = () => {
     });
   };
 
-  return (
-    <div className="w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Blogs</h1>
-        <Link
-          to="/blogs/add"
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-all duration-200"
+  // Client-side filtering as per original requirement
+  const filteredBlogs = useMemo(() => {
+    const blogs = data?.content || [];
+    if (!searchTerm) return blogs;
+    return blogs.filter((blog) =>
+      blog.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [data, searchTerm]);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: "image",
+        label: "Image",
+        render: (row) =>
+          row.imageName ? (
+            <img
+              src={getBlogFileUrl(row.blogId)}
+              alt={row.title}
+              className="h-10 w-14 object-cover rounded-lg border border-gray-100"
+            />
+          ) : (
+            <div className="h-10 w-14 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 italic text-[10px] text-gray-400">
+              No image
+            </div>
+          ),
+      },
+      {
+        key: "title",
+        label: "Title",
+        sortable: true,
+        render: (row) => <div className="font-semibold text-gray-900">{truncate(row.title, 40)}</div>,
+      },
+      {
+        key: "content",
+        label: "Content Snippet",
+        render: (row) => <div className="text-gray-500">{truncate(row.content, 50)}</div>,
+      },
+      {
+        key: "contact",
+        label: "Contact",
+        render: (row) => (
+          <div className="text-xs space-y-1">
+            {row.contactEmail && (
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Mail size={12} className="text-indigo-400" />
+                <span>{truncate(row.contactEmail, 20)}</span>
+              </div>
+            )}
+            {row.contactPhone && (
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Phone size={12} className="text-green-400" />
+                <span>{row.contactPhone}</span>
+              </div>
+            )}
+            {!row.contactEmail && !row.contactPhone && <span className="text-gray-300">-</span>}
+          </div>
+        ),
+      },
+      {
+        key: "createdDate",
+        label: "Published",
+        sortable: true,
+        render: (row) => (
+          <div className="flex items-center gap-1.5 text-gray-600">
+            <Calendar size={14} className="text-gray-400" />
+            <span>{formatDate(row.createdDate)}</span>
+          </div>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/blogs/view/${row.blogId}`}
+              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="View Blog"
+            >
+              <Eye size={18} />
+            </Link>
+            <Link
+              to={`/blogs/edit/${row.blogId}`}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="Edit Blog"
+            >
+              <Edit size={18} />
+            </Link>
+            <button
+              onClick={() => setDeleteId(row.blogId)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete Blog"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2">Failed to load blogs</h3>
+        <p>{error.message || "An unexpected error occurred."}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
         >
-          <Plus size={20} />
-          Add New Blog
-        </Link>
+          Retry
+        </button>
       </div>
+    );
+  }
 
-      {/* Filters */}
-      <div className="bg-white shadow-md rounded-lg p-4 mb-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by title..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PageHeader
+        title="Blog Management"
+        breadcrumbs={[{ label: "Blogs" }]}
+        actions={[
+          {
+            label: "Create New Post",
+            onClick: () => navigate("/blogs/add"),
+            icon: <Plus size={18} />,
+            variant: "primary",
+          },
+        ]}
+      />
 
-          {/* Sort Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-            <select
-              value={sortField}
-              onChange={(e) => {
-                setSortField(e.target.value);
-                setPage(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="createdDate">Created Date</option>
-              <option value="title">Title</option>
-            </select>
-          </div>
-
-          {/* Sort Order */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
-            <select
-              value={sortOrder}
-              onChange={(e) => {
-                setSortOrder(e.target.value);
-                setPage(0);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="desc">Newest First</option>
-              <option value="asc">Oldest First</option>
-            </select>
-          </div>
+      <div className="mb-8 relative max-w-md group">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <Search size={18} className="text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
         </div>
+        <input
+          type="text"
+          placeholder="Search articles by title..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm group-hover:border-gray-300"
+        />
       </div>
 
-      {/* Table */}
-      <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                {["Image", "Title", "Content", "Contact", "Meta Title", "Date", "Actions"].map(
-                  (col) => (
-                    <th
-                      key={col}
-                      className="p-4 text-left font-medium text-gray-700"
-                    >
-                      {col}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="p-8 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <span className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-600 border-t-transparent"></span>
-                      Loading...
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredBlogs.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-8 text-center text-gray-500">
-                    No blogs found.
-                  </td>
-                </tr>
-              ) : (
-                filteredBlogs.map((blog) => (
-                  <tr
-                    key={blog.blogId}
-                    className="border-b hover:bg-gray-50 transition-colors"
-                  >
-                    {/* Image */}
-                    <td className="p-4">
-                      {blog.imageName ? (
-                        <img
-                          src={getBlogFileUrl(blog.blogId)}
-                          alt={blog.title}
-                          className="h-12 w-16 object-cover rounded-md"
-                        />
-                      ) : (
-                        <div className="h-12 w-16 bg-gray-100 rounded-md flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No image</span>
-                        </div>
-                      )}
-                    </td>
+      {isLoading ? (
+        <LoadingState type="table" />
+      ) : (
+        <DataTable
+          data={filteredBlogs}
+          columns={columns}
+          loading={isLoading}
+          pagination={{
+            currentPage: page,
+            totalPages: data?.totalPages || 0,
+            totalItems: data?.totalItems || 0,
+            pageSize: pageSize,
+          }}
+          onPageChange={setPage}
+          onSort={(key, dir) => {
+            setSortField(key);
+            setSortOrder(dir);
+          }}
+        />
+      )}
 
-                    {/* Title */}
-                    <td className="p-4 font-medium text-gray-900">
-                      {truncate(blog.title, 40)}
-                    </td>
-
-                    {/* Content */}
-                    <td className="p-4 text-gray-600">
-                      {truncate(blog.content, 60)}
-                    </td>
-
-                    {/* Contact */}
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        {blog.contactEmail && (
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <Mail size={12} />
-                            {truncate(blog.contactEmail, 20)}
-                          </div>
-                        )}
-                        {blog.contactPhone && (
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <Phone size={12} />
-                            {blog.contactPhone}
-                          </div>
-                        )}
-                        {!blog.contactEmail && !blog.contactPhone && (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Meta Title */}
-                    <td className="p-4 text-gray-600">
-                      {truncate(blog.metaTitle, 30)}
-                    </td>
-
-                    {/* Date */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-1 text-gray-600">
-                        <Calendar size={14} />
-                        {formatDate(blog.createdDate)}
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          to={`/blogs/view/${blog.blogId}`}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="View"
-                        >
-                          <Eye size={18} />
-                        </Link>
-                        <Link
-                          to={`/blogs/edit/${blog.blogId}`}
-                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={18} />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(blog.blogId)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t">
-            <Pagination
-              currentPage={page + 1}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        )}
-      </div>
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Blog Post"
+        message="Are you sure you want to delete this blog? All associated content and images will be permanently removed."
+        confirmText="Yes, Proceed"
+        loading={deleteMutation.isLoading}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 };

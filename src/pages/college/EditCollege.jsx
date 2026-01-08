@@ -2,11 +2,10 @@ import CollegeForm from "./components/form/Form";
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getSingle, updateColleges } from "../../http/colleges";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 
- function EditCollege() {
+function EditCollege() {
   const { id } = useParams();
-  const token = localStorage.getItem("token");
 
   const [collegeData, setCollegeData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +14,7 @@ import Layout from "../../../components/layout/Layout";
   // Fetch single college
   const fetchCollege = async () => {
     try {
-      const response = await getSingle(id, token);
+      const response = await getSingle(id);
       if (response.status === 200) {
         setCollegeData(response.data.data);
         console.log("College data loaded");
@@ -37,7 +36,7 @@ import Layout from "../../../components/layout/Layout";
   // Handle form submission (edit mode doesn't update logo/images - use JSON)
   const handleUpdate = async (formData, logo, images) => {
     try {
-      const res = await updateColleges(id, formData, token);
+      const res = await updateColleges(id, formData);
       if (res.status === 200) {
         alert("College updated successfully");
       } else {

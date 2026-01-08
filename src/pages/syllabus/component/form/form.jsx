@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+
 import { useParams, useNavigate } from "react-router-dom";
 import { getCourses } from "../../../../http/course";
 
@@ -88,14 +89,14 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
 
-  const token = localStorage.getItem("token");
+
 
   // Fetch all courses on mount
   useEffect(() => {
     const fetchAllCourses = async () => {
       setLoadingCourses(true);
       try {
-        const res = await getCourses({ size: 100 }, token);
+        const res = await getCourses({ size: 100 });
         const data = res.data.data?.content || res.data.data || [];
         setAllCourses(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -105,7 +106,7 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
       setLoadingCourses(false);
     };
     fetchAllCourses();
-  }, [token]);
+  }, []);
 
   // Filter courses when affiliation changes
   useEffect(() => {
@@ -150,8 +151,7 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // ------------------------------
   const inputClass = useCallback(
     (field) =>
-      `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-        errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"
+      `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"
       }`,
     [errors]
   );
@@ -161,7 +161,7 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // ------------------------------
   const handleChange = (e) => {
     const { name, type, files, value } = e.target;
-    
+
     if (name === "affiliation") {
       // Reset courseId when affiliation changes
       setForm((prev) => ({
@@ -175,7 +175,7 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
         [name]: type === "file" ? files[0] || null : String(value),
       }));
     }
-    
+
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -331,8 +331,8 @@ const SyllabusForm = ({ mode = "add", initialData = null, onSubmit }) => {
                       {!form.affiliation
                         ? "Select affiliation first"
                         : loadingCourses
-                        ? "Loading courses..."
-                        : "Select a course"}
+                          ? "Loading courses..."
+                          : "Select a course"}
                     </option>
                     {courses.map((course) => (
                       <option key={course.courseId} value={course.courseId}>

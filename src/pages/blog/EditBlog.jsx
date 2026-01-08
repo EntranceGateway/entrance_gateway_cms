@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+
 import { useParams } from "react-router-dom";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import BlogForm from "./components/BlogForm";
 import { getBlogById, updateBlog } from "../../http/blog";
-import Spinner from "../../../components/Spinner/Spinner";
+import Spinner from "@/components/common/Spinner";
 
 const EditBlog = () => {
   const { id } = useParams();
@@ -11,12 +12,12 @@ const EditBlog = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await getBlogById(id, token);
+        const res = await getBlogById(id);
         setBlog(res.data.data);
       } catch (err) {
         setError(err.error || "Failed to load blog");
@@ -29,7 +30,7 @@ const EditBlog = () => {
   }, [id, token]);
 
   const handleSubmit = async (formData) => {
-    await updateBlog(id, formData, token);
+    await updateBlog(id, formData);
   };
 
   if (loading) {

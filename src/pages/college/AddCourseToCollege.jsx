@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { BookOpen, Building2, Plus, X, Check, Loader2 } from "lucide-react";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import { getSingle, addCourseToCollege } from "../../http/colleges";
 import { getCourses } from "../../http/course";
 
 const AddCourseToCollege = () => {
   const { id: collegeId } = useParams();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   const [college, setCollege] = useState(null);
   const [allCourses, setAllCourses] = useState([]);
@@ -21,7 +20,7 @@ const AddCourseToCollege = () => {
   // Fetch college details
   const fetchCollege = async () => {
     try {
-      const res = await getSingle(collegeId, token);
+      const res = await getSingle(collegeId);
       if (res.status === 200) {
         setCollege(res.data.data);
       }
@@ -34,7 +33,7 @@ const AddCourseToCollege = () => {
   // Fetch all courses
   const fetchCourses = async () => {
     try {
-      const res = await getCourses({ page: 0, size: 100 }, token);
+      const res = await getCourses({ page: 0, size: 100 });
       if (res.status === 200) {
         setAllCourses(res.data.data.content || []);
       }
@@ -70,7 +69,7 @@ const AddCourseToCollege = () => {
     setSuccess("");
 
     try {
-      const res = await addCourseToCollege(collegeId, selectedCourseId, token);
+      const res = await addCourseToCollege(collegeId, selectedCourseId);
       if (res.status === 200) {
         setSuccess("Course added successfully!");
         setSelectedCourseId("");
@@ -136,13 +135,12 @@ const AddCourseToCollege = () => {
               <div>
                 <span className="text-xs text-gray-500">Priority</span>
                 <span
-                  className={`inline-block px-2 py-1 text-xs rounded-md font-semibold ${
-                    college?.priority === "HIGH"
-                      ? "bg-red-100 text-red-700"
-                      : college?.priority === "MEDIUM"
+                  className={`inline-block px-2 py-1 text-xs rounded-md font-semibold ${college?.priority === "HIGH"
+                    ? "bg-red-100 text-red-700"
+                    : college?.priority === "MEDIUM"
                       ? "bg-yellow-100 text-yellow-700"
                       : "bg-green-100 text-green-700"
-                  }`}
+                    }`}
                 >
                   {college?.priority}
                 </span>
@@ -189,11 +187,10 @@ const AddCourseToCollege = () => {
               <button
                 onClick={handleAddCourse}
                 disabled={submitting || !selectedCourseId}
-                className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 ${
-                  submitting || !selectedCourseId
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
+                className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 ${submitting || !selectedCourseId
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
               >
                 {submitting ? (
                   <>

@@ -1,4 +1,4 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import NoticeTable from "./components/NoticeTable";
 
 const NoticePage = () => {

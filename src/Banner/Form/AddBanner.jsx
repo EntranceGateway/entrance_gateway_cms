@@ -1,12 +1,12 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import BannerForm from "./BannerForm";
 
-function AddBanner(){
-    return(
+function AddBanner() {
+    return (
         <>
-        <Layout>
-            <BannerForm/>
-        </Layout>
+            <Layout>
+                <BannerForm />
+            </Layout>
         </>
     )
 }

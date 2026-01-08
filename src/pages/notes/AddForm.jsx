@@ -1,13 +1,11 @@
 import React from "react";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import { createNote } from "../../http/notes";
-import NoteForm from "./components/form.jsx/NotesFrom";
-
+import NoteForm from "./components/form/NotesFrom";
 const CreateNote = () => {
-  const token = localStorage.getItem("token");
 
   const handleAddNote = async (formData) => {
-    return await createNote(formData, token);
+    return await createNote(formData);
   };
 
   return (

@@ -3,14 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import STATUSES from "../../globals/status/statuses";
 import Form from "./form/login";
-import { 
-  login, 
+import {
+  login,
   setStatus,
   selectAuthStatus,
   selectAuthError,
   selectIsAuthenticated,
   selectLockoutStatus,
-} from "../../../store/authSlice";
+} from "@/store/authSlice";
 import tokenService from "../../auth/services/tokenService";
 
 /**
@@ -21,7 +21,7 @@ const Login = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const hasCheckedAuth = useRef(false);
-  
+
   // Redux selectors
   const status = useSelector(selectAuthStatus);
   const error = useSelector(selectAuthError);
@@ -59,7 +59,7 @@ const Login = () => {
   useEffect(() => {
     if (hasCheckedAuth.current) return;
     hasCheckedAuth.current = true;
-    
+
     // Check authentication using the same service as ProtectedRoute
     // This prevents potential loops if one storage method fails while the other exists
     if (tokenService.isAuthenticated()) {
@@ -70,8 +70,8 @@ const Login = () => {
   const displayError = error || sessionError;
 
   return (
-    <Form 
-      type="Login" 
+    <Form
+      type="Login"
       onSubmit={handleLogin}
       error={status === STATUSES.ERROR ? displayError : sessionError}
       lockoutStatus={lockoutStatus}

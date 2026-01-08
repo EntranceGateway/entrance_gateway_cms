@@ -1,91 +1,105 @@
-import { useState, useEffect } from 'react';
-import Layout from '../../../components/layout/Layout';
-import { BookOpen } from 'lucide-react';
-import quizApi from '../services/quizApi';
-import Pagination from '../../Verification/Pagination';
+import React, { useState, useMemo } from "react";
+import { BookOpen, Search, Filter } from "lucide-react";
+import { useQuizCourses } from "@/hooks/useQuiz";
+import DataTable from "@/components/common/DataTable";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
+import Layout from "@/components/layout/Layout";
 
 const QuizCourses = () => {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(0);
   const [pageSize] = useState(10);
+  const [sortField, setSortField] = useState("courseName");
+  const [sortOrder, setSortOrder] = useState("asc");
 
-  const loadCourses = async () => {
-    try {
-      setLoading(true);
-      const response = await quizApi.getCourses(currentPage, pageSize, 'courseName', 'asc');
-      setCourses(response.data.data.content || []);
-      setTotalPages(response.data.data.totalPages || 1);
-    } catch (error) {
-      console.error('Error loading courses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fetch Quiz Courses using hook
+  const { data, isLoading, error } = useQuizCourses({
+    page,
+    size: pageSize,
+    sortBy: sortField,
+    sortDir: sortOrder,
+  });
 
-  useEffect(() => {
-    loadCourses();
-  }, [currentPage, pageSize]);
+  const columns = useMemo(
+    () => [
+      {
+        key: "courseName",
+        label: "Course Name",
+        sortable: true,
+        render: (row) => (
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <BookOpen size={16} />
+            </div>
+            <span className="font-bold text-gray-900">{row.courseName}</span>
+          </div>
+        )
+      },
+      {
+        key: "categoryName",
+        label: "Category",
+        render: (row) => (
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+            {row.categoryName || "Uncategorized"}
+          </span>
+        )
+      },
+      {
+        key: "description",
+        label: "Description",
+        render: (row) => (
+          <p className="text-gray-500 text-xs italic max-w-sm" title={row.description}>
+            {row.description || "No description provided."}
+          </p>
+        )
+      }
+    ],
+    []
+  );
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2">Failed to load quiz courses</h3>
+        <p>{error.message || "An unexpected error occurred."}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <Layout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <BookOpen size={24} className="text-indigo-600" />
-          Quiz Courses
-        </h1>
-        <p className="text-gray-500 mt-1">View courses available for quizzes (managed via main Courses section)</p>
-      </div>
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <PageHeader
+          title="Quiz Courses"
+          breadcrumbs={[{ label: "Quiz", path: "/quiz" }, { label: "Courses" }]}
+          description="Review courses available for quizzes (managed via main Courses section)"
+        />
 
-      {/* Table */}
-      <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="p-4 text-left font-medium text-gray-700">Course Name</th>
-                <th className="p-4 text-left font-medium text-gray-700">Category</th>
-                <th className="p-4 text-left font-medium text-gray-700">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={3} className="p-8 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <span className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-600 border-t-transparent"></span>
-                      Loading...
-                    </div>
-                  </td>
-                </tr>
-              ) : courses.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="p-8 text-center text-gray-500">
-                    No courses found.
-                  </td>
-                </tr>
-              ) : (
-                courses.map((course) => (
-                  <tr key={course.courseId} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="p-4 font-medium text-gray-900">{course.courseName}</td>
-                    <td className="p-4 text-gray-600">{course.categoryName || '-'}</td>
-                    <td className="p-4 text-gray-600">{course.description || '-'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="p-4 border-t">
-            <Pagination
-              page={currentPage + 1}
-              totalPages={totalPages}
-              onPageChange={(page) => setCurrentPage(page - 1)}
-            />
-          </div>
+        {isLoading ? (
+          <LoadingState type="table" />
+        ) : (
+          <DataTable
+            data={data?.content || []}
+            columns={columns}
+            loading={isLoading}
+            pagination={{
+              currentPage: page,
+              totalPages: data?.totalPages || 0,
+              totalItems: data?.totalItems || 0,
+              pageSize: pageSize,
+            }}
+            onPageChange={setPage}
+            onSort={(key, dir) => {
+              setSortField(key);
+              setSortOrder(dir);
+            }}
+          />
         )}
       </div>
     </Layout>

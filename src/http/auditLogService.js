@@ -5,6 +5,7 @@
  */
 
 import API from './index';
+import { handleApiError } from "./utils/errorHandler";
 import { API_ENDPOINTS } from '../auth/config/securityConfig';
 
 // Define audit log specific endpoints if not in securityConfig yet
@@ -25,10 +26,14 @@ const AUDIT_ENDPOINTS = {
  * @returns {Promise<Object>} Response data
  */
 export const getAllAuditLogs = async ({ page = 0, size = 20, sortBy = 'timestamp', sortDir = 'desc' } = {}) => {
-  const response = await API.get(AUDIT_ENDPOINTS.base, {
-    params: { page, size, sortBy, sortDir }
-  });
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.base, {
+      params: { page, size, sortBy, sortDir }
+    });
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 /**
@@ -37,8 +42,12 @@ export const getAllAuditLogs = async ({ page = 0, size = 20, sortBy = 'timestamp
  * @returns {Promise<Object>} Response data
  */
 export const getAuditLogById = async (id) => {
-  const response = await API.get(AUDIT_ENDPOINTS.byId(id));
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.byId(id));
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 /**
@@ -48,10 +57,14 @@ export const getAuditLogById = async (id) => {
  * @returns {Promise<Object>} Response data
  */
 export const getAuditLogsByAdmin = async (email, { page = 0, size = 20, sortBy = 'timestamp', sortDir = 'desc' } = {}) => {
-  const response = await API.get(AUDIT_ENDPOINTS.byAdmin, {
-    params: { email, page, size, sortBy, sortDir }
-  });
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.byAdmin, {
+      params: { email, page, size, sortBy, sortDir }
+    });
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 /**
@@ -60,10 +73,14 @@ export const getAuditLogsByAdmin = async (email, { page = 0, size = 20, sortBy =
  * @returns {Promise<Object>} Response data
  */
 export const getAuditLogsByAction = async (action) => {
-  const response = await API.get(AUDIT_ENDPOINTS.byAction, {
-    params: { action }
-  });
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.byAction, {
+      params: { action }
+    });
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 /**
@@ -72,10 +89,14 @@ export const getAuditLogsByAction = async (action) => {
  * @returns {Promise<Object>} Response data
  */
 export const getAuditLogsByEntity = async (entityType) => {
-  const response = await API.get(AUDIT_ENDPOINTS.byEntity, {
-    params: { entityType }
-  });
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.byEntity, {
+      params: { entityType }
+    });
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 /**
@@ -85,10 +106,14 @@ export const getAuditLogsByEntity = async (entityType) => {
  * @returns {Promise<Object>} Response data
  */
 export const getAuditLogsByDateRange = async (startDate, endDate) => {
-  const response = await API.get(AUDIT_ENDPOINTS.byDateRange, {
-    params: { startDate, endDate }
-  });
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.byDateRange, {
+      params: { startDate, endDate }
+    });
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 /**
@@ -96,8 +121,12 @@ export const getAuditLogsByDateRange = async (startDate, endDate) => {
  * @returns {Promise<Object>} Response data
  */
 export const getLoginAttempts = async () => {
-  const response = await API.get(AUDIT_ENDPOINTS.loginAttempts);
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.loginAttempts);
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 /**
@@ -105,8 +134,12 @@ export const getLoginAttempts = async () => {
  * @returns {Promise<Object>} Response data
  */
 export const getAuditActions = async () => {
-  const response = await API.get(AUDIT_ENDPOINTS.actions);
-  return response.data;
+  try {
+    const response = await API.get(AUDIT_ENDPOINTS.actions);
+    return response.data;
+  } catch (err) {
+    handleApiError(err);
+  }
 };
 
 export default {

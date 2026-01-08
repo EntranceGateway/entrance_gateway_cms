@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import OldQuestionForm from "./component/form/OldQuestionForm";
 import { updateOldQuestion, getOldQuestions } from "../../http/oldQuestionCollection";
 
@@ -10,7 +10,7 @@ const EditOldQuestion = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     const fetchOldQuestion = async () => {
@@ -18,10 +18,10 @@ const EditOldQuestion = () => {
         // Fetch the old question data
         // Note: You may need a specific endpoint to get a single old question by ID
         // For now, we'll try to get it from the list endpoint with a filter
-        const res = await getOldQuestions({}, token);
+        const res = await getOldQuestions({});
         const data = res.data.content || res.data.data?.content || [];
         const question = data.find((q) => q.id === id);
-        
+
         if (question) {
           setInitialData(question);
         } else {
@@ -39,7 +39,7 @@ const EditOldQuestion = () => {
 
   const handleUpdateOldQuestion = async (formData) => {
     try {
-      const res = await updateOldQuestion(id, formData, token);
+      const res = await updateOldQuestion(id, formData);
       return res.data;
     } catch (err) {
       throw err;

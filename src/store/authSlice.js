@@ -4,10 +4,10 @@
  */
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import STATUSES from '../src/globals/status/statuses';
-import authService from '../src/auth/services/authService';
-import tokenService from '../src/auth/services/tokenService';
-import rateLimitService from '../src/auth/services/rateLimitService';
+import STATUSES from '@/globals/status/statuses';
+import authService from '@/auth/services/authService';
+import tokenService from '@/auth/services/tokenService';
+import rateLimitService from '@/auth/services/rateLimitService';
 
 /**
  * Initial state with security-focused properties
@@ -17,23 +17,23 @@ const initialState = {
   user: null,
   userId: null,
   userRole: null,
-  
+
   // Authentication status
   status: null,
   isAuthenticated: false,
-  
+
   // Error handling
   error: null,
   errorCode: null,
-  
+
   // Rate limiting state
   lockoutStatus: null,
   attemptsRemaining: null,
-  
+
   // Token state (without storing actual tokens in Redux)
   tokenExpiry: null,
   needsRefresh: false,
-  
+
   // Session state
   lastActivity: null,
   sessionValid: true,
@@ -47,7 +47,7 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     const result = await authService.login(credentials);
-    
+
     if (!result.success) {
       return rejectWithValue({
         error: result.error,
@@ -55,7 +55,7 @@ export const login = createAsyncThunk(
         lockoutStatus: result.lockoutStatus,
       });
     }
-    
+
     return result;
   }
 );
@@ -81,7 +81,7 @@ export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
   async (_, { rejectWithValue }) => {
     const result = await authService.refreshAccessToken();
-    
+
     if (!result.success) {
       if (result.requiresLogin) {
         // Force logout on refresh failure
@@ -92,7 +92,7 @@ export const refreshToken = createAsyncThunk(
       }
       return rejectWithValue({ error: result.error });
     }
-    
+
     return result;
   }
 );
@@ -105,14 +105,14 @@ export const validateSession = createAsyncThunk(
   'auth/validateSession',
   async (_, { rejectWithValue }) => {
     const result = await authService.validateSession();
-    
+
     if (!result.valid) {
       return rejectWithValue({
         error: result.error,
         requiresLogin: result.requiresLogin,
       });
     }
-    
+
     return result;
   }
 );
@@ -130,14 +130,14 @@ const authSlice = createSlice({
     setStatus(state, action) {
       state.status = action.payload;
     },
-    
+
     /**
      * Set error message
      */
     setError(state, action) {
       state.error = action.payload;
     },
-    
+
     /**
      * Set user data
      * SECURITY: Sanitized before storage
@@ -145,7 +145,7 @@ const authSlice = createSlice({
     setUser(state, action) {
       state.user = action.payload;
     },
-    
+
     /**
      * Update last activity timestamp
      * SECURITY: Used for session timeout detection
@@ -153,14 +153,14 @@ const authSlice = createSlice({
     updateLastActivity(state) {
       state.lastActivity = Date.now();
     },
-    
+
     /**
      * Set session validity
      */
     setSessionValid(state, action) {
       state.sessionValid = action.payload;
     },
-    
+
     /**
      * Reset state on logout
      * SECURITY: Complete state cleanup
@@ -168,7 +168,7 @@ const authSlice = createSlice({
     resetState(state) {
       Object.assign(state, initialState);
     },
-    
+
     /**
      * Update lockout status from rate limiting
      */
@@ -177,7 +177,7 @@ const authSlice = createSlice({
       state.lockoutStatus = status.isLockedOut ? status : null;
       state.attemptsRemaining = status.attemptsRemaining;
     },
-    
+
     /**
      * Restore auth state from token service
      * SECURITY: Called on app init to restore session
@@ -190,7 +190,7 @@ const authSlice = createSlice({
       state.tokenExpiry = authState.tokenInfo?.expiresAt;
     },
   },
-  
+
   extraReducers: (builder) => {
     // Login cases
     builder
@@ -222,8 +222,8 @@ const authSlice = createSlice({
           state.attemptsRemaining = action.payload.lockoutStatus.attemptsRemaining;
         }
       })
-    
-    // Logout cases
+
+      // Logout cases
       .addCase(performLogout.pending, (state) => {
         state.status = STATUSES.LOADING;
       })
@@ -235,8 +235,8 @@ const authSlice = createSlice({
         // Still reset state even on failure
         Object.assign(state, initialState);
       })
-    
-    // Token refresh cases
+
+      // Token refresh cases
       .addCase(refreshToken.pending, (state) => {
         state.needsRefresh = true;
       })
@@ -254,8 +254,8 @@ const authSlice = createSlice({
           Object.assign(state, initialState);
         }
       })
-    
-    // Session validation cases
+
+      // Session validation cases
       .addCase(validateSession.fulfilled, (state, action) => {
         state.sessionValid = true;
         state.userId = action.payload.userId;
@@ -272,9 +272,9 @@ const authSlice = createSlice({
 });
 
 // Export actions
-export const { 
-  setStatus, 
-  setError, 
+export const {
+  setStatus,
+  setError,
   setUser,
   updateLastActivity,
   setSessionValid,
@@ -315,7 +315,7 @@ export const setUserId = (state, action) => {
  * @deprecated Use login thunk instead
  */
 export function addAuth(data) {
-  return async function(dispatch) {
+  return async function (dispatch) {
     dispatch(setStatus(STATUSES.LOADING));
     try {
       const result = await authService.register(data);

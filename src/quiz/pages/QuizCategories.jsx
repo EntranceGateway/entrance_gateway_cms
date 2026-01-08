@@ -1,205 +1,274 @@
-import { useState, useEffect } from 'react';
-import Layout from '../../../components/layout/Layout';
-import { Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
-import quizApi from '../services/quizApi';
-import Pagination from '../../Verification/Pagination';
+import React, { useState, useMemo } from "react";
+import { Plus, Edit, Trash2, FolderOpen, X, Save } from "lucide-react";
+import {
+  useQuizCategories,
+  useCreateQuizCategory,
+  useUpdateQuizCategory,
+  useDeleteQuizCategory
+} from "@/hooks/useQuiz";
+import DataTable from "@/components/common/DataTable";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
+import Layout from "@/components/layout/Layout";
 
 const QuizCategories = () => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(10);
+  const [sortField, setSortField] = useState("categoryName");
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  // State for Add/Edit Modal
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({ categoryName: '', remarks: '' });
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [pageSize] = useState(10);
+  const [formData, setFormData] = useState({ categoryName: "", remarks: "" });
+  const [deleteId, setDeleteId] = useState(null);
 
-  const loadCategories = async () => {
-    try {
-      setLoading(true);
-      const response = await quizApi.getCategories(currentPage, pageSize, 'categoryName', 'asc');
-      setCategories(response.data.data.content || []);
-      setTotalPages(response.data.data.totalPages || 1);
-    } catch (error) {
-      console.error('Error loading categories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Queries & Mutations
+  const { data, isLoading, error } = useQuizCategories({
+    page,
+    size: pageSize,
+    sortBy: sortField,
+    sortDir: sortOrder,
+  });
 
-  useEffect(() => {
-    loadCategories();
-  }, [currentPage, pageSize]);
+  const createMutation = useCreateQuizCategory();
+  const updateMutation = useUpdateQuizCategory();
+  const deleteMutation = useDeleteQuizCategory();
 
   const handleAdd = () => {
     setEditingCategory(null);
-    setFormData({ categoryName: '', remarks: '' });
+    setFormData({ categoryName: "", remarks: "" });
     setShowModal(true);
   };
 
   const handleEdit = (category) => {
     setEditingCategory(category);
-    setFormData({ categoryName: category.categoryName, remarks: category.remarks || '' });
+    setFormData({
+      categoryName: category.categoryName,
+      remarks: category.remarks || ""
+    });
     setShowModal(true);
-  };
-
-  const handleDelete = async (categoryId) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-    
-    try {
-      await quizApi.deleteCategory(categoryId);
-      loadCategories();
-    } catch (error) {
-      alert('Error deleting category');
-    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       if (editingCategory) {
-        await quizApi.updateCategory(editingCategory.categoryId, formData);
+        await updateMutation.mutateAsync({
+          id: editingCategory.categoryId,
+          data: formData
+        });
       } else {
-        await quizApi.createCategory(formData);
+        await createMutation.mutateAsync(formData);
       }
       setShowModal(false);
-      loadCategories();
-    } catch (error) {
-      alert('Error saving category');
+    } catch (err) {
+      console.error("Submit Category Error:", err);
     }
   };
 
-  return (
-    <Layout>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <FolderOpen size={24} className="text-indigo-600" />
-          Categories Management
-        </h1>
-        <button 
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
+    } catch (err) {
+      console.error("Delete Category Error:", err);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        key: "categoryName",
+        label: "Category Name",
+        sortable: true,
+        render: (row) => (
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <FolderOpen size={16} />
+            </div>
+            <span className="font-bold text-gray-900">{row.categoryName}</span>
+          </div>
+        )
+      },
+      {
+        key: "remarks",
+        label: "Remarks",
+        render: (row) => (
+          <span className="text-gray-600 text-xs italic">
+            {row.remarks || "No remarks provided"}
+          </span>
+        )
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleEdit(row)}
+              className="p-2 text-amber-600 hover:bg-amber-50 rounded-xl transition-all border border-transparent hover:border-amber-100"
+              title="Edit Category"
+            >
+              <Edit size={18} />
+            </button>
+            <button
+              onClick={() => setDeleteId(row.categoryId)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+              title="Delete Category"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        )
+      }
+    ],
+    []
+  );
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2">Failed to load categories</h3>
+        <p>{error.message || "An unexpected error occurred."}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
         >
-          <Plus size={20} />
-          Add Category
+          Retry
         </button>
       </div>
+    );
+  }
 
-      {/* Table */}
-      <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="p-4 text-left font-medium text-gray-700">Name</th>
-                <th className="p-4 text-left font-medium text-gray-700">Remarks</th>
-                <th className="p-4 text-left font-medium text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={3} className="p-8 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <span className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-600 border-t-transparent"></span>
-                      Loading...
-                    </div>
-                  </td>
-                </tr>
-              ) : categories.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="p-8 text-center text-gray-500">
-                    No categories found.
-                  </td>
-                </tr>
-              ) : (
-                categories.map((category) => (
-                  <tr key={category.categoryId} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="p-4 font-medium text-gray-900">{category.categoryName}</td>
-                    <td className="p-4 text-gray-600">{category.remarks || '-'}</td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleEdit(category)}
-                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(category.categoryId)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+  return (
+    <Layout>
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <PageHeader
+          title="Quiz Categories"
+          breadcrumbs={[{ label: "Quiz", path: "/quiz" }, { label: "Categories" }]}
+          actions={[
+            {
+              label: "Add New Category",
+              onClick: handleAdd,
+              icon: <Plus size={18} />,
+              variant: "primary",
+            },
+          ]}
+        />
 
-        {totalPages > 1 && (
-          <div className="p-4 border-t">
-            <Pagination
-              page={currentPage + 1}
-              totalPages={totalPages}
-              onPageChange={(page) => setCurrentPage(page - 1)}
-            />
+        {isLoading ? (
+          <LoadingState type="table" />
+        ) : (
+          <DataTable
+            data={data?.content || []}
+            columns={columns}
+            loading={isLoading}
+            pagination={{
+              currentPage: page,
+              totalPages: data?.totalPages || 0,
+              totalItems: data?.totalItems || 0,
+              pageSize: pageSize,
+            }}
+            onPageChange={setPage}
+            onSort={(key, dir) => {
+              setSortField(key);
+              setSortOrder(dir);
+            }}
+          />
+        )}
+
+        {/* Add/Edit Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-300">
+              <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold">
+                    {editingCategory ? 'Modify Category' : 'Create Category'}
+                  </h2>
+                  <p className="text-indigo-100 text-xs mt-1">
+                    {editingCategory ? 'Update existing quiz classification' : 'Establish a new quiz grouping'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  disabled={createMutation.isLoading || updateMutation.isLoading}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-8">
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Category Name</label>
+                    <input
+                      type="text"
+                      value={formData.categoryName}
+                      onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium"
+                      placeholder="e.g., Medical Entrance, Engineering"
+                      required
+                      disabled={createMutation.isLoading || updateMutation.isLoading}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Remarks (Optional)</label>
+                    <textarea
+                      value={formData.remarks}
+                      onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium resize-none"
+                      placeholder="Additional context or notes..."
+                      rows={4}
+                      disabled={createMutation.isLoading || updateMutation.isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-8 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-50 transition-all"
+                    disabled={createMutation.isLoading || updateMutation.isLoading}
+                  >
+                    Discard
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    disabled={createMutation.isLoading || updateMutation.isLoading}
+                  >
+                    {(createMutation.isLoading || updateMutation.isLoading) ? (
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    ) : (
+                      <>
+                        <Save size={18} />
+                        {editingCategory ? 'Update' : 'Create'}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              {editingCategory ? 'Edit Category' : 'Add Category'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category Name *</label>
-                <input
-                  type="text"
-                  value={formData.categoryName}
-                  onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
-                <textarea
-                  value={formData.remarks}
-                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  rows={3}
-                />
-              </div>
-              <div className="flex justify-end gap-3">
-                <button 
-                  type="button" 
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+        <ConfirmModal
+          isOpen={!!deleteId}
+          title="Delete Category"
+          message="Are you sure you want to delete this category? All associated courses and question sets might be affected depending on server-side constraints. This action is permanent."
+          confirmText="Confirm Deletion"
+          loading={deleteMutation.isLoading}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteId(null)}
+        />
+      </div>
     </Layout>
   );
 };

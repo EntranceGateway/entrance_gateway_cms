@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Loader2, Download, AlertCircle, FileText, ExternalLink } from "lucide-react";
-import PdfViewer from "../pdfview/PdfViewer";
+import PdfViewer from "./PdfViewer";
 import api from "../../http/index";
 
 // Helper to fetch file as Blob (for Auth Header support)
-const fetchFileBlob = async (url, token) => {
+// Helper to fetch file as Blob (for Auth Header support)
+const fetchFileBlob = async (url) => {
   const response = await api.get(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
     responseType: "blob",
   });
   return response.data;
@@ -44,9 +44,7 @@ const FileViewer = ({
         // NOTE: Some CORS setups might block HEAD requests. If so, we might failover to GET.
         let contentType = null;
         try {
-          const headRes = await api.head(fileUrl, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
+          const headRes = await api.head(fileUrl);
           contentType = headRes.headers["content-type"];
         } catch (headErr) {
           console.warn("HEAD request failed, falling back to GET detection", headErr);
@@ -55,8 +53,8 @@ const FileViewer = ({
         // B. Fetching Phase
         // Since we need Auth Headers, we MUST fetch as Blob for <img> and <video> to work securely
         // without cookies. If we had cookies, we could just utilize `fileUrl` directly.
-        const blob = await fetchFileBlob(fileUrl, token);
-        
+        const blob = await fetchFileBlob(fileUrl);
+
         // If HEAD failed, use Blob type
         if (!contentType) {
           contentType = blob.type;
@@ -122,11 +120,11 @@ const FileViewer = ({
         <AlertCircle size={32} className="mb-2" />
         <p className="font-medium">Failed to load file</p>
         <p className="text-sm opacity-80 mt-1">{error}</p>
-        <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-white border border-red-200 rounded text-sm hover:bg-gray-50"
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-white border border-red-200 rounded text-sm hover:bg-gray-50"
         >
-            Retry
+          Retry
         </button>
       </div>
     );
@@ -138,16 +136,16 @@ const FileViewer = ({
   if (fileType?.includes("pdf")) {
     return (
       <div className={`w-full ${className}`}>
-         {/* Using existing PdfViewer for consistency */}
-         <PdfViewer
-            token={token}
-            fetchPdfBlob={async (url) => {
-              const res = await fetch(url);
-              return res.blob();
-            }}
-            pdfFileUrl={blobUrl} // Pass pre-fetched blob URL
-            className="w-full h-full min-h-[600px]"
-          />
+        {/* Using existing PdfViewer for consistency */}
+        <PdfViewer
+          token={token}
+          fetchPdfBlob={async (url) => {
+            const res = await fetch(url);
+            return res.blob();
+          }}
+          pdfFileUrl={blobUrl} // Pass pre-fetched blob URL
+          className="w-full h-full min-h-[600px]"
+        />
       </div>
     );
   }
@@ -156,26 +154,26 @@ const FileViewer = ({
   if (fileType?.includes("image/")) {
     return (
       <div className={`flex flex-col items-center ${className}`}>
-        <img 
-            src={blobUrl} 
-            alt={fileName} 
-            className="max-w-full h-auto rounded shadow-sm object-contain max-h-[80vh]" 
+        <img
+          src={blobUrl}
+          alt={fileName}
+          className="max-w-full h-auto rounded shadow-sm object-contain max-h-[80vh]"
         />
         <div className="flex gap-2 mt-4">
-             <button
-                onClick={handleOpenNewTab}
-                className="flex items-center gap-2 px-4 py-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
-                >
-                <ExternalLink size={18} />
-                Open Full
-            </button>
-            <button
-                onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                <Download size={18} />
-                Download
-            </button>
+          <button
+            onClick={handleOpenNewTab}
+            className="flex items-center gap-2 px-4 py-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
+          >
+            <ExternalLink size={18} />
+            Open Full
+          </button>
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            <Download size={18} />
+            Download
+          </button>
         </div>
       </div>
     );
@@ -189,14 +187,14 @@ const FileViewer = ({
           <source src={blobUrl} type={fileType} />
           Your browser does not support the video tag.
         </video>
-         <div className="flex gap-2 mt-4">
-            <button
-                onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                <Download size={18} />
-                Download Video
-            </button>
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            <Download size={18} />
+            Download Video
+          </button>
         </div>
       </div>
     );
@@ -212,7 +210,7 @@ const FileViewer = ({
       <p className="text-gray-500 mb-6 text-center max-w-sm">
         This file type ({fileType || "unknown"}) cannot be previewed directly in the browser.
       </p>
-      
+
       <button
         onClick={handleDownload}
         className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-all shadow-sm transform active:scale-95"

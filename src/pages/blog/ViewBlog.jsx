@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+
 import { useParams, Link } from "react-router-dom";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import { getBlogById, downloadBlogFile, getBlogFileUrl } from "../../http/blog";
-import Spinner from "../../../components/Spinner/Spinner";
+import Spinner from "@/components/common/Spinner";
 import { ArrowLeft, Calendar, Mail, Phone, Tag, Hash, Edit, Download, ExternalLink } from "lucide-react";
 
 const ViewBlog = () => {
@@ -11,12 +12,12 @@ const ViewBlog = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await getBlogById(id, token);
+        const res = await getBlogById(id);
         setBlog(res.data.data);
       } catch (err) {
         setError(err.error || "Failed to load blog");
@@ -26,7 +27,7 @@ const ViewBlog = () => {
     };
 
     fetchBlog();
-  }, [id, token]);
+  }, [id]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -41,7 +42,7 @@ const ViewBlog = () => {
   // Handle file download
   const handleDownload = async () => {
     try {
-      const response = await downloadBlogFile(id, token);
+      const response = await downloadBlogFile(id);
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");

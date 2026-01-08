@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
 import {
   getAllAdmins,
@@ -24,7 +25,7 @@ const AdminTable = () => {
   const [sortDir, setSortDir] = useState("asc");
   const PAGE_SIZE = 10;
 
-  const token = localStorage.getItem("token");
+
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // Check if current user is SUPER_ADMIN
@@ -34,15 +35,15 @@ const AdminTable = () => {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      const res = await getAllAdmins({ 
-        page, 
+      const res = await getAllAdmins({
+        page,
         size: PAGE_SIZE,
         sortBy,
-        sortDir 
-      }, token);
+        sortDir
+      });
       const responseData = res.data?.data || res.data;
-      const data = Array.isArray(responseData) 
-        ? responseData 
+      const data = Array.isArray(responseData)
+        ? responseData
         : responseData?.content || [];
       setAdmins(data);
       setTotalPages(responseData?.totalPages || 1);
@@ -62,7 +63,7 @@ const AdminTable = () => {
     if (!window.confirm(`Are you sure you want to delete admin with email: ${email}?`)) return;
 
     try {
-      await deleteAdmin(email, token);
+      await deleteAdmin(email);
       fetchAdmins();
     } catch (err) {
       console.error("Delete Admin Error:", err);
@@ -73,7 +74,7 @@ const AdminTable = () => {
   // Update Role
   const handleRoleUpdate = async (adminId, newRole) => {
     try {
-      await updateAdminRole(adminId, newRole, token);
+      await updateAdminRole(adminId, newRole);
       setEditingRole(null);
       fetchAdmins();
     } catch (err) {
@@ -126,7 +127,7 @@ const AdminTable = () => {
       {editingAdmin && (
         <EditAdminModal
           admin={editingAdmin}
-          token={token}
+
           onClose={() => setEditingAdmin(null)}
           onSuccess={() => {
             setEditingAdmin(null);
@@ -182,10 +183,10 @@ const AdminTable = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                            {admin.name 
+                            {admin.name
                               ? admin.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                              : admin.role === 'SUPER_ADMIN' 
-                                ? 'SA' 
+                              : admin.role === 'SUPER_ADMIN'
+                                ? 'SA'
                                 : admin.email?.charAt(0)?.toUpperCase() || 'A'}
                           </div>
                           <div>
@@ -252,11 +253,11 @@ const AdminTable = () => {
                           <div className="flex items-center justify-center gap-2">
                             {/* Edit Button */}
                             <button
-                                onClick={() => setEditingAdmin(admin)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Edit Admin"
-                              >
-                                <Edit2 size={18} />
+                              onClick={() => setEditingAdmin(admin)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit Admin"
+                            >
+                              <Edit2 size={18} />
                             </button>
 
                             {/* Delete Button */}
@@ -298,141 +299,141 @@ const AdminTable = () => {
 /**
  * Edit Admin Modal Component
  */
-const EditAdminModal = ({ admin, token, onClose, onSuccess }) => {
-    const [form, setForm] = useState({
-        name: admin?.name || "",
-        email: admin?.email || "",
-        password: "", // Password is optional or required depending on validaton logic, but usually required for full update if API demands it. Based on prompt: data: "name, email, password".
-        // Assuming password is required for this specific update endpoint based on "request body: name, email, password" description.
-    });
-    const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+const EditAdminModal = ({ admin, onClose, onSuccess }) => {
+  const [form, setForm] = useState({
+    name: admin?.name || "",
+    email: admin?.email || "",
+    password: "", // Password is optional or required depending on validaton logic, but usually required for full update if API demands it. Based on prompt: data: "name, email, password".
+    // Assuming password is required for this specific update endpoint based on "request body: name, email, password" description.
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
 
-        // Basic validation
-        if (!form.name || !form.email || !form.password) {
-            setError("All fields are required.");
-            return;
-        }
+    // Basic validation
+    if (!form.name || !form.email || !form.password) {
+      setError("All fields are required.");
+      return;
+    }
 
-        setLoading(true);
-        try {
-            await updateAdminDetails(form, token);
-            onSuccess();
-        } catch (err) {
-             setError(typeof err === 'string' ? err : (err.message || "Failed to update admin"));
-        } finally {
-            setLoading(false);
-        }
-    };
+    setLoading(true);
+    try {
+      await updateAdminDetails(form);
+      onSuccess();
+    } catch (err) {
+      setError(typeof err === 'string' ? err : (err.message || "Failed to update admin"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                {/* Header */}
-                <div className="flex justify-between items-center p-4 border-b bg-gray-50">
-                    <h3 className="text-lg font-semibold text-gray-800">Edit Admin User</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {error && (
-                        <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-start gap-2">
-                             <AlertCircle size={16} className="mt-0.5 shrink-0"/>
-                             <span>{error}</span>
-                        </div>
-                    )}
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                <User size={16} />
-                            </span>
-                            <input
-                                type="text"
-                                name="name"
-                                value={form.name}
-                                onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                                placeholder="Full Name"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                <Mail size={16} />
-                            </span>
-                            <input
-                                type="email"
-                                name="email"
-                                value={form.email}
-                                onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                                placeholder="Email Address"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <div className="relative">
-                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                <Lock size={16} />
-                            </span>
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                value={form.password}
-                                onChange={handleChange}
-                                className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                                placeholder="New Password"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            >
-                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">Required for update</p>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            {loading ? "Updating..." : "Update Admin"}
-                        </button>
-                    </div>
-                </form>
-            </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b bg-gray-50">
+          <h3 className="text-lg font-semibold text-gray-800">Edit Admin User</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X size={20} />
+          </button>
         </div>
-    );
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-start gap-2">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <User size={16} />
+              </span>
+              <input
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                placeholder="Full Name"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <Mail size={16} />
+              </span>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                placeholder="Email Address"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <Lock size={16} />
+              </span>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                placeholder="New Password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Required for update</p>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? "Updating..." : "Update Admin"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default AdminTable;

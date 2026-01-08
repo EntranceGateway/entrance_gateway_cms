@@ -3,11 +3,10 @@ import { useParams } from "react-router-dom";
 
 import { getSingleCourse, updateCourse } from "../../http/course";
 import CourseForm from "./component/form";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 
 export default function EditCourse() {
   const { id } = useParams();
-  const token = localStorage.getItem("token");
 
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +15,7 @@ export default function EditCourse() {
   // Fetch single course data by id
   const fetchCourse = async () => {
     try {
-      const response = await getSingleCourse(id, token);
+      const response = await getSingleCourse(id);
 
       if (response.status === 200) {
         setCourseData(response.data.data);
@@ -38,7 +37,7 @@ export default function EditCourse() {
   // Update handler
   const handleUpdate = async (formData) => {
     try {
-      const res = await updateCourse(id, formData, token);
+      const res = await updateCourse(id, formData);
 
       if (res.status === 200) {
         alert("Course updated successfully!");
@@ -55,12 +54,12 @@ export default function EditCourse() {
   if (error) return <p className="text-center text-red-600 py-5">{error}</p>;
 
   return (
-        <Layout>
+    <Layout>
       <CourseForm
         mode="edit"
         initialData={courseData}
         onSubmit={handleUpdate}
       />
-      </Layout>
+    </Layout>
   );
 }

@@ -1,4 +1,4 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import BlogTable from "./components/BlogTable";
 
 const BlogPage = () => {

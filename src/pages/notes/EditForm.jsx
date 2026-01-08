@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-import Layout from "../../../components/layout/Layout";
-import NoteForm from "./components/form.jsx/NotesFrom";
+import Layout from "@/components/layout/Layout";
+import NoteForm from "./components/form/NotesFrom";
 import {
   getNotesById,
   getSingle,
@@ -12,7 +12,6 @@ import {
 
 const EditNote = () => {
   const { id } = useParams();
-  const token = localStorage.getItem("token");
 
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,8 +28,8 @@ const EditNote = () => {
 
     try {
       const [jsonRes, fileRes] = await Promise.all([
-        getNotesById(id, token),
-        getSingle(id, token).catch(() => ({ data: { data: { fileUrl: "" } } })),
+        getNotesById(id),
+        getSingle(id).catch(() => ({ data: { data: { fileUrl: "" } } })),
       ]);
 
       const details = jsonRes?.data?.data;
@@ -54,7 +53,7 @@ const EditNote = () => {
 
   useEffect(() => {
     loadNote();
-  }, [id, token]);
+  }, [id]);
 
   // -------------------------------
   // Handle form update
@@ -78,12 +77,12 @@ const EditNote = () => {
 
       // Update JSON fields
       if (Object.keys(noteJson).length > 0) {
-        await updateNoteDetails(id, noteJson, token);
+        await updateNoteDetails(id, noteJson);
       }
 
       // Update file if provided
       if (file) {
-        await updateNoteFile(id, file, token);
+        await updateNoteFile(id, file);
       }
 
       await loadNote();
@@ -114,7 +113,7 @@ const EditNote = () => {
     </Layout>
 
 
-    
+
   );
 };
 
