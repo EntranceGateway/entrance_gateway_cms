@@ -25,7 +25,8 @@ const AdminTable = () => {
   const PAGE_SIZE = 10;
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  // Retrieve user from 'admin' key (set by Navbar) or fallback to empty object
+  const user = JSON.parse(localStorage.getItem("admin") || "{}");
 
   // Check if current user is SUPER_ADMIN
   const isSuperAdmin = user?.role?.toUpperCase() === "SUPER_ADMIN";

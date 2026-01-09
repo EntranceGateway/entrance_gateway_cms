@@ -45,7 +45,7 @@ export const registerAdmin = async (data, token) => {
 // --------------------------------------
 export const deleteAdmin = async (email, token) => {
   try {
-    return await api.delete("/api/v1/admin/", {
+    return await api.delete("/api/v1/admin", {
       data: { email },
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
@@ -72,7 +72,7 @@ export const updateAdminRole = async (adminId, role, token) => {
 // --------------------------------------
 export const updateAdminDetails = async (data, token) => {
   try {
-    return await api.put("/api/v1/admin/", data, {
+    return await api.put("/api/v1/admin", data, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch (err) {
