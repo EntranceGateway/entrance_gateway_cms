@@ -61,6 +61,28 @@ export async function login({ email, password }) {
 
     // Check for token in various possible response formats
     const responseData = response.data?.data || response.data;
+    
+    // EDGE CASE: Check if API returned HTML (e.g. 404 page for API route hitting frontend)
+    if (typeof responseData === 'string' && responseData.trim().startsWith('<')) {
+      console.error('Critical Error: API Endpoint returned HTML instead of JSON. Check VITE_API_BASE_URL.');
+      return {
+        success: false,
+        error: 'Configuration Error: API endpoint returned HTML. Please check your network tab or console.',
+        errorCode: 'config_error_html_response',
+      };
+    }
+
+    // EDGE CASE: Backend returns 200 OK but with success: false
+    if (responseData && responseData.success === false) {
+       rateLimitService.recordFailedAttempt();
+       return {
+        success: false,
+        error: responseData.message || responseData.error || 'Login failed.',
+        errorCode: responseData.errorCode || 'backend_logic_error',
+        lockoutStatus: rateLimitService.checkLockout(),
+      };
+    }
+
     // Support both 'accessToken' (new) and 'token' (legacy) keys
     const accessToken = responseData?.accessToken || responseData?.token;
 
@@ -102,12 +124,13 @@ export async function login({ email, password }) {
       };
     }
 
-    // Unexpected response format
+    // Unexpected response format (200 OK but no token)
+    console.error('Login Failed: 200 OK received but no token found in response.', { responseData });
     rateLimitService.recordFailedAttempt();
     return {
       success: false,
-      error: 'Login failed. Please try again.',
-      errorCode: 'unexpected_response',
+      error: 'Login failed: Server returned success but no token. Check console for details.',
+      errorCode: 'missing_token_in_200',
       lockoutStatus: rateLimitService.checkLockout(),
     };
   } catch (error) {
