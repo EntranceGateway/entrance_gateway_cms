@@ -1,6 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import ProtectedRoute from "@/verification/ProtectedRoute";
+import ProtectedRoute from "@/Verification/ProtectedRoute";
 
 // Import route modules
 import { authRoutes } from "./auth.routes";
