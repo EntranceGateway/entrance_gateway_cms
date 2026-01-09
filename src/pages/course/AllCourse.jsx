@@ -1,10 +1,10 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import CourseTable from "./component/CourseTable";
 
-function AllCourse(){
-    return(
+function AllCourse() {
+    return (
         <Layout>
-            <CourseTable/>
+            <CourseTable />
         </Layout>
     )
 }

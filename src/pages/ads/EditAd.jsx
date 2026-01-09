@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import AdsForm from "./components/AdsForm";
-import Spinner from "../../../components/Spinner/Spinner";
+import Spinner from "@/components/common/Spinner";
 import { getAds } from "../../http/ads";
 
 function EditAd() {
@@ -11,12 +11,10 @@ function EditAd() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
     const fetchAd = async () => {
       try {
-        const res = await getAds({ page: 0, size: 100 }, token);
+        const res = await getAds({ page: 0, size: 100 });
         const data = res.data?.data?.content || res.data?.content || [];
         const foundAd = data.find((a) => a.adId === id);
         if (foundAd) {
@@ -32,7 +30,7 @@ function EditAd() {
     };
 
     fetchAd();
-  }, [id, token]);
+  }, [id]);
 
   if (loading) {
     return (

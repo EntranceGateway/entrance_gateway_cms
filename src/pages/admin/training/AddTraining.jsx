@@ -1,10 +1,10 @@
-import Layout from "../../../../components/layout/Layout"
+import Layout from "@/components/layout/Layout";
 import TrainingForm from "./component/form/form"
 
-function AddTraning(){
-    return(
+function AddTraning() {
+    return (
         <Layout>
-            <TrainingForm/>
+            <TrainingForm />
         </Layout>
 
     )

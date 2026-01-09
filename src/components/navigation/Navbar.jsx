@@ -2,9 +2,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, Settings, LogOut, User, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getAdmin } from "../../src/http/adminget";
-import authService from "../../src/auth/services/authService";
-import tokenService from "../../src/auth/services/tokenService";
+import { getAdmin } from "@/http/adminget";
+import authService from "@/auth/services/authService";
+import tokenService from "@/auth/services/tokenService";
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -35,7 +35,7 @@ const Navbar = () => {
 
     const fetchAdminDetails = async () => {
       try {
-        const res = await getAdmin(token);
+        const res = await getAdmin();
         const adminData = res.data?.data || res.data?.admin || res.data;
 
         if (adminData && isMounted) {
@@ -133,10 +133,10 @@ const Navbar = () => {
               className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition"
             >
               <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                {admin?.name 
+                {admin?.name
                   ? admin.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                  : admin?.role === 'SUPER_ADMIN' 
-                    ? 'SA' 
+                  : admin?.role === 'SUPER_ADMIN'
+                    ? 'SA'
                     : admin?.email?.charAt(0)?.toUpperCase() || 'A'}
               </div>
 
@@ -149,9 +149,8 @@ const Navbar = () => {
 
               <ChevronDown
                 size={16}
-                className={`transition-transform ${
-                  dropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`transition-transform ${dropdownOpen ? "rotate-180" : ""
+                  }`}
               />
             </button>
 
@@ -162,8 +161,8 @@ const Navbar = () => {
                     {admin?.name?.trim()
                       ? admin.name
                       : admin?.role === "SUPER_ADMIN"
-                      ? "Super Admin"
-                      : "Admin"}
+                        ? "Super Admin"
+                        : "Admin"}
                   </p>
                   <p className="text-sm text-gray-500">{admin?.email}</p>
                 </div>

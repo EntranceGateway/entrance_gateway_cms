@@ -11,14 +11,14 @@ import {
   ChevronDown,
   ChevronUp,
   GraduationCap,
-  BookOpen,FileCheck ,Image ,Folder,Bell,
+  BookOpen, FileCheck, Image, Folder, Bell,
   HelpCircle,
   Newspaper,
   Shield
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import tokenService from "../../src/auth/services/tokenService";
-import authService from "../../src/auth/services/authService";
+import tokenService from "@/auth/services/tokenService";
+import authService from "@/auth/services/authService";
 
 const Sidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -68,7 +68,7 @@ const Sidebar = () => {
         { name: "All Notes", path: "/notespage" },
         { name: "Add Note", path: "/notes/add" },
       ],
-    },  {
+    }, {
       name: "Syllabus",
       icon: <FileCheck size={20} />,
       submenu: [
@@ -76,7 +76,7 @@ const Sidebar = () => {
         { name: "Add Syllabus", path: "/syllabus/add" },
       ],
     },
-     {
+    {
       name: "Ads",
       icon: <Image size={20} />,
       submenu: [
@@ -104,7 +104,7 @@ const Sidebar = () => {
       name: "Notices",
       icon: <Bell size={20} />,
       submenu: [
-         { name: "All Notices", path: "/notices/all" },
+        { name: "All Notices", path: "/notices/all" },
         { name: "Add Notices", path: "/notices/add" },
       ],
     },
@@ -118,9 +118,9 @@ const Sidebar = () => {
     },
     {
       name: "Colleges",
-      icon: <GraduationCap  size={20} />,
+      icon: <GraduationCap size={20} />,
       submenu: [
-       
+
         { name: "All Colleges", path: "/college/all" },
         { name: "Add Colleges", path: "/college/add" },
       ],
@@ -226,9 +226,8 @@ const Sidebar = () => {
 
                       {/* Submenu */}
                       <div
-                        className={`mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
-                          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                        }`}
+                        className={`mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                          }`}
                       >
                         {item.submenu.map((sub) => (
                           <Link
@@ -270,7 +269,7 @@ const Sidebar = () => {
         <div className="border-t border-gray-800 p-4">
           <button
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-all duration-200 font-medium shadow-md"
-      onClick={handleLogout}
+            onClick={handleLogout}
           >
             <LogOut size={20} />
             <span>Logout</span>

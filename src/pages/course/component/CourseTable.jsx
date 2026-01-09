@@ -1,247 +1,241 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import Pagination from "../../../Verification/Pagination";
-import { deleteCourse, getCourses, getCoursesByAffiliation } from "../../../http/course";
+import React, { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useCourses, useDeleteCourse } from "@/hooks/useCourses";
+import DataTable from "@/components/common/DataTable";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
+import { Plus, Edit, Trash2, FileText, Search, Filter, X, ChevronRight } from "lucide-react";
+
+// Affiliation options (standardized)
+const AFFILIATIONS = [
+  { value: "TRIBHUVAN_UNIVERSITY", label: "Tribhuvan University" },
+  { value: "POKHARA_UNIVERSITY", label: "Pokhara University" },
+  { value: "KATHMANDU_UNIVERSITY", label: "Kathmandu University" },
+  { value: "PURWANCHAL_UNIVERSITY", label: "Purwanchal University" },
+  { value: "MID_WESTERN_UNIVERSITY", label: "Mid Western University" },
+  { value: "FAR_WESTERN_UNIVERSITY", label: "Far Western University" },
+  { value: "LUMBINI_UNIVERSITY", label: "Lumbini University" },
+  { value: "CAMPUS_AFFILIATED_TO_FOREIGN_UNIVERSITY", label: "Foreign University" },
+];
 
 const CourseTable = () => {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [page, setPage] = useState(0); // API uses 0-based indexing
-  const [totalPages, setTotalPages] = useState(0);
-  const PAGE_SIZE = 10;
-
+  const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(10);
   const [sortField, setSortField] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
   // Filter state
   const [affiliation, setAffiliation] = useState("");
+  const [deleteId, setDeleteId] = useState(null);
 
-  const token = localStorage.getItem("token");
+  // Fetch Courses using hook
+  const { data, isLoading, error } = useCourses({
+    page,
+    size: pageSize,
+    sortBy: sortField,
+    sortDir: sortOrder,
+    ...(affiliation && { affiliation }),
+  });
 
-  // Fetch Courses
-  const fetchCourses = async () => {
-    setLoading(true);
+  const deleteMutation = useDeleteCourse();
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      let res;
-      
-      if (affiliation) {
-        // Use affiliation-specific endpoint
-        res = await getCoursesByAffiliation(
-          { affiliation, page, size: PAGE_SIZE },
-          token
-        );
-      } else {
-        // Use default endpoint with sorting
-        const params = {
-          page,
-          size: PAGE_SIZE,
-          ...(sortField && { sortBy: sortField, sortDir: sortOrder }),
-        };
-        res = await getCourses(params, token);
-      }
-      
-      const data = res.data.data.content || [];
-      setCourses(data);
-      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
-      const responseData = res.data.data || res.data;
-      setTotalPages(responseData.totalPages || 0);
-    } catch (err) {
-      console.error("Fetch Course Error:", err);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchCourses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sortField, sortOrder, affiliation]);
-
-  // Handle affiliation filter change
-  const handleAffiliationChange = (value) => {
-    setAffiliation(value);
-    setPage(0); // reset to first page
-  };
-
-  // Delete
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this course?")) return;
-
-    try {
-      await deleteCourse(id, token);
-      fetchCourses();
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
     } catch (err) {
       console.error("Delete Course Error:", err);
     }
   };
 
-  // Handle page change (convert from 1-based display to 0-based API)
-  const handlePageChange = (newPage) => {
-    setPage(newPage - 1);
-  };
+  const columns = useMemo(
+    () => [
+      {
+        key: "courseName",
+        label: "Course Name",
+        sortable: true,
+        render: (row) => (
+          <div className="flex flex-col">
+            <span className="font-bold text-gray-900">{row.courseName}</span>
+            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-0.5">{row.courseId}</span>
+          </div>
+        ),
+      },
+      {
+        key: "description",
+        label: "Description/Criteria",
+        render: (row) => (
+          <div className="max-w-xs">
+            <div className="text-xs text-gray-600 truncate mb-1" title={row.description}>
+              {row.description || "No description"}
+            </div>
+            <div className="text-[10px] text-gray-400 italic truncate" title={row.criteria}>
+              {row.criteria ? `Criteria: ${row.criteria}` : "No criteria defined"}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "courseLevel",
+        label: "Level & Type",
+        render: (row) => (
+          <div className="flex flex-wrap gap-1.5">
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase">
+              {row.courseLevel?.replace(/_/g, " ") || "N/A"}
+            </span>
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase">
+              {row.courseType?.replace(/_/g, " ") || "N/A"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        key: "affiliation",
+        label: "Affiliation",
+        render: (row) => (
+          <span className="text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+            {row.affiliation?.replace(/_/g, " ")}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <div className="flex items-center gap-1.5">
+            <Link
+              to={`/syllabus/add/${row.courseId}`}
+              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100 flex items-center gap-1"
+              title="Add Syllabus"
+            >
+              <FileText size={18} />
+              <span className="text-xs font-bold hidden xl:inline">Syllabus</span>
+            </Link>
+            <Link
+              to={`/course/edit/${row.courseId}`}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100"
+              title="Edit Course"
+            >
+              <Edit size={18} />
+            </Link>
+            <button
+              onClick={() => setDeleteId(row.courseId)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+              title="Delete Course"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2">Failed to load courses</h3>
+        <p>{error.message || "An unexpected error occurred."}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Courses</h1>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PageHeader
+        title="Course Management"
+        breadcrumbs={[{ label: "Courses" }]}
+        actions={[
+          {
+            label: "Create New Course",
+            onClick: () => navigate("/course/add"),
+            icon: <Plus size={18} />,
+            variant: "primary",
+          },
+        ]}
+      />
 
-      {/* Filter Controls */}
-      <div className="bg-white shadow-md rounded-lg p-4 mb-4 space-y-4">
-        <h3 className="font-semibold text-gray-700">Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Affiliation Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Affiliation</label>
-            <select
-              value={affiliation}
-              onChange={(e) => handleAffiliationChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All</option>
-              <option value="TRIBHUVAN_UNIVERSITY">Tribhuvan University</option>
-              <option value="POKHARA_UNIVERSITY">Pokhara University</option>
-              <option value="KATHMANDU_UNIVERSITY">Kathmandu University</option>
-              <option value="PURWANCHAL_UNIVERSITY">Purwanchal University</option>
-              <option value="MID_WESTERN_UNIVERSITY">Mid Western University</option>
-              <option value="FAR_WESTERN_UNIVERSITY">Far Western University</option>
-              <option value="LUMBINI_UNIVERSITY">Lumbini University</option>
-              <option value="CAMPUS_AFFILIATED_TO_FOREIGN_UNIVERSITY">Campus Affiliated to Foreign University</option>
-            </select>
-          </div>
-
-          {/* Clear Filter */}
-          {affiliation && (
-            <div className="flex items-end">
-              <button
-                onClick={() => handleAffiliationChange("")}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition"
-              >
-                Clear Filter
-              </button>
+      {/* Filter Section */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+              <Filter size={20} />
             </div>
+            <h3 className="font-bold text-gray-800">Filter Courses</h3>
+          </div>
+          {affiliation && (
+            <button
+              onClick={() => { setAffiliation(""); setPage(0); }}
+              className="text-sm font-semibold text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors"
+            >
+              <X size={14} />
+              Clear Filter
+            </button>
+          )}
+        </div>
+
+        <div className="max-w-md">
+          <select
+            value={affiliation}
+            onChange={(e) => { setAffiliation(e.target.value); setPage(0); }}
+            className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium appearance-none"
+          >
+            <option value="">All Affiliations</option>
+            {AFFILIATIONS.map((aff) => (
+              <option key={aff.value} value={aff.value}>{aff.label}</option>
+            ))}
+          </select>
+          {affiliation && (
+            <p className="mt-2 text-[11px] text-gray-500 italic ml-1">
+              * Sorting is handled by the server preference for this affiliation view.
+            </p>
           )}
         </div>
       </div>
 
-      {/* Sort Controls */}
-      <div className="bg-white shadow-md rounded-lg p-4 mt-4 flex flex-wrap gap-4 items-center">
-        <span className="font-medium text-gray-700">Sort By:</span>
-        <select
-          value={sortField}
-          onChange={(e) => {
-            setSortField(e.target.value);
-            setPage(0);
+      {isLoading ? (
+        <LoadingState type="table" />
+      ) : (
+        <DataTable
+          data={data?.content || []}
+          columns={columns}
+          loading={isLoading}
+          pagination={{
+            currentPage: page,
+            totalPages: data?.totalPages || 0,
+            totalItems: data?.totalItems || 0,
+            pageSize: pageSize,
           }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={!!affiliation}
-        >
-          <option value="">Default (courseName)</option>
-          <option value="courseName">Course Name</option>
-          <option value="description">Description</option>
-          <option value="courseLevel">Course Level</option>
-          <option value="courseType">Course Type</option>
-        </select>
-
-        <select
-          value={sortOrder}
-          onChange={(e) => {
-            setSortOrder(e.target.value);
-            setPage(0);
+          onPageChange={setPage}
+          onSort={(key, dir) => {
+            if (!affiliation) {
+              setSortField(key);
+              setSortOrder(dir);
+            }
           }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={!sortField || !!affiliation}
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
-        {affiliation && (
-          <span className="text-xs text-gray-500 italic">Sorting disabled when filtering by affiliation</span>
-        )}
-      </div>
+        />
+      )}
 
-      {/* Table */}
-      <div className="bg-white shadow-xl rounded-2xl overflow-hidden mt-4">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                {["Course Name", "Description", "Course Level", "Course Type", "Criteria", "Affiliation", "Action"].map((col) => (
-                  <th
-                    key={col}
-                    className="p-4 text-left font-medium text-gray-700 sticky top-0 bg-gray-50 z-10"
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="text-center p-6 text-gray-500">
-                    Loading...
-                  </td>
-                </tr>
-              ) : courses.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center p-6 text-gray-500">
-                    🔍 No courses found
-                  </td>
-                </tr>
-              ) : (
-                courses.map((course) => (
-                  <tr key={course.courseId} className="hover:bg-gray-50 transition">
-                    <td className="p-4 font-medium text-gray-800">{course.courseName}</td>
-                    <td className="p-4 text-gray-600 max-w-xs truncate" title={course.description}>{course.description}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 text-xs font-semibold rounded-md bg-purple-100 text-purple-700">
-                        {course.courseLevel?.replace(/_/g, ' ') || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 text-xs font-semibold rounded-md bg-green-100 text-green-700">
-                        {course.courseType?.replace(/_/g, ' ') || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-gray-600 max-w-xs truncate" title={course.criteria}>
-                      {course.criteria || 'N/A'}
-                    </td>
-                    <td className="p-4">
-                      <span className="px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-700">
-                        {course.affiliation?.replace(/_/g, ' ') || 'N/A'}
-                      </span>
-                    </td>
-
-                    <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-                         <Link
-                        to={`/syllabus/add/${course.courseId}`}
-                        className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
-                      >
-                        Add syllabus
-                      </Link>
-                      <Link
-                        to={`/course/edit/${course.courseId}`}
-                        className="px-3 py-1.5 rounded-xl text-amber-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(course.courseId)}
-                        className="px-3 py-1.5 rounded-xl text-red-700 font-semibold border border-red-200 hover:bg-red-50 transition"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Pagination */}
-      <Pagination page={page + 1} totalPages={totalPages} onPageChange={handlePageChange} />
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Course"
+        message="Are you sure you want to delete this course? This will not remove associated syllabus items but will break the reference. This action is permanent."
+        confirmText="Yes, Delete Course"
+        loading={deleteMutation.isLoading}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 };

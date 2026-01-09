@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+
 import { useParams } from "react-router-dom";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import NoticeForm from "./components/NoticeForm";
 import { getNoticeById, updateNotice } from "../../http/notice";
-import Spinner from "../../../components/Spinner/Spinner";
+import Spinner from "@/components/common/Spinner";
 
 const EditNotice = () => {
   const { id } = useParams();
@@ -11,12 +12,12 @@ const EditNotice = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     const fetchNotice = async () => {
       try {
-        const res = await getNoticeById(id, token);
+        const res = await getNoticeById(id);
         setNotice(res.data.data);
       } catch (err) {
         setError(err.error || "Failed to load notice");
@@ -29,7 +30,7 @@ const EditNotice = () => {
   }, [id, token]);
 
   const handleSubmit = async (formData) => {
-    await updateNotice(id, formData, token);
+    await updateNotice(id, formData);
   };
 
   if (loading) {

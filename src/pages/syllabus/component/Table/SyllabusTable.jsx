@@ -19,7 +19,7 @@ const SyllabusTable = () => {
   const [courseName, setCourseName] = useState("");
   const [semester, setSemester] = useState("");
 
-  const token = localStorage.getItem("token");
+
 
   // ---------------- FETCH DATA ----------------
   const fetchSyllabus = async () => {
@@ -32,41 +32,39 @@ const SyllabusTable = () => {
       };
 
       let res;
-      
-      console.log("Fetching syllabus with filters:", { 
-        affiliation, 
-        courseName, 
+
+      console.log("Fetching syllabus with filters:", {
+        affiliation,
+        courseName,
         semester,
         affiliationLength: affiliation?.length,
         courseNameLength: courseName?.length,
         semesterValue: semester
       });
-      
+
       // Choose endpoint based on filters (trim to remove spaces)
       const trimmedAffiliation = affiliation?.trim();
       const trimmedCourseName = courseName?.trim();
       const trimmedSemester = semester?.trim();
-      
+
       if (trimmedAffiliation && trimmedCourseName && trimmedSemester) {
         // Use semester-specific endpoint
         console.log("Using semester endpoint with:", { trimmedAffiliation, trimmedCourseName, trimmedSemester });
         res = await getSyllabusByAffiliationCourseAndSemester(
-          { ...params, affiliation: trimmedAffiliation, courseName: trimmedCourseName, semester: parseInt(trimmedSemester) },
-          token
+          { ...params, affiliation: trimmedAffiliation, courseName: trimmedCourseName, semester: parseInt(trimmedSemester) }
         );
       } else if (trimmedAffiliation && trimmedCourseName) {
         // Use course-specific endpoint
         console.log("Using course endpoint with:", { trimmedAffiliation, trimmedCourseName });
         res = await getSyllabusByAffiliationAndCourse(
-          { ...params, affiliation: trimmedAffiliation, courseName: trimmedCourseName },
-          token
+          { ...params, affiliation: trimmedAffiliation, courseName: trimmedCourseName }
         );
       } else {
         // Use default endpoint (all syllabus)
         console.log("Using default endpoint - no filters or incomplete filters");
-        res = await getSyllabus(params, token);
+        res = await getSyllabus(params);
       }
-      
+
       console.log("Response:", res.data);
       // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
       const responseData = res.data.data || res.data;
@@ -90,7 +88,7 @@ const SyllabusTable = () => {
     if (!window.confirm("Delete this syllabus?")) return;
 
     try {
-      await deleteSyllabus(id, token);
+      await deleteSyllabus(id);
       fetchSyllabus();
     } catch (err) {
       console.error("Delete error:", err);
@@ -163,7 +161,7 @@ const SyllabusTable = () => {
             />
           </div>
         </div>
-        
+
         {/* Clear Filters Button */}
         {(affiliation || courseName || semester) && (
           <button

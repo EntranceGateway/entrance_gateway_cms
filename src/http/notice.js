@@ -1,89 +1,80 @@
 import api from "./index";
+import { handleApiError } from "./utils/errorHandler";
 
 // --------------------------------------
 // Get All Notices (with pagination & sorting)
 // --------------------------------------
-export const getNotices = async (params = {}, token) => {
+export const getNotices = async (params = {}) => {
   try {
-    return await api.get("/api/v1/notices", {
-      params,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/notices", { params });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to fetch notices." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Get Single Notice by ID
 // --------------------------------------
-export const getNoticeById = async (id, token) => {
+export const getNoticeById = async (id) => {
   try {
-    return await api.get(`/api/v1/notices/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get(`/api/v1/notices/${id}`);
   } catch (err) {
-    throw err.response?.data || { error: "Failed to fetch notice." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Create Notice
 // --------------------------------------
-export const createNotice = async (formData, token) => {
+export const createNotice = async (formData) => {
   try {
     return await api.post("/api/v1/notices", formData, {
       headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
         // Don't manually set Content-Type for FormData - browser will set it with correct boundary
       },
     });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to create notice." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Update Notice
 // --------------------------------------
-export const updateNotice = async (id, formData, token) => {
+export const updateNotice = async (id, formData) => {
   try {
     return await api.put(`/api/v1/notices/${id}`, formData, {
       headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
         // Don't manually set Content-Type for FormData - browser will set it with correct boundary
       },
     });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to update notice." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Delete Notice
 // --------------------------------------
-export const deleteNotice = async (id, token) => {
+export const deleteNotice = async (id) => {
   try {
-    return await api.delete(`/api/v1/notices/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.delete(`/api/v1/notices/${id}`);
   } catch (err) {
-    throw err.response?.data || { error: "Failed to delete notice." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Download Notice File/Image
 // --------------------------------------
-export const downloadNoticeFile = async (id, token) => {
+export const downloadNoticeFile = async (id) => {
   try {
     const response = await api.get(`/api/v1/notices/${id}/file`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       responseType: "blob",
     });
     return response;
   } catch (err) {
-    throw err.response?.data || { error: "Failed to download notice file." };
+    handleApiError(err);
   }
 };
 

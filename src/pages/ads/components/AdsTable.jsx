@@ -1,61 +1,36 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getAds, deleteAd, AD_POSITIONS, AD_STATUSES, AD_PRIORITIES } from "../../../http/ads";
-import Pagination from "../../../Verification/Pagination";
-import { Plus, Edit, Trash2, Eye, Calendar, Image, DollarSign } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAds, useDeleteAd } from "@/hooks/useAds";
+import { AD_POSITIONS, AD_STATUSES, AD_PRIORITIES } from "@/constants/ads.constants";
+import DataTable from "@/components/common/DataTable";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
+import { Plus, Edit, Trash2, Calendar, Image as ImageIcon, DollarSign } from "lucide-react";
 
 const AdsTable = () => {
-  const [ads, setAds] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const PAGE_SIZE = 10;
+  const [pageSize] = useState(10);
+  const [deleteId, setDeleteId] = useState(null);
 
-  const token = localStorage.getItem("token");
+  // Fetch Ads using hook
+  const { data, isLoading, error } = useAds({ page, size: pageSize });
+  const deleteMutation = useDeleteAd();
 
-  // Fetch Ads
-  const fetchAds = async () => {
-    setLoading(true);
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      const res = await getAds({ page, size: PAGE_SIZE }, token);
-      const responseData = res.data?.data || res.data;
-      const data = responseData?.content || [];
-      setAds(data);
-      setTotalPages(responseData?.totalPages || 0);
-    } catch (err) {
-      console.error("Fetch Ads Error:", err);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchAds();
-  }, [page]);
-
-  // Delete Ad
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this ad?")) return;
-
-    try {
-      await deleteAd(id, token);
-      fetchAds();
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
     } catch (err) {
       console.error("Delete Ad Error:", err);
     }
   };
 
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    setPage(newPage - 1);
-  };
+  // Helper logic
+  const getLabel = (options, value) => options.find((o) => o.value === value)?.label || value || "-";
 
-  // Get label from value
-  const getLabel = (options, value) => {
-    const option = options.find((o) => o.value === value);
-    return option?.label || value || "-";
-  };
-
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -65,175 +40,180 @@ const AdsTable = () => {
     });
   };
 
-  // Get status badge color
-  const getStatusBadge = (status) => {
-    const colors = {
+  const getBadgeStyle = (type, value) => {
+    const statusColors = {
       ACTIVE: "bg-green-100 text-green-800",
       DRAFT: "bg-gray-100 text-gray-800",
       PAUSED: "bg-yellow-100 text-yellow-800",
       EXPIRED: "bg-red-100 text-red-800",
     };
-    return colors[status] || "bg-gray-100 text-gray-800";
-  };
-
-  // Get priority badge color
-  const getPriorityBadge = (priority) => {
-    const colors = {
+    const priorityColors = {
       HIGH: "bg-red-100 text-red-800",
       MEDIUM: "bg-yellow-100 text-yellow-800",
       LOW: "bg-blue-100 text-blue-800",
     };
-    return colors[priority] || "bg-gray-100 text-gray-800";
+    return type === "status" ? statusColors[value] : priorityColors[value];
   };
 
-  return (
-    <div className="w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Ads Management</h1>
-        <Link
-          to="/ads/add"
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-all duration-200"
-        >
-          <Plus size={20} />
-          Add New Ad
-        </Link>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="p-4 text-left text-sm font-semibold text-gray-600">Image</th>
-                <th className="p-4 text-left text-sm font-semibold text-gray-600">Title</th>
-                <th className="p-4 text-left text-sm font-semibold text-gray-600">Position</th>
-                <th className="p-4 text-left text-sm font-semibold text-gray-600">Status</th>
-                <th className="p-4 text-left text-sm font-semibold text-gray-600">Priority</th>
-                <th className="p-4 text-left text-sm font-semibold text-gray-600">Duration</th>
-                <th className="p-4 text-left text-sm font-semibold text-gray-600">Budget</th>
-                <th className="p-4 text-center text-sm font-semibold text-gray-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center text-gray-500">
-                    Loading...
-                  </td>
-                </tr>
-              ) : ads.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center text-gray-500">
-                    No ads found.
-                  </td>
-                </tr>
-              ) : (
-                ads.map((ad) => (
-                  <tr
-                    key={ad.adId}
-                    className="border-b hover:bg-gray-50 transition-colors"
-                  >
-                    {/* Image */}
-                    <td className="p-4">
-                      {ad.images && ad.images.length > 0 ? (
-                        <img
-                          src={`https://api.entrancegateway.com/images/${ad.images[0]}`}
-                          alt={ad.title}
-                          className="h-12 w-16 object-cover rounded-md"
-                        />
-                      ) : (
-                        <div className="h-12 w-16 bg-gray-100 rounded-md flex items-center justify-center">
-                          <Image size={20} className="text-gray-400" />
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Title */}
-                    <td className="p-4">
-                      <div className="font-medium text-gray-900">{ad.title || "-"}</div>
-                      <div className="text-xs text-gray-500">{ad.banner}</div>
-                    </td>
-
-                    {/* Position */}
-                    <td className="p-4 text-gray-600">
-                      {getLabel(AD_POSITIONS, ad.position)}
-                    </td>
-
-                    {/* Status */}
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(ad.status)}`}>
-                        {getLabel(AD_STATUSES, ad.status)}
-                      </span>
-                    </td>
-
-                    {/* Priority */}
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityBadge(ad.priority)}`}>
-                        {getLabel(AD_PRIORITIES, ad.priority)}
-                      </span>
-                    </td>
-
-                    {/* Duration */}
-                    <td className="p-4">
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Calendar size={14} />
-                        <span>{formatDate(ad.startDate)}</span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        to {formatDate(ad.endDate)}
-                      </div>
-                    </td>
-
-                    {/* Budget */}
-                    <td className="p-4">
-                      {ad.totalBudget ? (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <DollarSign size={14} />
-                          <span>{ad.totalBudget.toFixed(2)}</span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="p-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <Link
-                          to={`/ads/edit/${ad.adId}`}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={18} />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(ad.adId)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t">
-            <Pagination
-              currentPage={page + 1}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
+  const columns = useMemo(
+    () => [
+      {
+        key: "image",
+        label: "Image",
+        render: (row) =>
+          row.images?.[0] ? (
+            <img
+              src={`https://api.entrancegateway.com/images/${row.images[0]}`}
+              alt={row.title}
+              className="h-10 w-14 object-cover rounded-lg border border-gray-100"
             />
+          ) : (
+            <div className="h-10 w-14 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100">
+              <ImageIcon size={18} className="text-gray-300" />
+            </div>
+          ),
+      },
+      {
+        key: "title",
+        label: "Title & Banner",
+        render: (row) => (
+          <div>
+            <div className="font-semibold text-gray-900">{row.title || "-"}</div>
+            <div className="text-xs text-gray-500 italic">{row.banner}</div>
           </div>
-        )}
+        ),
+      },
+      {
+        key: "position",
+        label: "Position",
+        render: (row) => getLabel(AD_POSITIONS, row.position),
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (row) => (
+          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getBadgeStyle("status", row.status)}`}>
+            {getLabel(AD_STATUSES, row.status)}
+          </span>
+        ),
+      },
+      {
+        key: "priority",
+        label: "Priority",
+        render: (row) => (
+          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getBadgeStyle("priority", row.priority)}`}>
+            {getLabel(AD_PRIORITIES, row.priority)}
+          </span>
+        ),
+      },
+      {
+        key: "duration",
+        label: "Duration",
+        render: (row) => (
+          <div className="text-xs space-y-1">
+            <div className="flex items-center gap-1.5 text-gray-600">
+              <Calendar size={12} />
+              <span>{formatDate(row.startDate)}</span>
+            </div>
+            <div className="text-gray-400 pl-4">to {formatDate(row.endDate)}</div>
+          </div>
+        ),
+      },
+      {
+        key: "budget",
+        label: "Budget",
+        render: (row) =>
+          row.totalBudget ? (
+            <div className="flex items-center gap-1 text-sm font-semibold text-gray-700">
+              <DollarSign size={14} />
+              <span>{row.totalBudget.toFixed(2)}</span>
+            </div>
+          ) : (
+            <span className="text-gray-400">-</span>
+          ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/ads/edit/${row.adId}`}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
+              title="Edit Ad"
+            >
+              <Edit size={18} />
+            </Link>
+            <button
+              onClick={() => setDeleteId(row.adId)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+              title="Delete Ad"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2">Failed to load advertisements</h3>
+        <p>{error.message || "An unexpected error occurred."}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
+        >
+          Retry
+        </button>
       </div>
+    );
+  }
+
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PageHeader
+        title="Ads Management"
+        breadcrumbs={[{ label: "Ads" }]}
+        actions={[
+          {
+            label: "Create Advertisement",
+            onClick: () => navigate("/ads/add"),
+            icon: <Plus size={18} />,
+            variant: "primary",
+          },
+        ]}
+      />
+
+      {isLoading ? (
+        <LoadingState type="table" />
+      ) : (
+        <DataTable
+          data={data?.content || []}
+          columns={columns}
+          loading={isLoading}
+          pagination={{
+            currentPage: page,
+            totalPages: data?.totalPages || 0,
+            totalItems: data?.totalItems || 0,
+            pageSize: pageSize,
+          }}
+          onPageChange={setPage}
+        />
+      )}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Advertisement"
+        message="Are you sure you want to delete this ad? This will permanently remove it from the system."
+        confirmText="Yes, Delete Ad"
+        loading={deleteMutation.isLoading}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 };

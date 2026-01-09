@@ -1,6 +1,7 @@
 import { useState } from "react";
+
 import { useNavigate, Link } from "react-router-dom";
-import Layout from "../../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import { registerAdmin } from "../../../http/adminget";
 import { AlertCircle, User, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
@@ -15,7 +16,7 @@ const AdminRegister = () => {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "", error: "" });
 
-  const token = localStorage.getItem("token");
+
 
   // Validate form
   const validate = () => {
@@ -58,7 +59,7 @@ const AdminRegister = () => {
     setErrors({});
 
     try {
-      await registerAdmin(form, token);
+      await registerAdmin(form);
       setStatus({
         loading: false,
         success: "Admin created successfully!",
@@ -209,11 +210,10 @@ const AdminRegister = () => {
               <button
                 type="submit"
                 disabled={status.loading}
-                className={`flex-1 py-3 px-4 text-white rounded-lg font-medium transition-all duration-200 ${
-                  status.loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700"
-                }`}
+                className={`flex-1 py-3 px-4 text-white rounded-lg font-medium transition-all duration-200 ${status.loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
               >
                 {status.loading ? "Creating..." : "Create Admin"}
               </button>

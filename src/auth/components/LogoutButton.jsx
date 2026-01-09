@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import { performLogout } from '../../../store/authSlice';
+import { performLogout } from '@/store/authSlice';
 
 /**
  * Secure Logout Button Component
@@ -13,9 +13,9 @@ import { performLogout } from '../../../store/authSlice';
  * @param {boolean} props.showIcon - Show logout icon
  * @param {string} props.label - Button label
  */
-const LogoutButton = ({ 
-  className = '', 
-  showIcon = true, 
+const LogoutButton = ({
+  className = '',
+  showIcon = true,
   label = 'Logout',
   variant = 'default', // 'default', 'minimal', 'danger'
 }) => {
@@ -26,7 +26,7 @@ const LogoutButton = ({
     try {
       // Dispatch logout action (handles token cleanup)
       await dispatch(performLogout());
-      
+
       // Navigate to login page
       navigate('/admin/login', { replace: true });
     } catch (error) {

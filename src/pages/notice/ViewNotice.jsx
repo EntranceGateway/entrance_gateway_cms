@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import { getNoticeById } from "../../http/notice";
 import { noticeFile } from "../../http/fetchpdf";
-import FileViewer from "../../components/FileViewer/FileViewer";
-import Spinner from "../../../components/Spinner/Spinner";
+import FileViewer from "@/components/pdf/FileViewer";
+import Spinner from "@/components/common/Spinner";
 import { ArrowLeft, Calendar, Edit } from "lucide-react";
 
 const ViewNotice = () => {
@@ -13,12 +13,12 @@ const ViewNotice = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     const fetchNotice = async () => {
       try {
-        const res = await getNoticeById(id, token);
+        const res = await getNoticeById(id);
         setNotice(res.data.data);
       } catch (err) {
         setError(err.error || "Failed to load notice");
@@ -88,9 +88,8 @@ const ViewNotice = () => {
           {/* Featured File (Image or PDF or Video) */}
           {notice?.imageName && (
             <div className="w-full bg-gray-100 border-b border-gray-200">
-              <FileViewer 
+              <FileViewer
                 fileUrl={noticeFile(id)}
-                token={token}
                 fileName={notice.imageName}
                 className="w-full"
               />

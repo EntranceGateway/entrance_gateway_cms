@@ -1,12 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { createAd, updateAd } from "../../../http/ads";
 import {
-  createAd,
-  updateAd,
   AD_POSITIONS,
   AD_STATUSES,
   AD_PRIORITIES,
-} from "../../../http/ads";
+} from "@/constants/ads.constants";
 import {
   AlertCircle,
   Image,
@@ -55,7 +54,6 @@ const AdsForm = ({ mode = "create", initialData = null, adId = null }) => {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "", error: "" });
 
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // Initialize form with data
@@ -182,10 +180,10 @@ const AdsForm = ({ mode = "create", initialData = null, adId = null }) => {
       });
 
       if (mode === "edit" && adId) {
-        await updateAd(adId, formData, token);
+        await updateAd(adId, formData);
         setStatus({ loading: false, success: "Ad updated successfully!", error: "" });
       } else {
-        await createAd(formData, token);
+        await createAd(formData);
         setStatus({ loading: false, success: "Ad created successfully!", error: "" });
       }
 
@@ -749,17 +747,16 @@ const AdsForm = ({ mode = "create", initialData = null, adId = null }) => {
             <button
               type="submit"
               disabled={status.loading}
-              className={`flex-1 py-3 px-4 text-white rounded-lg font-medium transition-all duration-200 ${
-                status.loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
+              className={`flex-1 py-3 px-4 text-white rounded-lg font-medium transition-all duration-200 ${status.loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700"
+                }`}
             >
               {status.loading
                 ? "Saving..."
                 : mode === "edit"
-                ? "Update Ad"
-                : "Create Ad"}
+                  ? "Update Ad"
+                  : "Create Ad"}
             </button>
           </div>
         </form>

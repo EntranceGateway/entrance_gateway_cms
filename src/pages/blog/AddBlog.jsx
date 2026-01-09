@@ -1,12 +1,11 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
+
 import BlogForm from "./components/BlogForm";
 import { createBlog } from "../../http/blog";
 
 const AddBlog = () => {
-  const token = localStorage.getItem("token");
-
   const handleSubmit = async (formData) => {
-    await createBlog(formData, token);
+    await createBlog(formData);
   };
 
   return (

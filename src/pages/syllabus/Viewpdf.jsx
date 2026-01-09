@@ -1,19 +1,17 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { syllabusFile } from "../../http/fetchpdf";
-import FileViewer from "../../components/FileViewer/FileViewer";
+import FileViewer from "@/components/pdf/FileViewer";
 
 const ViewSyllabus = () => {
   const { id } = useParams();
-  
-  const token = localStorage.getItem("token");
+
   const pdfUrl = syllabusFile(id);
 
   return (
     <div className="w-full h-screen bg-gray-100">
       <FileViewer
         fileUrl={pdfUrl}
-        token={token}
         fileName={`syllabus-${id}`}
         className="w-full h-screen"
       />

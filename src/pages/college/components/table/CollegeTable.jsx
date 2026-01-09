@@ -1,257 +1,320 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { deleteColleges, getColleges } from "../../../../http/colleges";
-import UniversalFilter from "../../../../Verification/UniversalFilter";
-import Pagination from "../../../../Verification/Pagination";
-import { BookOpen, Plus } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useColleges, useDeleteCollege } from "@/hooks/useColleges";
+import DataTable from "@/components/common/DataTable";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
+import { BookOpen, Plus, Edit, Trash2, Globe, MapPin, Mail, Phone, Info, Search, Filter, X } from "lucide-react";
 
 const CollegeTable = () => {
-  const [colleges, setColleges] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [page, setPage] = useState(0); // API uses 0-based indexing
-  const [totalPages, setTotalPages] = useState(0);
-  const PAGE_SIZE = 10;
-
+  const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(10);
   const [sortField, setSortField] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
   // Filter states
-  const [filters, setFilters] = useState({});
+  const [collegeName, setCollegeName] = useState("");
+  const [location, setLocation] = useState("");
+  const [collegeType, setCollegeType] = useState("");
+  const [priority, setPriority] = useState("");
+  const [deleteId, setDeleteId] = useState(null);
 
-  const token = localStorage.getItem("token");
+  // Fetch Colleges using hook
+  const { data, isLoading, error } = useColleges({
+    page,
+    size: pageSize,
+    sortBy: sortField,
+    sortDir: sortOrder,
+    ...(collegeName && { collegeName }),
+    ...(location && { location }),
+    ...(collegeType && { collegeType }),
+    ...(priority && { priority }),
+  });
 
-  const fetchColleges = async () => {
-    setLoading(true);
+  const deleteMutation = useDeleteCollege();
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      const params = {
-        page,
-        size: PAGE_SIZE,
-        ...(sortField && { sortBy: sortField, sortDir: sortOrder }),
-        ...filters,
-      };
-      
-      const res = await getColleges(params, token);
-      const data = res.data.data.content || [];
-      setColleges(data);
-      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
-      const responseData = res.data.data || res.data;
-      setTotalPages(responseData.totalPages || 0);
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
     } catch (err) {
-      console.error("Fetch error:", err);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchColleges();
-  }, [page, sortField, sortOrder, filters]);
-
-  // Update filters and reset to first page
-  const handleFilter = (newFilters) => {
-    setFilters(newFilters);
-    setPage(0); // reset to first page
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this college?")) return;
-
-    try {
-      await deleteColleges(id, token);
-      fetchColleges();
-    } catch (err) {
-      console.error("Delete error:", err);
+      console.error("Delete College Error:", err);
     }
   };
 
-  // Handle page change (convert from 1-based display to 0-based API)
-  const handlePageChange = (newPage) => {
-    setPage(newPage - 1);
+  const columns = useMemo(
+    () => [
+      {
+        key: "collegeName",
+        label: "College Details",
+        sortable: true,
+        render: (row) => (
+          <div className="flex flex-col">
+            <span className="font-bold text-gray-900">{row.collegeName}</span>
+            <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+              <MapPin size={12} className="text-gray-400" />
+              <span>{row.location}</span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "affiliation",
+        label: "Affiliation",
+        render: (row) => (
+          <span className="text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+            {row.affiliation?.replace(/_/g, " ")}
+          </span>
+        ),
+      },
+      {
+        key: "priority",
+        label: "Priority",
+        sortable: true,
+        render: (row) => {
+          const styles = {
+            HIGH: "bg-red-50 text-red-600 border-red-100",
+            MEDIUM: "bg-amber-50 text-amber-600 border-amber-100",
+            LOW: "bg-emerald-50 text-emerald-600 border-emerald-100",
+          };
+          return (
+            <span className={`px-2 py-1 text-[10px] uppercase font-bold rounded-full border ${styles[row.priority] || "bg-gray-50 text-gray-600"}`}>
+              {row.priority}
+            </span>
+          );
+        },
+      },
+      {
+        key: "courses",
+        label: "Courses",
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100">
+              <BookOpen size={12} />
+              {row.courses?.length || 0}
+            </span>
+            {row.courses?.length > 0 && (
+              <div className="relative group/pop">
+                <Info size={14} className="text-gray-400 cursor-help hover:text-indigo-500 transition-colors" />
+                <div className="absolute z-50 invisible group-hover/pop:visible opacity-0 group-hover/pop:opacity-100 transition-all bottom-full left-0 mb-2 w-64 p-4 bg-white border border-gray-100 rounded-2xl shadow-2xl scale-95 group-hover/pop:scale-100">
+                  <h4 className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                    <BookOpen size={12} className="text-indigo-500" />
+                    Available Courses
+                  </h4>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                    {row.courses.map((c) => (
+                      <div key={c.courseId} className="text-[11px] text-gray-600 flex items-start gap-2 bg-gray-50 p-1.5 rounded-lg border border-transparent hover:border-indigo-100 transition-all">
+                        <span className="text-indigo-400 font-bold">•</span>
+                        <span className="truncate">{c.courseName}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "contacts",
+        label: "Contacts",
+        render: (row) => (
+          <div className="flex flex-col gap-1 text-[11px]">
+            {row.email && (
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Mail size={12} className="text-gray-400" />
+                <span>{row.email}</span>
+              </div>
+            )}
+            {row.contact && (
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Phone size={12} className="text-gray-400" />
+                <span>{row.contact}</span>
+              </div>
+            )}
+            {row.website && (
+              <a href={row.website} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium">
+                <Globe size={12} />
+                <span>Website</span>
+              </a>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <div className="flex items-center gap-1.5">
+            <Link
+              to={`/college/${row.collegeId}/courses`}
+              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100"
+              title="Manage Courses"
+            >
+              <Plus size={18} />
+            </Link>
+            <Link
+              to={`/college/edit/${row.collegeId}`}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100"
+              title="Edit College"
+            >
+              <Edit size={18} />
+            </Link>
+            <button
+              onClick={() => setDeleteId(row.collegeId)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+              title="Delete College"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  const resetFilters = () => {
+    setCollegeName("");
+    setLocation("");
+    setCollegeType("");
+    setPriority("");
+    setPage(0);
   };
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2">Failed to load colleges</h3>
+        <p>{error.message || "An unexpected error occurred."}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Colleges</h1>
-
-      {/* Live filter */}
-      <UniversalFilter
-        config={[
-          { name: "collegeName", label: "College Name", type: "text", placeholder: "Search by name" },
-          { name: "location", label: "Location", type: "text", placeholder: "Search location" },
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PageHeader
+        title="College Portal"
+        breadcrumbs={[{ label: "Colleges" }]}
+        actions={[
           {
-            name: "collegeType",
-            label: "Type",
-            type: "select",
-            options: [
-              { value: "PRIVATE", label: "Private" },
-              { value: "COMMUNITY", label: "Community" },
-              { value: "GOVERNMENT", label: "Government" },
-            ],
-          },
-          {
-            name: "priority",
-            label: "Priority",
-            type: "select",
-            options: [
-              { value: "HIGH", label: "High" },
-              { value: "MEDIUM", label: "Medium" },
-              { value: "LOW", label: "Low" },
-            ],
+            label: "Registration",
+            onClick: () => navigate("/college/add"),
+            icon: <Plus size={18} />,
+            variant: "primary",
           },
         ]}
-        onFilter={handleFilter} // live filter on every input
       />
 
-      {/* Sort Controls */}
-      <div className="bg-white shadow-md rounded-lg p-4 mt-4 flex flex-wrap gap-4 items-center">
-        <span className="font-medium text-gray-700">Sort By:</span>
-        <select
-          value={sortField}
-          onChange={(e) => {
-            setSortField(e.target.value);
-            setPage(0);
-          }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">None</option>
-          <option value="collegeName">Name</option>
-          <option value="location">Location</option>
-          <option value="priority">Priority</option>
-          <option value="establishedYear">Year</option>
-        </select>
+      {/* Modern Filter Bar */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+              <Filter size={20} />
+            </div>
+            <h3 className="font-bold text-gray-800">Advanced Search</h3>
+          </div>
+          {(collegeName || location || collegeType || priority) && (
+            <button
+              onClick={resetFilters}
+              className="text-sm font-semibold text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors"
+            >
+              <X size={14} />
+              Reset All
+            </button>
+          )}
+        </div>
 
-        <select
-          value={sortOrder}
-          onChange={(e) => {
-            setSortOrder(e.target.value);
-            setPage(0);
-          }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={!sortField}
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="relative group">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={collegeName}
+              onChange={(e) => { setCollegeName(e.target.value); setPage(0); }}
+              className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium"
+            />
+          </div>
 
-      {/* Table */}
-      <div className="bg-white shadow-xl rounded-2xl overflow-hidden mt-4">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                {["Name", "Location", "Affiliation", "Priority", "Courses", "Contact", "Email", "Website", "Year", "Action"].map(
-                  (col) => (
-                    <th
-                      key={col}
-                      className="p-4 text-left font-medium text-gray-700 sticky top-0 bg-gray-50 z-10"
-                    >
-                      {col}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
+          <div className="relative group">
+            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search by location..."
+              value={location}
+              onChange={(e) => { setLocation(e.target.value); setPage(0); }}
+              className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium"
+            />
+          </div>
 
-            <tbody className="divide-y">
-              {loading ? (
-                <tr>
-                  <td colSpan={10} className="text-center p-6 text-gray-500">
-                    Loading...
-                  </td>
-                </tr>
-              ) : colleges.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="text-center p-6 text-gray-500">
-                    🔍 No colleges found for selected filters
-                  </td>
-                </tr>
-              ) : (
-                colleges.map((college) => (
-                  <tr key={college.collegeId} className="hover:bg-gray-50 transition">
-                    <td className="p-4 font-medium text-gray-800">{college.collegeName}</td>
-                    <td className="p-4 text-gray-600">{college.location}</td>
-                    <td className="p-4 text-gray-600">{college.affiliation?.replace(/_/g, " ")}</td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-md font-semibold ${
-                          college.priority === "HIGH"
-                            ? "bg-red-100 text-red-700"
-                            : college.priority === "MEDIUM"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {college.priority}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
-                          <BookOpen className="w-3 h-3" />
-                          {college.courses?.length || 0}
-                        </span>
-                        {college.courses?.length > 0 && (
-                          <div className="relative group">
-                            <span className="cursor-help text-gray-400 hover:text-gray-600">ℹ️</span>
-                            <div className="absolute z-20 hidden group-hover:block left-0 top-6 w-64 p-3 bg-white border border-gray-200 rounded-lg shadow-lg">
-                              <p className="text-xs font-semibold text-gray-700 mb-2">Courses:</p>
-                              <ul className="text-xs text-gray-600 space-y-1">
-                                {college.courses.slice(0, 5).map((c) => (
-                                  <li key={c.courseId} className="truncate">• {c.courseName}</li>
-                                ))}
-                                {college.courses.length > 5 && (
-                                  <li className="text-blue-600">+{college.courses.length - 5} more</li>
-                                )}
-                              </ul>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 text-gray-600">{college.contact}</td>
-                    <td className="p-4 text-gray-600">{college.email}</td>
-                    <td className="p-4 text-blue-600 underline">
-                      <a href={college.website} target="_blank" rel="noreferrer">
-                        Visit
-                      </a>
-                    </td>
-                    <td className="p-4 text-gray-600">{college.establishedYear}</td>
-                    <td className="p-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-                      <Link
-                        to={`/college/${college.collegeId}/courses`}
-                        className="px-3 py-1.5 rounded-xl text-green-700 font-semibold border border-green-200 hover:bg-green-50 transition flex items-center gap-1"
-                        title="Manage Courses"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Courses
-                      </Link>
-                      <Link
-                        to={`/college/edit/${college.collegeId}`}
-                        className="px-3 py-1.5 rounded-xl text-blue-700 font-semibold border border-blue-200 hover:bg-blue-50 transition"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(college.collegeId)}
-                        className="px-3 py-1.5 rounded-xl text-red-700 font-semibold border border-red-200 hover:bg-red-50 transition"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="space-y-1">
+            <select
+              value={collegeType}
+              onChange={(e) => { setCollegeType(e.target.value); setPage(0); }}
+              className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium appearance-none"
+            >
+              <option value="">Institution Type</option>
+              <option value="PRIVATE">Private</option>
+              <option value="COMMUNITY">Community</option>
+              <option value="GOVERNMENT">Government</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <select
+              value={priority}
+              onChange={(e) => { setPriority(e.target.value); setPage(0); }}
+              className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all text-sm font-medium appearance-none"
+            >
+              <option value="">Priority Level</option>
+              <option value="HIGH">High Priority</option>
+              <option value="MEDIUM">Medium Priority</option>
+              <option value="LOW">Low Priority</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Pagination */}
-      <Pagination
-        page={page + 1}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
+      {isLoading ? (
+        <LoadingState type="table" />
+      ) : (
+        <DataTable
+          data={data?.content || []}
+          columns={columns}
+          loading={isLoading}
+          pagination={{
+            currentPage: page,
+            totalPages: data?.totalPages || 0,
+            totalItems: data?.totalItems || 0,
+            pageSize: pageSize,
+          }}
+          onPageChange={setPage}
+          onSort={(key, dir) => {
+            setSortField(key);
+            setSortOrder(dir);
+          }}
+        />
+      )}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Remove Institution"
+        message="Are you sure you want to delete this college? All associated records, courses, and media will be permanently deleted. This action cannot be reversed."
+        confirmText="Confirm Removal"
+        loading={deleteMutation.isLoading}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
       />
     </div>
   );

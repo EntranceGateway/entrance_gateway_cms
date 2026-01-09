@@ -1,89 +1,80 @@
 import api from "./index";
+import { handleApiError } from "./utils/errorHandler";
 
 // --------------------------------------
 // Get All Blogs (with pagination & sorting)
 // --------------------------------------
-export const getBlogs = async (params = {}, token) => {
+export const getBlogs = async (params = {}) => {
   try {
-    return await api.get("/api/v1/blogs", {
-      params,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/blogs", { params });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to fetch blogs." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Get Single Blog by ID
 // --------------------------------------
-export const getBlogById = async (id, token) => {
+export const getBlogById = async (id) => {
   try {
-    return await api.get(`/api/v1/blogs/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get(`/api/v1/blogs/${id}`);
   } catch (err) {
-    throw err.response?.data || { error: "Failed to fetch blog." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Create Blog
 // --------------------------------------
-export const createBlog = async (formData, token) => {
+export const createBlog = async (formData) => {
   try {
     return await api.post("/api/v1/blogs", formData, {
       headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
         "Content-Type": "multipart/form-data",
       },
     });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to create blog." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Update Blog
 // --------------------------------------
-export const updateBlog = async (id, formData, token) => {
+export const updateBlog = async (id, formData) => {
   try {
     return await api.put(`/api/v1/blogs/${id}`, formData, {
       headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
         "Content-Type": "multipart/form-data",
       },
     });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to update blog." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Delete Blog
 // --------------------------------------
-export const deleteBlog = async (id, token) => {
+export const deleteBlog = async (id) => {
   try {
-    return await api.delete(`/api/v1/blogs/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.delete(`/api/v1/blogs/${id}`);
   } catch (err) {
-    throw err.response?.data || { error: "Failed to delete blog." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Download Blog File/Image
 // --------------------------------------
-export const downloadBlogFile = async (id, token) => {
+export const downloadBlogFile = async (id) => {
   try {
     const response = await api.get(`/api/v1/blogs/${id}/file`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       responseType: "blob",
     });
     return response;
   } catch (err) {
-    throw err.response?.data || { error: "Failed to download blog file." };
+    handleApiError(err);
   }
 };
 

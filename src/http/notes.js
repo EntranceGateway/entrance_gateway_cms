@@ -1,46 +1,36 @@
 import api from "./index"; // axios instance
+import { handleApiError } from "./utils/errorHandler";
 
 // ===============================
 // CREATE NOTE  (JSON + File)
 // ===============================
-export const createNote = async (formData, token) => {
+export const createNote = async (formData) => {
   try {
-    return await api.post("/api/v1/notes", formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // ❌ Don't manually set Content-Type for FormData
-      },
-    });
+    return await api.post("/api/v1/notes", formData);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // GET ALL NOTES
 // ===============================
-export const getNotes = async (params = {}, token) => {
+export const getNotes = async (params = {}) => {
   try {
-    return await api.get("/api/v1/notes", {
-      params,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/notes", { params });
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // GET NOTES BY COURSE, SEMESTER & AFFILIATION
 // ===============================
-export const getNotesByFilter = async (params = {}, token) => {
+export const getNotesByFilter = async (params = {}) => {
   try {
-    return await api.get("/api/v1/notes/by-course-semester-affiliation", {
-      params,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/notes/by-course-semester-affiliation", { params });
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
@@ -51,86 +41,75 @@ export const getNotesByFilter = async (params = {}, token) => {
 // ===============================
 // GET SINGLE NOTE (PDF file)
 // ===============================
-export const getSingle = async (url, token) => {
-  if (!token) throw new Error("Authentication token is missing");
+export const getSingle = async (url) => {
+  try {
+    const res = await api.get(url, {
+      headers: {
+        Accept: "application/pdf",
+      },
+      responseType: "blob",
+      withCredentials: true,
+    });
 
-  const res = await api.get(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/pdf",
-    },
-    responseType: "blob",
-    withCredentials: true,
-  });
+    if (res.status !== 200) {
+      throw new Error(`Unexpected response status: ${res.status}`);
+    }
 
-  if (res.status !== 200) {
-    throw new Error(`Unexpected response status: ${res.status}`);
+    const contentType = res.headers["content-type"];
+    if (!contentType || !contentType.includes("application/pdf")) {
+      throw new Error("Invalid response: not a PDF file");
+    }
+
+    return res.data; // blob
+  } catch (err) {
+    handleApiError(err);
   }
-
-  const contentType = res.headers["content-type"];
-  if (!contentType || !contentType.includes("application/pdf")) {
-    throw new Error("Invalid response: not a PDF file");
-  }
-
-  return res.data; // blob
 };
 
-export const getNotesById = async (noteId, token) => {
+export const getNotesById = async (noteId) => {
   try {
-    return await api.get(`/api/v1/notes/${noteId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get(`/api/v1/notes/${noteId}`);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // UPDATE NOTE DETAILS  (JSON)
 // ===============================
-export const updateNoteDetails = async (id, body, token) => {
+export const updateNoteDetails = async (id, body) => {
   try {
     return await api.put(`/api/v1/notes/${id}`, body, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // UPDATE NOTE FILE (PDF Upload)
 // ===============================
-export const updateNoteFile = async (id, file, token) => {
+export const updateNoteFile = async (id, file) => {
   try {
     const formData = new FormData();
     formData.append("file", file);
 
-    return await api.put(`/api/v1/notes/${id}/file`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // ❌ No manual Content-Type → browser handles it
-      },
-    });
+    return await api.put(`/api/v1/notes/${id}/file`, formData);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // DELETE NOTE
 // ===============================
-export const deleteNote = async (id, token) => {
+export const deleteNote = async (id) => {
   try {
-    return await api.delete(`/api/v1/notes/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    return await api.delete(`/api/v1/notes/${id}`);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };

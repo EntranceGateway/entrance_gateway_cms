@@ -1,10 +1,10 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import CollegeTable from "./components/table/CollegeTable";
 
-function CollegeAll(){
-    return(
+function CollegeAll() {
+    return (
         <Layout>
-            <CollegeTable/>
+            <CollegeTable />
         </Layout>
     )
 }

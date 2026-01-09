@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import Layout from "../../../components/layout/Layout";
+
+import Layout from "@/components/layout/Layout";
 import { getAdmin, ADMIN_ROLES } from "../../http/adminget";
 import { User, Mail, Shield, Loader2 } from "lucide-react";
 
@@ -8,12 +9,12 @@ export default function AdminProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await getAdmin(token);
+        const res = await getAdmin();
         const data = res.data?.data || res.data;
         setProfile(data);
       } catch (err) {
@@ -24,7 +25,7 @@ export default function AdminProfile() {
     };
 
     fetchProfile();
-  }, [token]);
+  }, []);
 
   // Get display name - if no name and SUPER_ADMIN, show "SUPER ADMIN"
   const getDisplayName = () => {
@@ -75,10 +76,10 @@ export default function AdminProfile() {
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-10">
               <div className="flex items-center gap-6">
                 <div className="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                  {profile?.name 
+                  {profile?.name
                     ? profile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                    : profile?.role === 'SUPER_ADMIN' 
-                      ? 'SA' 
+                    : profile?.role === 'SUPER_ADMIN'
+                      ? 'SA'
                       : profile?.email?.charAt(0)?.toUpperCase() || 'A'}
                 </div>
                 <div>

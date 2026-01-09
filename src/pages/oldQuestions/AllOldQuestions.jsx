@@ -1,4 +1,4 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import OldQuestionTable from "./component/Table/OldQuestionTable";
 
 function AllOldQuestions() {

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import Layout from "../../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import auditLogService from "../../../http/auditLogService";
-import { 
-  Search, Filter, Calendar, Download, RefreshCw, 
+import {
+  Search, Filter, Calendar, Download, RefreshCw,
   ChevronLeft, ChevronRight, Eye, AlertCircle,
   Shield, CheckCircle, XCircle, Clock
 } from "lucide-react";
@@ -17,7 +17,7 @@ export default function AuditLogs() {
     totalElements: 0,
     totalPages: 0
   });
-  
+
   // Filters
   const [actionFilter, setActionFilter] = useState("");
   const [availableActions, setAvailableActions] = useState([]);
@@ -43,9 +43,9 @@ export default function AuditLogs() {
       } else if (actionFilter) {
         response = await auditLogService.getAuditLogsByAction(actionFilter);
       } else {
-        response = await auditLogService.getAllAuditLogs({ 
+        response = await auditLogService.getAllAuditLogs({
           page: pagination.page,
-          size: pagination.size 
+          size: pagination.size
         });
       }
 
@@ -98,17 +98,17 @@ export default function AuditLogs() {
     // Slightly hacky: we need to wait for state update or force a refetch logic
     // Usually easier to just reload or manually call basic fetch
     setTimeout(() => {
-       auditLogService.getAllAuditLogs({ page: 0, size: 20 })
-         .then(res => {
-            const data = res.data;
-            setLogs(data.content);
-            setPagination({
-              page: 0,
-              size: 20,
-              totalElements: data.totalElements,
-              totalPages: data.totalPages
-            });
-         });
+      auditLogService.getAllAuditLogs({ page: 0, size: 20 })
+        .then(res => {
+          const data = res.data;
+          setLogs(data.content);
+          setPagination({
+            page: 0,
+            size: 20,
+            totalElements: data.totalElements,
+            totalPages: data.totalPages
+          });
+        });
     }, 100);
   };
 
@@ -140,16 +140,16 @@ export default function AuditLogs() {
               Track and monitor all administrative actions
             </p>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
             >
               <Filter size={18} />
               Filters
             </button>
-            <button 
+            <button
               onClick={fetchLogs}
               className="p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
               title="Refresh Logs"
@@ -164,7 +164,7 @@ export default function AuditLogs() {
           <div className="p-6 bg-gray-50 border-b border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
-              <select 
+              <select
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
@@ -175,35 +175,35 @@ export default function AuditLogs() {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-              <input 
-                type="datetime-local" 
+              <input
+                type="datetime-local"
                 value={dateRange.start}
-                onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-              <input 
-                type="datetime-local" 
+              <input
+                type="datetime-local"
                 value={dateRange.end}
-                onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
               />
             </div>
 
             <div className="flex items-end gap-2">
-              <button 
+              <button
                 onClick={applyFilters}
                 className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
               >
                 Apply
               </button>
-              <button 
+              <button
                 onClick={clearFilters}
                 className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
@@ -261,23 +261,22 @@ export default function AuditLogs() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      {log.entityType} 
+                      {log.entityType}
                       {log.entityId && <span className="text-xs text-gray-400 block font-mono mt-0.5 max-w-[100px] truncate">{log.entityId}</span>}
                     </td>
                     <td className="px-6 py-4 text-gray-600 max-w-xs truncate" title={log.description}>
                       {log.description}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        log.responseStatus >= 200 && log.responseStatus < 300 
-                          ? 'bg-green-100 text-green-800' 
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.responseStatus >= 200 && log.responseStatus < 300
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      }`}>
+                        }`}>
                         {log.responseStatus}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button 
+                      <button
                         onClick={() => setSelectedLog(log)}
                         className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                       >
@@ -297,7 +296,7 @@ export default function AuditLogs() {
             Showing <span className="font-medium">{pagination.page * pagination.size + 1}</span> to <span className="font-medium">{Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}</span> of <span className="font-medium">{pagination.totalElements}</span> results
           </div>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => handlePageChange(pagination.page - 1)}
               disabled={pagination.page === 0}
               className="p-2 border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -307,7 +306,7 @@ export default function AuditLogs() {
             <span className="text-sm font-medium text-gray-700">
               Page {pagination.page + 1} of {pagination.totalPages || 1}
             </span>
-            <button 
+            <button
               onClick={() => handlePageChange(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages - 1}
               className="p-2 border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -327,14 +326,14 @@ export default function AuditLogs() {
                 Audit Log Details
                 <span className="text-xs font-mono bg-gray-200 px-2 py-0.5 rounded text-gray-600">#{selectedLog.id}</span>
               </h3>
-              <button 
+              <button
                 onClick={() => setSelectedLog(null)}
                 className="p-1 hover:bg-gray-200 rounded-full transition-colors"
               >
                 <XCircle size={24} className="text-gray-400 hover:text-gray-600" />
               </button>
             </div>
-            
+
             <div className="p-6 overflow-y-auto space-y-6">
               {/* Main Info Grid */}
               <div className="grid grid-cols-2 gap-6">
@@ -396,7 +395,7 @@ export default function AuditLogs() {
             </div>
 
             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-              <button 
+              <button
                 onClick={() => setSelectedLog(null)}
                 className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
               >

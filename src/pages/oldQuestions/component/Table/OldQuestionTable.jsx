@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import Pagination from "../../../../Verification/Pagination";
-import { getOldQuestions, filterOldQuestions, deleteOldQuestion, getOldQuestionPdfUrl } from "../../../../http/oldQuestionCollection";
-import { getCourses } from "../../../../http/course";
+import React, { useState, useMemo, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useOldQuestions, useDeleteOldQuestion } from "@/hooks/useOldQuestions";
+import { useCourses } from "@/hooks/useCourses";
+import { getOldQuestionPdfUrl } from "@/http/oldQuestionCollection";
+import DataTable from "@/components/common/DataTable";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
+import { Plus, Edit, Trash2, Eye, Calendar, Filter, X } from "lucide-react";
 
-const PAGE_SIZE = 10;
-
-// Affiliation options
+// Affiliation options (standardized)
 const AFFILIATIONS = [
   { value: "TRIBHUVAN_UNIVERSITY", label: "Tribhuvan University" },
   { value: "POKHARA_UNIVERSITY", label: "Pokhara University" },
@@ -19,11 +22,9 @@ const AFFILIATIONS = [
 ];
 
 const OldQuestionTable = () => {
-  const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-
+  const [pageSize] = useState(10);
   const [sortField, setSortField] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
@@ -33,117 +34,111 @@ const OldQuestionTable = () => {
   const [semester, setSemester] = useState("");
   const [year, setYear] = useState("");
   const [setName, setSetName] = useState("");
+  const [deleteId, setDeleteId] = useState(null);
 
-  // Course dropdown data
-  const [courses, setCourses] = useState([]);
+  // Fetch all courses for filtering
+  const { data: coursesData } = useCourses({ size: 1000 });
+  const allCourses = useMemo(() => coursesData?.content || [], [coursesData]);
 
-  const token = localStorage.getItem("token");
-
-  // All courses (fetched once)
-  const [allCourses, setAllCourses] = useState([]);
-
-  // Fetch all courses on mount
-  useEffect(() => {
-    const fetchAllCourses = async () => {
-      try {
-        const res = await getCourses({ size: 100 }, token);
-        const data = res.data.data?.content || res.data.data || [];
-        setAllCourses(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Error fetching all courses:", err);
-        setAllCourses([]);
-      }
-    };
-    fetchAllCourses();
-  }, [token]);
-
-  // Filter courses when affiliation changes
-  useEffect(() => {
-    if (!affiliation) {
-      setCourses([]);
-      return;
-    }
-    const filtered = allCourses.filter(
-      (c) => c.affiliation === affiliation
-    );
-    setCourses(filtered);
+  // Filter courses based on affiliation
+  const filteredCourses = useMemo(() => {
+    if (!affiliation) return [];
+    return allCourses.filter((c) => c.affiliation === affiliation);
   }, [affiliation, allCourses]);
 
-  // Fetch old questions
-  const fetchQuestions = async () => {
-    setLoading(true);
+  // Fetch Old Questions using hook
+  const { data, isLoading, error } = useOldQuestions({
+    page,
+    size: pageSize,
+    sortBy: sortField,
+    sortDir: sortOrder,
+    ...(courseId && { courseId }),
+    ...(semester && { semester: parseInt(semester) }),
+    ...(year && { year: parseInt(year) }),
+    ...(!courseId && setName && { setName }),
+  });
+
+  const deleteMutation = useDeleteOldQuestion();
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      const params = {
-        page,
-        size: PAGE_SIZE,
-        ...(sortField && { sortBy: sortField, sortDir: sortOrder }),
-      };
-
-      let res;
-
-      // Use filter endpoint if courseId is provided
-      if (courseId) {
-        res = await filterOldQuestions(
-          {
-            ...params,
-            courseId,
-            ...(semester && { semester: parseInt(semester) }),
-            ...(year && { year: parseInt(year) }),
-          },
-          token
-        );
-      } else {
-        // Use questions endpoint with optional filters
-        res = await getOldQuestions(
-          {
-            ...params,
-            ...(year && { year: parseInt(year) }),
-            ...(setName && { setName }),
-          },
-          token
-        );
-      }
-
-      // API Response format: { message, data: { content, totalElements, totalPages, pageNumber, pageSize, last } }
-      const responseData = res.data.data || res.data;
-      const data = responseData.content || [];
-      setQuestions(data);
-      setTotalPages(responseData.totalPages || 0);
+      await deleteMutation.mutateAsync(deleteId);
+      setDeleteId(null);
     } catch (err) {
-      console.error("Fetch old questions error:", err);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchQuestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sortField, sortOrder, affiliation, courseId, semester, year, setName]);
-
-  // Delete handler
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this old question?")) return;
-
-    try {
-      await deleteOldQuestion(id, token);
-      fetchQuestions();
-    } catch (err) {
-      console.error("Delete error:", err);
+      console.error("Delete Question Error:", err);
     }
   };
 
-  // Handle filter changes and reset to first page
-  const handleFilterChange = (setter) => (value) => {
-    setter(value);
-    setPage(0);
-  };
+  const columns = useMemo(
+    () => [
+      {
+        key: "setName",
+        label: "Set Name",
+        sortable: true,
+        render: (row) => <span className="font-semibold text-gray-900">{row.setName}</span>,
+      },
+      {
+        key: "subject",
+        label: "Subject",
+        sortable: true,
+        render: (row) => (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+            {row.subject || "N/A"}
+          </span>
+        ),
+      },
+      {
+        key: "courseName",
+        label: "Course",
+        sortable: true,
+        render: (row) => (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+            {row.courseName || "N/A"}
+          </span>
+        ),
+      },
+      { key: "year", label: "Year", sortable: true },
+      {
+        key: "description",
+        label: "Description",
+        render: (row) => <div className="max-w-xs truncate text-gray-500" title={row.description}>{row.description || "-"}</div>,
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <a
+              href={getOldQuestionPdfUrl(row.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="View PDF"
+            >
+              <Eye size={18} />
+            </a>
+            <Link
+              to={`/old-questions/edit/${row.id}`}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="Edit"
+            >
+              <Edit size={18} />
+            </Link>
+            <button
+              onClick={() => setDeleteId(row.id)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    setPage(newPage - 1);
-  };
-
-  // Clear all filters
   const clearFilters = () => {
     setAffiliation("");
     setCourseId("");
@@ -153,25 +148,57 @@ const OldQuestionTable = () => {
     setPage(0);
   };
 
-  return (
-    <div className="w-full p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Old Question Collection</h1>
-        <Link
-          to="/old-questions/add"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto mt-10">
+        <h3 className="text-xl font-bold mb-2">Failed to load question collection</h3>
+        <p>{error.message || "An unexpected error occurred."}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
         >
-          + Add Question
-        </Link>
+          Retry
+        </button>
       </div>
+    );
+  }
 
-      {/* Filter Controls */}
-      <div className="bg-white shadow-md rounded-lg p-4 mb-4 space-y-4">
-        <h3 className="font-semibold text-gray-700">Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* Affiliation Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Affiliation</label>
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PageHeader
+        title="Old Question Collection"
+        breadcrumbs={[{ label: "Old Questions" }]}
+        actions={[
+          {
+            label: "Add Collection",
+            onClick: () => navigate("/old-questions/add"),
+            icon: <Plus size={18} />,
+            variant: "primary",
+          },
+        ]}
+      />
+
+      {/* Filters Section */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 text-gray-700 font-semibold">
+            <Filter size={18} className="text-indigo-500" />
+            <span>Search Filters</span>
+          </div>
+          {(affiliation || courseId || semester || year || setName) && (
+            <button
+              onClick={clearFilters}
+              className="text-sm text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+            >
+              <X size={14} />
+              Clear All
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Affiliation</label>
             <select
               value={affiliation}
               onChange={(e) => {
@@ -180,20 +207,17 @@ const OldQuestionTable = () => {
                 setSemester("");
                 setPage(0);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none text-sm transition-all"
             >
               <option value="">All Affiliations</option>
               {AFFILIATIONS.map((aff) => (
-                <option key={aff.value} value={aff.value}>
-                  {aff.label}
-                </option>
+                <option key={aff.value} value={aff.value}>{aff.label}</option>
               ))}
             </select>
           </div>
 
-          {/* Course Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Course</label>
             <select
               value={courseId}
               onChange={(e) => {
@@ -202,205 +226,82 @@ const OldQuestionTable = () => {
                 setPage(0);
               }}
               disabled={!affiliation}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none text-sm transition-all disabled:opacity-50"
             >
-              <option value="">
-                {!affiliation ? "Select affiliation first" : "All Courses"}
-              </option>
-              {courses.map((course) => (
-                <option key={course.courseId} value={course.courseId}>
-                  {course.courseName}
-                </option>
+              <option value="">{!affiliation ? "Select Affiliation" : "All Courses"}</option>
+              {filteredCourses.map((c) => (
+                <option key={c.courseId} value={c.courseId}>{c.courseName}</option>
               ))}
             </select>
           </div>
 
-          {/* Semester Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Semester</label>
             <input
               type="number"
+              placeholder="1-8"
               value={semester}
-              onChange={(e) => handleFilterChange(setSemester)(e.target.value)}
-              placeholder="e.g., 1, 2, 3"
-              min="1"
-              max="8"
+              onChange={(e) => { setSemester(e.target.value); setPage(0); }}
               disabled={!courseId}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none text-sm transition-all disabled:opacity-50"
             />
           </div>
 
-          {/* Year Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Year</label>
             <input
               type="number"
+              placeholder="YYYY"
               value={year}
-              onChange={(e) => handleFilterChange(setYear)(e.target.value)}
-              placeholder="e.g., 2024"
-              min="1990"
-              max="2100"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => { setYear(e.target.value); setPage(0); }}
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none text-sm transition-all"
             />
           </div>
 
-          {/* Set Name Filter (only when no courseId) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Set Name</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Set Name</label>
             <input
               type="text"
+              placeholder="Search set..."
               value={setName}
-              onChange={(e) => handleFilterChange(setSetName)(e.target.value)}
-              placeholder="Search by set name"
+              onChange={(e) => { setSetName(e.target.value); setPage(0); }}
               disabled={!!courseId}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none text-sm transition-all disabled:opacity-50"
             />
           </div>
         </div>
-
-        {/* Clear Filters Button */}
-        {(affiliation || courseId || semester || year || setName) && (
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition"
-          >
-            Clear Filters
-          </button>
-        )}
       </div>
 
-      {/* Sort Controls */}
-      <div className="bg-white shadow-md rounded-lg p-4 mt-4 flex flex-wrap gap-4 items-center">
-        <span className="font-medium text-gray-700">Sort By:</span>
-        <select
-          value={sortField}
-          onChange={(e) => {
-            setSortField(e.target.value);
-            setPage(0);
+      {isLoading ? (
+        <LoadingState type="table" />
+      ) : (
+        <DataTable
+          data={data?.content || []}
+          columns={columns}
+          loading={isLoading}
+          pagination={{
+            currentPage: page,
+            totalPages: data?.totalPages || 0,
+            totalItems: data?.totalItems || 0,
+            pageSize: pageSize,
           }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Default</option>
-          <option value="setName">Set Name</option>
-          <option value="year">Year</option>
-          <option value="subject">Subject</option>
-          <option value="courseName">Course Name</option>
-        </select>
-
-        <select
-          value={sortOrder}
-          onChange={(e) => {
-            setSortOrder(e.target.value);
-            setPage(0);
+          onPageChange={setPage}
+          onSort={(key, dir) => {
+            setSortField(key);
+            setSortOrder(dir);
           }}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
-      </div>
+        />
+      )}
 
-      {/* Table */}
-      <div className="mt-4 bg-white shadow-md rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Set Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Subject
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Course
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Year
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                    Loading...
-                  </td>
-                </tr>
-              ) : questions.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                    No old questions found
-                  </td>
-                </tr>
-              ) : (
-                questions.map((q) => (
-                  <tr key={q.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="font-medium text-gray-900">{q.setName}</span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                        {q.subject || "N/A"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                        {q.courseName || "N/A"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-gray-600">
-                      {q.year}
-                    </td>
-                    <td className="px-4 py-4 max-w-xs truncate text-gray-600">
-                      {q.description || "-"}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-center">
-                      <div className="flex justify-center gap-2">
-                        <a
-                          href={getOldQuestionPdfUrl(q.id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
-                        >
-                          View PDF
-                        </a>
-                        <Link
-                          to={`/old-questions/edit/${q.id}`}
-                          className="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(q.id)}
-                          className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="px-4 py-3 border-t border-gray-200">
-          <Pagination
-            currentPage={page + 1}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
-      </div>
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Question Collection"
+        message="Are you sure you want to delete this collection item? This action cannot be undone."
+        confirmText="Delete Permanently"
+        loading={deleteMutation.isLoading}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 };

@@ -1,85 +1,73 @@
 import api from "./index";
+import { handleApiError } from "./utils/errorHandler";
 
 // ===============================
 // CREATE OLD QUESTION COLLECTION
 // ===============================
-export const addOldQuestion = async (formData, token) => {
+export const addOldQuestion = async (formData) => {
   try {
     return await api.post("/api/v1/old-question-collections/admin/old-questions", formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
         // Don't manually set Content-Type for FormData
       },
     });
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // GET OLD QUESTIONS WITH FILTERS
 // ===============================
-export const getOldQuestions = async (params = {}, token) => {
+export const getOldQuestions = async (params = {}) => {
   try {
-    return await api.get("/api/v1/old-question-collections/questions", {
-      params,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/old-question-collections/questions", { params });
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // FILTER OLD QUESTIONS (courseId, semester, year)
 // ===============================
-export const filterOldQuestions = async (params = {}, token) => {
+export const filterOldQuestions = async (params = {}) => {
   try {
-    return await api.get("/api/v1/old-question-collections/filter", {
-      params,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/old-question-collections/filter", { params });
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // GET SEMESTERS BY COURSE
 // ===============================
-export const getSemestersByCourse = async (courseId, token) => {
+export const getSemestersByCourse = async (courseId) => {
   try {
-    return await api.get(`/api/v1/old-question-collections/course/${courseId}/semesters`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get(`/api/v1/old-question-collections/course/${courseId}/semesters`);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // GET SUBJECTS BY COURSE AND SEMESTER
 // ===============================
-export const getSubjectsBySemester = async (courseId, semester, token) => {
+export const getSubjectsBySemester = async (courseId, semester) => {
   try {
-    return await api.get(`/api/v1/old-question-collections/course/${courseId}/semester/${semester}/subjects`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get(`/api/v1/old-question-collections/course/${courseId}/semester/${semester}/subjects`);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // GET OLD QUESTIONS BY SYLLABUS
 // ===============================
-export const getOldQuestionsBySyllabus = async (syllabusId, token) => {
+export const getOldQuestionsBySyllabus = async (syllabusId) => {
   try {
-    return await api.get(`/api/v1/old-question-collections/syllabus/${syllabusId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get(`/api/v1/old-question-collections/syllabus/${syllabusId}`);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
@@ -93,28 +81,25 @@ export const getOldQuestionPdfUrl = (id) => {
 // ===============================
 // DELETE OLD QUESTION
 // ===============================
-export const deleteOldQuestion = async (id, token) => {
+export const deleteOldQuestion = async (id) => {
   try {
-    return await api.delete(`/api/v1/old-question-collections/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    return await api.delete(`/api/v1/old-question-collections/${id}`);
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };
 
 // ===============================
 // UPDATE OLD QUESTION
 // ===============================
-export const updateOldQuestion = async (id, formData, token) => {
+export const updateOldQuestion = async (id, formData) => {
   try {
     return await api.put(`/api/v1/old-question-collections/admin/old-questions/${id}`, formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
         // Don't manually set Content-Type for FormData
       },
     });
   } catch (err) {
-    throw err.response?.data || err;
+    handleApiError(err);
   }
 };

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import SyllabusForm from "./component/form/form";
 import { getSyllabusById, updateSyllabus } from "../../http/syllabus";
 
 const EditSyllabus = () => {
   const { id } = useParams();
-  const token = localStorage.getItem("token");
 
   const [syllabus, setSyllabus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +21,7 @@ const EditSyllabus = () => {
     setSuccess("");
 
     try {
-      const res = await getSyllabusById(id, token);
+      const res = await getSyllabusById(id);
       const data = res?.data?.data;
 
       if (!data) throw new Error("No syllabus data found");
@@ -74,12 +73,12 @@ const EditSyllabus = () => {
 
       // Update JSON fields
       if (Object.keys(syllabusJson).length > 0) {
-        await updateSyllabus(id, syllabusJson, token);
+        await updateSyllabus(id, syllabusJson);
       }
 
       // Update file if provided
       if (file) {
-        await updateSyllabus(id, formData, token); // send FormData with file
+        await updateSyllabus(id, formData); // send FormData with file
       }
 
       await loadSyllabus();

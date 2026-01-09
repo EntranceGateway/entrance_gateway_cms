@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { getCourses } from "../../../../http/course";
 import { getSyllabusByCourseId } from "../../../../http/syllabus";
@@ -66,7 +67,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingSyllabi, setLoadingSyllabi] = useState(false);
 
-  const token = localStorage.getItem("token");
+
 
   // All courses (fetched once)
   const [allCourses, setAllCourses] = useState([]);
@@ -76,7 +77,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
     const fetchAllCourses = async () => {
       setLoadingCourses(true);
       try {
-        const res = await getCourses({ size: 100 }, token);
+        const res = await getCourses({ size: 100 });
         const data = res.data.data?.content || res.data.data || [];
         setAllCourses(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -86,7 +87,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
       setLoadingCourses(false);
     };
     fetchAllCourses();
-  }, [token]);
+  }, []);
 
   // Filter courses when affiliation changes
   useEffect(() => {
@@ -107,11 +108,11 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
         setSyllabi([]);
         return;
       }
-      
+
       setLoadingSyllabi(true);
       try {
         // Fetch syllabus by course ID
-        const res = await getSyllabusByCourseId(form.courseId, {}, token);
+        const res = await getSyllabusByCourseId(form.courseId, {});
         // Handle different response structures
         const data = res.data.data?.content || res.data.data || res.data.content || res.data || [];
         setSyllabi(Array.isArray(data) ? data : []);
@@ -122,7 +123,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
       setLoadingSyllabi(false);
     };
     fetchSyllabi();
-  }, [form.courseId, token]);
+  }, [form.courseId]);
 
   // Load initial data in edit mode
   useEffect(() => {
@@ -147,8 +148,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // Input class generator
   const inputClass = useCallback(
     (field) =>
-      `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-        errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"
+      `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"
       }`,
     [errors]
   );
@@ -156,7 +156,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // Handle input changes
   const handleChange = (e) => {
     const { name, type, files, value } = e.target;
-    
+
     if (name === "affiliation") {
       // Reset courseId and syllabusId when affiliation changes
       setForm((prev) => ({
@@ -178,7 +178,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
         [name]: type === "file" ? files[0] || null : value,
       }));
     }
-    
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -187,7 +187,7 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // Build form data for submission
   const buildFormData = () => {
     const fd = new FormData();
-    
+
     const requestData = {
       setName: form.setName.trim(),
       description: form.description.trim(),
@@ -195,47 +195,47 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
       syllabusId: form.syllabusId,
       courseId: form.courseId,
     };
-    
+
     fd.append(
       "data",
       new Blob([JSON.stringify(requestData)], { type: "application/json" })
     );
-    
+
     if (form.file) {
       fd.append("file", form.file);
     }
-    
+
     return fd;
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const validationErrors = validateForm(form, mode);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-    
+
     setStatus({ loading: true, success: "" });
-    
+
     try {
       const formData = buildFormData();
       await onSubmit(formData);
-      
+
       setStatus({
         loading: false,
         success: mode === "add" ? "Old question added successfully!" : "Old question updated successfully!",
       });
-      
+
       // Redirect after success
       setTimeout(() => {
         navigate("/old-questions/all");
       }, 1500);
     } catch (err) {
       setStatus({ loading: false, success: "" });
-      
+
       // Handle backend validation errors
       if (err.response?.data?.errors) {
         const backendErrors = {};
@@ -311,8 +311,8 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
             {!form.affiliation
               ? "Select an affiliation first"
               : loadingCourses
-              ? "Loading courses..."
-              : "Select a course"}
+                ? "Loading courses..."
+                : "Select a course"}
           </option>
           {courses.map((course) => (
             <option key={course.courseId} value={course.courseId}>
@@ -341,8 +341,8 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
             {!form.courseId
               ? "Select a course first"
               : loadingSyllabi
-              ? "Loading syllabi..."
-              : "Select a syllabus"}
+                ? "Loading syllabi..."
+                : "Select a syllabus"}
           </option>
           {syllabi.map((syllabus) => (
             <option key={syllabus.syllabusId} value={syllabus.syllabusId}>
@@ -413,13 +413,13 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
         <label className="block text-sm font-medium text-gray-700">
           PDF File {mode === "add" && <span className="text-red-500">*</span>}
         </label>
-        
+
         {mode === "edit" && form.existingPdfPath && (
           <div className="mb-2 p-2 bg-gray-50 rounded-lg text-sm text-gray-600">
             Current file: {form.existingPdfPath.split("/").pop()}
           </div>
         )}
-        
+
         <input
           type="file"
           name="file"
@@ -447,10 +447,10 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
           {status.loading
             ? "Saving..."
             : mode === "add"
-            ? "Add Old Question"
-            : "Update Old Question"}
+              ? "Add Old Question"
+              : "Update Old Question"}
         </button>
-        
+
         <button
           type="button"
           onClick={() => navigate("/old-questions/all")}

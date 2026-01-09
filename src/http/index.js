@@ -5,6 +5,7 @@
 
 import axios from "axios";
 import { API_ENDPOINTS } from "../auth/config/securityConfig";
+import tokenService from "../auth/services/tokenService";
 
 /**
  * Create axios instance with secure configuration
@@ -13,13 +14,13 @@ import { API_ENDPOINTS } from "../auth/config/securityConfig";
 const API = axios.create({
   // Use environment variable for API URL (avoid hardcoding)
   baseURL: API_ENDPOINTS.baseUrl,
-  
+
   // SECURITY: Request timeout to prevent hanging requests
   timeout: 30000, // 30 seconds
-  
+
   // SECURITY: Include credentials for cookie-based auth (if backend supports)
   // withCredentials: true,
-  
+
   // Default headers
   headers: {
     'Accept': 'application/json',
@@ -27,6 +28,8 @@ const API = axios.create({
     // Don't set it globally to allow FormData to set multipart/form-data
   },
 });
+
+
 
 /**
  * Request logging for development

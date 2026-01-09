@@ -1,13 +1,13 @@
-import Layout from "../../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import NoteForm from "../../notes/components/form.jsx/NotesFrom";
 
 const CreateNote = () => {
   return (
     <Layout>
-<NoteForm />
+      <NoteForm />
     </Layout>
 
-)
+  )
 }
 
 export default CreateNote;

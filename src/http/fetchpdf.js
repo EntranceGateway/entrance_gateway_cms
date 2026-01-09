@@ -1,12 +1,9 @@
 import api from "./index"; // axios instance
 
-export const getSingle = async (url, token) => {
-  if (!token) throw new Error("Authentication token is missing");
-
+export const getSingle = async (url) => {
   try {
     const res = await api.get(url, {
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: "application/pdf",
       },
       responseType: "blob",
@@ -18,7 +15,7 @@ export const getSingle = async (url, token) => {
     }
 
     const contentType = res.headers["content-type"];
-    
+
     // Check if response is actually a PDF
     if (contentType && contentType.includes("application/json")) {
       // API returned JSON error instead of PDF - parse it
@@ -41,7 +38,7 @@ export const getSingle = async (url, token) => {
     // Handle axios errors
     if (error.response) {
       const { status, data } = error.response;
-      
+
       // Try to extract error message from blob response
       if (data instanceof Blob) {
         try {
@@ -52,7 +49,7 @@ export const getSingle = async (url, token) => {
           throw new Error(`Server error: ${status}`);
         }
       }
-      
+
       throw new Error(data?.message || data?.error || `Server error: ${status}`);
     }
     throw error;
@@ -65,7 +62,7 @@ const syllabusFile = (id) => `/api/v1/syllabus/${id}/file`;
 const noticeFile = (id) => `/api/v1/notices/${id}/file`;
 
 export {
-    noteFile,
-    syllabusFile,
-    noticeFile
+  noteFile,
+  syllabusFile,
+  noticeFile
 }

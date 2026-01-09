@@ -1,14 +1,13 @@
 import React from "react";
-import Layout from "../../../components/layout/Layout";
+
+import Layout from "@/components/layout/Layout";
 import OldQuestionForm from "./component/form/OldQuestionForm";
 import { addOldQuestion } from "../../http/oldQuestionCollection";
 
 const AddOldQuestion = () => {
-  const token = localStorage.getItem("token");
-
   const handleAddOldQuestion = async (formData) => {
     try {
-      const res = await addOldQuestion(formData, token);
+      const res = await addOldQuestion(formData);
       return res.data;
     } catch (err) {
       throw err;

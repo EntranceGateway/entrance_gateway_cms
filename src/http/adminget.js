@@ -1,82 +1,71 @@
 import api from "./index";
+import { handleApiError } from "./utils/errorHandler";
 
 // --------------------------------------
 // Get Admin Details (Current User)
 // --------------------------------------
-export const getAdmin = async (token) => {
+export const getAdmin = async () => {
   try {
-    return await api.get("/api/v1/admin/me", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/admin/me");
   } catch (err) {
-    throw err.response?.data || { error: "Failed to fetch admin details." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Get All Admins
 // --------------------------------------
-export const getAllAdmins = async (params = {}, token) => {
+export const getAllAdmins = async (params = {}) => {
   try {
-    return await api.get("/api/v1/admin/allAdmins", {
-      params,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.get("/api/v1/admin/allAdmins", { params });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to fetch admins." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Register New Admin (SUPER_ADMIN only)
 // --------------------------------------
-export const registerAdmin = async (data, token) => {
+export const registerAdmin = async (data) => {
   try {
-    return await api.post("/api/v1/auth/admin/register", data, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.post("/api/v1/auth/admin/register", data);
   } catch (err) {
-    throw err.response?.data || { error: "Failed to register admin." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Delete Admin (SUPER_ADMIN only)
 // --------------------------------------
-export const deleteAdmin = async (email, token) => {
+export const deleteAdmin = async (email) => {
   try {
     return await api.delete("/api/v1/admin", {
       data: { email },
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch (err) {
-    throw err.response?.data || { error: "Failed to delete admin." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Update Admin Role
 // --------------------------------------
-export const updateAdminRole = async (adminId, role, token) => {
+export const updateAdminRole = async (adminId, role) => {
   try {
-    return await api.post(`/api/v1/admin/updateAdminRole/${adminId}?role=${role}`, {}, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.post(`/api/v1/admin/updateAdminRole/${adminId}?role=${role}`, {});
   } catch (err) {
-    throw err.response?.data || { error: "Failed to update admin role." };
+    handleApiError(err);
   }
 };
 
 // --------------------------------------
 // Update Admin Details (SUPER_ADMIN only)
 // --------------------------------------
-export const updateAdminDetails = async (data, token) => {
+export const updateAdminDetails = async (data) => {
   try {
-    return await api.put("/api/v1/admin", data, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return await api.put("/api/v1/admin/", data);
   } catch (err) {
-    throw err.response?.data || { error: "Failed to update admin details." };
+    handleApiError(err);
   }
 };
 

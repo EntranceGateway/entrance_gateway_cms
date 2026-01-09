@@ -28,7 +28,7 @@ const ENCRYPTION_KEY = import.meta.env.VITE_TOKEN_ENCRYPTION_KEY || 'default-dev
  */
 function encrypt(text) {
   if (!text) return '';
-  
+
   try {
     // Convert to base64 and apply simple XOR with key
     const encoded = btoa(encodeURIComponent(text));
@@ -52,7 +52,7 @@ function encrypt(text) {
  */
 function decrypt(encrypted) {
   if (!encrypted) return '';
-  
+
   try {
     const decoded = atob(encrypted);
     let result = '';
@@ -77,8 +77,8 @@ export function parseJwt(token) {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
 
     return JSON.parse(jsonPayload);
@@ -117,7 +117,7 @@ export function storeTokens({ accessToken, refreshToken, userId, userRole, expir
       role: userRole,
     });
     localStorage.setItem(TOKEN_CONFIG.storageKeys.accessToken, encrypt(backup));
-    
+
     // BACKWARD COMPATIBILITY: Also store in old format for existing components (Navbar, etc.)
     // TODO: Remove this once all components are updated to use tokenService
     localStorage.setItem('token', accessToken);
@@ -196,9 +196,9 @@ export function isTokenExpired() {
   if (!tokenStore.tokenExpiry) {
     restoreFromBackup();
   }
-  
+
   if (!tokenStore.tokenExpiry) return true;
-  
+
   // Add buffer time (2 minutes before actual expiry)
   const bufferMs = TOKEN_CONFIG.refreshThresholdMinutes * 60 * 1000;
   return Date.now() > (tokenStore.tokenExpiry - bufferMs);
@@ -210,7 +210,7 @@ export function isTokenExpired() {
  */
 export function shouldRefreshToken() {
   if (!tokenStore.tokenExpiry) return false;
-  
+
   const refreshThreshold = TOKEN_CONFIG.refreshThresholdMinutes * 60 * 1000;
   return Date.now() > (tokenStore.tokenExpiry - refreshThreshold);
 }
@@ -228,7 +228,7 @@ function restoreFromBackup() {
     if (!decrypted) return;
 
     const backup = JSON.parse(decrypted);
-    
+
     // Restore to memory
     tokenStore = {
       accessToken: backup.at,
@@ -316,7 +316,7 @@ function cancelScheduledRefresh() {
  */
 export function updateAccessToken(newAccessToken, expiresIn) {
   const expiryTime = Date.now() + (expiresIn || TOKEN_CONFIG.accessTokenExpiryMinutes * 60 * 1000);
-  
+
   tokenStore.accessToken = newAccessToken;
   tokenStore.tokenExpiry = expiryTime;
 
@@ -349,8 +349,8 @@ export function getTokenInfo() {
     hasAccessToken: !!token,
     hasRefreshToken: !!tokenStore.refreshToken,
     isExpired: isTokenExpired(),
-    expiresAt: tokenStore.tokenExpiry 
-      ? new Date(tokenStore.tokenExpiry).toISOString() 
+    expiresAt: tokenStore.tokenExpiry
+      ? new Date(tokenStore.tokenExpiry).toISOString()
       : null,
     userId: tokenStore.userId,
     userRole: tokenStore.userRole,
@@ -368,7 +368,6 @@ export default {
   shouldRefreshToken,
   clearTokens,
   updateAccessToken,
-  isAuthenticated,
   isAuthenticated,
   getTokenInfo,
   parseJwt,

@@ -11,7 +11,7 @@ import { useDispatch } from "react-redux";
 import tokenService from "../../auth/services/tokenService";
 import authService from "../../auth/services/authService";
 import { sanitizeObject } from "../../auth/utils/inputSanitizer";
-import { resetState } from "../../../store/authSlice";
+import { resetState } from "@/store/authSlice";
 import API from "../../http";
 
 // Queue for requests waiting on token refresh
@@ -40,7 +40,7 @@ const processQueue = (token, error = null) => {
 const useAxiosInterceptor = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // Use refs to avoid recreating interceptors on each render
   const navigateRef = useRef(navigate);
   const dispatchRef = useRef(dispatch);
@@ -59,7 +59,7 @@ const useAxiosInterceptor = () => {
       (config) => {
         // Get current access token
         const token = tokenService.getAccessToken();
-        
+
         if (token) {
           // SECURITY: Add Authorization header
           config.headers.Authorization = `Bearer ${token}`;
@@ -74,8 +74,8 @@ const useAxiosInterceptor = () => {
         // SECURITY: Sanitize request body for non-GET requests
         // Skip for FormData (file uploads) and Blobs
         if (
-          config.data && 
-          typeof config.data === 'object' && 
+          config.data &&
+          typeof config.data === 'object' &&
           !(config.data instanceof FormData) &&
           !(config.data instanceof Blob)
         ) {
@@ -86,7 +86,7 @@ const useAxiosInterceptor = () => {
             trimWhitespace: true,
             checkXss: true,
           });
-          
+
           config.data = {
             ...sanitizedData,
             ...(password !== undefined && { password }),
@@ -111,16 +111,16 @@ const useAxiosInterceptor = () => {
     const responseInterceptor = API.interceptors.response.use(
       (response) => {
         const contentType = response.headers['content-type'];
-        
+
         // SECURITY: Sanitize response data
         // Only sanitize if it's JSON object data and NOT a Blob/File
         const isJson = contentType && contentType.includes('application/json');
-        
+
         if (
           isJson &&
-          response.data && 
+          response.data &&
           typeof response.data === 'object' &&
-          response.config?.url && 
+          response.config?.url &&
           !response.config.url.includes('/auth/') // Don't modify auth responses
         ) {
           // Deep sanitize string values in response
@@ -150,7 +150,7 @@ const useAxiosInterceptor = () => {
             // Token refresh already tried - force logout
             tokenService.clearTokens();
             dispatchRef.current(resetState());
-            navigateRef.current("/admin/login", { 
+            navigateRef.current("/admin/login", {
               replace: true,
               state: { error: "Session expired. Please log in again." },
             });
@@ -178,16 +178,16 @@ const useAxiosInterceptor = () => {
 
           try {
             const result = await authService.refreshAccessToken();
-            
+
             if (result.success && result.token) {
               // Update the original request with new token
               originalRequest.headers.Authorization = `Bearer ${result.token}`;
-              
+
               // Process queued requests
               processQueue(result.token);
-              
+
               isRefreshing = false;
-              
+
               // Retry the original request
               return API(originalRequest);
             } else {
@@ -198,15 +198,15 @@ const useAxiosInterceptor = () => {
           } catch (refreshError) {
             isRefreshing = false;
             processQueue(null, refreshError);
-            
+
             // Force logout on refresh failure
             tokenService.clearTokens();
             dispatchRef.current(resetState());
-            navigateRef.current("/admin/login", { 
+            navigateRef.current("/admin/login", {
               replace: true,
               state: { error: "Session expired. Please log in again." },
             });
-            
+
             return Promise.reject(refreshError);
           }
         }
