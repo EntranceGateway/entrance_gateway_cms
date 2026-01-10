@@ -126,7 +126,7 @@ const useAxiosInterceptor = () => {
         // Handle 401 Unauthorized errors
         if (error.response?.status === 401) {
           // IMPORTANT: Skip token refresh for auth endpoints (login, register, refresh)
-          // These should pass errors directly to the calling service
+          // These should pass errors directly to the calling service.
           const isAuthEndpoint = originalRequest?.url?.includes('/auth/');
           if (isAuthEndpoint) {
             return Promise.reject(error);
