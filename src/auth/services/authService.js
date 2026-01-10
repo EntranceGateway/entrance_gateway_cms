@@ -115,6 +115,11 @@ export async function login({ email, password }) {
       // Clear rate limiting on success
       rateLimitService.recordSuccessfulLogin();
 
+      // BACKWARD COMPATIBILITY: Store user object for components that rely on localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(user || {}));
+      }
+
       return {
         success: true,
         user: sanitizeObject(user || {}), // Sanitize user data from server
@@ -185,6 +190,9 @@ export async function logout() {
   // Always clear local tokens first (even if server call fails)
   tokenService.clearTokens();
   rateLimitService.resetRateLimit();
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('user');
+  }
 
   // Attempt server-side logout
   try {
@@ -413,8 +421,10 @@ export function hasRole(requiredRoles) {
  * @returns {Object} Current auth state
  */
 export function getAuthState() {
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null;
   return {
     isAuthenticated: tokenService.isAuthenticated(),
+    user: user, // Hydrate user object
     userId: tokenService.getUserId(),
     userRole: tokenService.getUserRole(),
     tokenInfo: tokenService.getTokenInfo(),

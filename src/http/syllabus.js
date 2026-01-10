@@ -54,8 +54,8 @@ export const getSyllabusByAffiliationCourseAndSemester = async (params = {}) => 
 // ===============================
 export const getSyllabusByCourseId = async (courseId, params = {}) => {
   try {
-    return await api.get(`/api/v1/syllabus/by-course`, {
-      params: { courseId, ...params },
+    return await api.get(`/api/v1/courses/full-syllabus/${courseId}`, {
+      params,
     });
   } catch (err) {
     handleApiError(err);

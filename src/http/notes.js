@@ -17,9 +17,11 @@ export const createNote = async (formData) => {
 // ===============================
 export const getNotes = async (params = {}) => {
   try {
-    return await api.get("/api/v1/notes", { params });
+    const response = await api.get("/api/v1/notes", { params });
+    return response.data.data;
   } catch (err) {
     handleApiError(err);
+    throw err;
   }
 };
 
@@ -28,9 +30,11 @@ export const getNotes = async (params = {}) => {
 // ===============================
 export const getNotesByFilter = async (params = {}) => {
   try {
-    return await api.get("/api/v1/notes/by-course-semester-affiliation", { params });
+    const response = await api.get("/api/v1/notes/by-course-semester-affiliation", { params });
+    return response.data.data;
   } catch (err) {
     handleApiError(err);
+    throw err;
   }
 };
 

@@ -112,24 +112,11 @@ const useAxiosInterceptor = () => {
       (response) => {
         const contentType = response.headers['content-type'];
 
-        // SECURITY: Sanitize response data
-        // Only sanitize if it's JSON object data and NOT a Blob/File
-        const isJson = contentType && contentType.includes('application/json');
-
-        if (
-          isJson &&
-          response.data &&
-          typeof response.data === 'object' &&
-          response.config?.url &&
-          !response.config.url.includes('/auth/') // Don't modify auth responses
-        ) {
-          // Deep sanitize string values in response
-          response.data = sanitizeObject(response.data, {
-            allowHtml: false,
-            checkXss: true,
-            checkSqlInjection: false, // Response data shouldn't need SQL check
-          });
-        }
+        // SECURITY NOTE: We do NOT sanitize response data here anymore.
+        // The previous implementation was aggressively HTML-encoding all strings (e.g. "/" -> "&#x2F;"),
+        // which caused data corruption in the UI.
+        // React already safeguards against XSS in JSX rendering.
+        // If specific data needs sanitization, it should be done at the component level or by the backend.
 
         return response;
       },

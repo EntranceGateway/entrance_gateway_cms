@@ -97,7 +97,7 @@ export const API_ENDPOINTS = {
   auth: {
     login: '/api/v1/auth/login',
     logout: '/api/v1/auth/logout',
-    refresh: '/api/v1/auth/refresh',
+    refresh: '/api/v1/auth/refresh-token',
     register: '/api/v1/auth/admin/register',
     validateToken: '/api/v1/auth/validate',
   },

@@ -113,9 +113,41 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
       try {
         // Fetch syllabus by course ID
         const res = await getSyllabusByCourseId(form.courseId, {});
-        // Handle different response structures
-        const data = res.data.data?.content || res.data.data || res.data.content || res.data || [];
-        setSyllabi(Array.isArray(data) ? data : []);
+        console.log("Syllabus API Response:", res); // Debug log
+        const rawData = res.data?.data || res.data || [];
+        let parsedSyllabi = [];
+
+        // Check for new nested structure: Array -> Object(Year) -> Object(Semester) -> Array(Subjects)
+        // Detect if key is likely a year/number and value is object
+        const isNested = Array.isArray(rawData) && rawData.length > 0 && 
+                        typeof rawData[0] === 'object' && !rawData[0].syllabusId;
+
+        if (isNested) {
+           rawData.forEach(yearData => {
+             Object.entries(yearData).forEach(([year, semesterData]) => {
+                if (typeof semesterData === 'object') {
+                   Object.entries(semesterData).forEach(([semester, subjects]) => {
+                      if (Array.isArray(subjects)) {
+                         subjects.forEach(subject => {
+                            parsedSyllabi.push({
+                               syllabusId: subject, // ⚠️ USING NAME AS ID because API provides no ID
+                               subjectName: subject,
+                               semester: semester,
+                               year: year
+                            });
+                         });
+                      }
+                   });
+                }
+             });
+           });
+        } else {
+           // Fallback for standard structure
+           parsedSyllabi = (res.data?.data?.content || res.data?.data || res.data?.content || []);
+           if (!Array.isArray(parsedSyllabi)) parsedSyllabi = [];
+        }
+
+        setSyllabi(parsedSyllabi);
       } catch (err) {
         console.error("Error fetching syllabi:", err);
         setSyllabi([]);

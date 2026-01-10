@@ -84,14 +84,7 @@ const Sidebar = () => {
         { name: "Add Ad", path: "/ads/add" },
       ],
     },
-    {
-      name: "Question",
-      icon: <BookOpen size={20} />,
-      submenu: [
-        { name: "All Question", path: "/question" },
-        { name: "Add Question", path: "/question/add" },
-      ],
-    },
+
     {
       name: "Old Questions",
       icon: <FileText size={20} />,

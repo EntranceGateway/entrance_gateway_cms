@@ -8,6 +8,7 @@ import {
   updateAdminDetails,
   ADMIN_ROLES,
 } from "../../../../http/adminget";
+import tokenService from "../../../../auth/services/tokenService";
 import Pagination from "../../../../Verification/Pagination";
 import { Plus, Trash2, Shield, Mail, User, ChevronDown, Edit2, X, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
@@ -26,10 +27,17 @@ const AdminTable = () => {
   const PAGE_SIZE = 10;
 
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
   // Check if current user is SUPER_ADMIN
-  const isSuperAdmin = user?.role?.toUpperCase() === "SUPER_ADMIN";
+  // Use tokenService as the source of truth instead of potentially missing localStorage "user" object
+  const userRole = tokenService.getUserRole();
+  const isSuperAdmin = Array.isArray(userRole) 
+    ? userRole.includes("SUPER_ADMIN") 
+    : userRole === "SUPER_ADMIN";
+  
+  // Get user for email check (self-deletion prevention)
+  const user = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem("user") || "{}" : "{}");
+  
+  // console.log("Current User Role:", userRole, "| Is Super Admin:", isSuperAdmin);
 
   // Fetch Admins
   const fetchAdmins = async () => {
@@ -261,7 +269,7 @@ const AdminTable = () => {
                             </button>
 
                             {/* Delete Button */}
-                            {admin.email !== user?.email && (
+                            {admin.email !== user?.email && admin.role !== 'SUPER_ADMIN' && (
                               <button
                                 onClick={() => handleDelete(admin.email)} // Passing email for deletion
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

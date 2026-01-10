@@ -185,6 +185,7 @@ const authSlice = createSlice({
     restoreAuthState(state) {
       const authState = authService.getAuthState();
       state.isAuthenticated = authState.isAuthenticated;
+      state.user = authState.user; // Restore full user object
       state.userId = authState.userId;
       state.userRole = authState.userRole;
       state.tokenExpiry = authState.tokenInfo?.expiresAt;
