@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useOldQuestions, useDeleteOldQuestion } from "@/hooks/useOldQuestions";
 import { useCourses } from "@/hooks/useCourses";
-import { getOldQuestionPdfUrl } from "@/http/oldQuestionCollection";
 import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
@@ -109,15 +108,13 @@ const OldQuestionTable = () => {
         label: "Actions",
         render: (row) => (
           <div className="flex items-center gap-2">
-            <a
-              href={getOldQuestionPdfUrl(row.id)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to={`/old-questions/view/${row.id}`}
               className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
               title="View PDF"
             >
               <Eye size={18} />
-            </a>
+            </Link>
             <Link
               to={`/old-questions/edit/${row.id}`}
               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"

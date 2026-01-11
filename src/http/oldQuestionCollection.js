@@ -84,10 +84,41 @@ export const getOldQuestionsBySyllabus = async (syllabusId) => {
 };
 
 // ===============================
-// VIEW OLD QUESTION PDF
+// VIEW OLD QUESTION PDF (URL for external viewing)
 // ===============================
 export const getOldQuestionPdfUrl = (id) => {
   return `https://api.entrancegateway.com/api/v1/old-question-collections/view/${id}`;
+};
+
+// ===============================
+// FETCH OLD QUESTION PDF BLOB (for PdfViewer component)
+// Endpoint: GET /api/v1/old-question-collections/{id}/file
+// Returns: Binary PDF data as Blob
+// ===============================
+export const fetchOldQuestionPdfBlob = async (url, token) => {
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.blob();
+  } catch (err) {
+    console.error("PDF fetch error:", err);
+    throw err;
+  }
+};
+
+// Helper to get the file endpoint URL for a specific old question
+export const getOldQuestionFileUrl = (id) => {
+  return `https://api.entrancegateway.com/api/v1/old-question-collections/${id}/file`;
 };
 
 // ===============================
