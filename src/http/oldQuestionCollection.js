@@ -14,6 +14,17 @@ export const getAllOldQuestions = async (params = {}) => {
 };
 
 // ===============================
+// GET OLD QUESTION BY ID
+// ===============================
+export const getOldQuestionById = async (id) => {
+  try {
+    return await api.get(`/api/v1/old-question-collections/admin/old-questions/${id}`);
+  } catch (err) {
+    handleApiError(err);
+  }
+};
+
+// ===============================
 // CREATE OLD QUESTION COLLECTION
 // ===============================
 export const addOldQuestion = async (formData) => {
@@ -135,9 +146,23 @@ export const deleteOldQuestion = async (id) => {
 // ===============================
 // UPDATE OLD QUESTION
 // ===============================
+// ===============================
+// GET OLD QUESTION BY ID
+// ===============================
+// export const getOldQuestionById = async (id) => {
+//   try {
+//     return await api.get(`/api/v1/old-question-collections/${id}`);
+//   } catch (err) {
+//     handleApiError(err);
+//   }
+// };
+
+// ===============================
+// UPDATE OLD QUESTION
+// ===============================
 export const updateOldQuestion = async (id, formData) => {
   try {
-    return await api.put(`/api/v1/old-question-collections/admin/old-questions/${id}`, formData, {
+    return await api.put(`/api/v1/old-question-collections/${id}`, formData, {
       headers: {
         // Don't manually set Content-Type for FormData
       },

@@ -1,5 +1,8 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+// src/pages/notes/components/form/NotesFrom.jsx
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import PageHeader from "@/components/common/PageHeader";
+import { BookOpen, AlertCircle, Save, FileText } from "lucide-react";
 
 // -----------------------------
 // Default Form Shape
@@ -59,15 +62,16 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
     }
     setErrors({});
     setStatus({ loading: false, success: "" });
-  }, [mode, initialData]);
+  }, [mode, initialData, id]);
 
   // -----------------------------
   // Memoized Input Class Generator
   // -----------------------------
   const inputClass = useCallback(
     (field) =>
-      `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-indigo-500 
-      ${errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"}`,
+      `block w-full rounded-xl border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+        errors[field] ? "border-red-300 ring-red-200" : "border-gray-200 bg-gray-50/50 focus:bg-white"
+      }`,
     [errors]
   );
 
@@ -160,124 +164,148 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // Render
   // -----------------------------
   return (
-    <section className="w-full py-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="rounded-xl border bg-white shadow-md overflow-hidden">
-          {/* Header */}
-          <header className="px-6 py-4 border-b bg-indigo-50">
-            <h1 className="text-2xl font-semibold">
-              {mode === "edit" ? "Edit Note" : "Create New Note"}
-            </h1>
-          </header>
+    <div className="w-full">
+      <PageHeader
+        title={mode === "edit" ? "Edit Note" : "Create New Note"}
+        subtitle={mode === "edit" ? "Update note details and documents" : "Upload new study materials"}
+        breadcrumbs={[
+            { label: "Notes", to: "/notespage" },
+            { label: mode === "edit" ? "Edit" : "Add" }
+        ]}
+        icon={BookOpen}
+      />
 
-          <div className="p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden p-8">
             {/* Success */}
             {status.success && (
-              <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded">
+              <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm flex items-center gap-2">
+                <Save size={16} />
                 {status.success}
               </div>
             )}
 
             {/* Global Error */}
             {errors.global && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">
+              <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm flex items-center gap-2">
+                <AlertCircle size={16} />
                 {errors.global}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} noValidate>
-              <div className="grid gap-6">
-                {/* Note Name */}
-                <div>
-                  <label className="font-medium text-sm">Note Name *</label>
-                  <input
-                    type="text"
-                    name="noteName"
-                    value={form.noteName}
-                    onChange={handleChange}
-                    className={inputClass("noteName")}
-                  />
-                  {errors.noteName && (
-                    <p className="text-xs text-red-600 mt-1">{errors.noteName}</p>
-                  )}
-                </div>
+            <form onSubmit={handleSubmit} noValidate className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                    {/* Note Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Note Name <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        name="noteName"
+                        value={form.noteName}
+                        onChange={handleChange}
+                        className={inputClass("noteName")}
+                        placeholder="e.g. Chapter 1 Summary"
+                      />
+                      {errors.noteName && (
+                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.noteName}</p>
+                      )}
+                    </div>
 
-                {/* Syllabus ID */}
-                <div>
-                  <label className="font-medium text-sm">Syllabus ID *</label>
-                  <input
-                    type="text"
-                    name="syllabusId"
-                    value={form.syllabusId}
-                    onChange={handleChange}
-                    className={inputClass("syllabusId")}
-                  />
-                  {errors.syllabusId && (
-                    <p className="text-xs text-red-600 mt-1">{errors.syllabusId}</p>
-                  )}
+                    {/* Syllabus ID */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Syllabus ID <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        name="syllabusId"
+                        value={form.syllabusId}
+                        onChange={handleChange}
+                        className={inputClass("syllabusId")}
+                        placeholder="Associated Syllabus ID"
+                      />
+                      {errors.syllabusId && (
+                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {errors.syllabusId}</p>
+                      )}
+                    </div>
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="font-medium text-sm">Description</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
                   <textarea
                     name="noteDescription"
                     value={form.noteDescription}
                     onChange={handleChange}
                     rows={4}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm"
+                    className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 shadow-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    placeholder="Brief description of the note content..."
                   />
                 </div>
 
                 {/* File Section */}
                 <div>
-                  {mode === "edit" && form.fileUrl && (
-                    <div className="mb-3">
-                      <label className="text-sm font-medium">Current PDF:</label>
-                      <a
-                        href={form.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block text-blue-600 underline mt-1"
-                      >
-                        View File
-                      </a>
-                    </div>
-                  )}
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Documents</h3>
+                  <div className="p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:border-indigo-300 transition-colors bg-gray-50/30">
+                      {mode === "edit" && form.fileUrl && (
+                        <div className="mb-4 flex items-center gap-2 text-indigo-600 bg-indigo-50 w-fit px-3 py-1.5 rounded-lg text-sm font-medium">
+                          <FileText size={16} />
+                          <a
+                            href={form.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline"
+                          >
+                            View Current PDF
+                          </a>
+                        </div>
+                      )}
 
-                  <label className="text-sm font-medium">
-                    {mode === "add" ? "Upload PDF *" : "Replace PDF (optional)"}
-                  </label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {mode === "add" ? "Upload PDF *" : "Replace PDF (optional)"}
+                      </label>
 
-                  <input
-                    type="file"
-                    name="file"
-                    accept="application/pdf"
-                    onChange={handleChange}
-                    className="mt-2"
-                  />
+                      <input
+                        type="file"
+                        name="file"
+                        accept="application/pdf"
+                        onChange={handleChange}
+                        className="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2.5 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-indigo-50 file:text-indigo-700
+                        hover:file:bg-indigo-100 transition-colors"
+                      />
 
-                  {errors.file && <p className="text-xs text-red-600">{errors.file}</p>}
+                      {errors.file && <p className="text-xs text-red-600 mt-2 flex items-center gap-1"><AlertCircle size={10} /> {errors.file}</p>}
+                  </div>
                 </div>
-              </div>
 
               {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={status.loading}
-                className="mt-8 w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:bg-gray-400"
-              >
-                {status.loading
-                  ? "Saving..."
-                  : mode === "edit"
-                  ? "Update Note"
-                  : "Create Note"}
-              </button>
+              <div className="flex justify-end gap-4 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/notespage")}
+                    className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={status.loading}
+                    className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center gap-2"
+                  >
+                    {status.loading ? "Processing..." : (
+                        <>
+                            <Save size={18} />
+                            {mode === "edit" ? "Update Note" : "Create Note"}
+                        </>
+                    )}
+                  </button>
+              </div>
             </form>
-          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

@@ -6,6 +6,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import LoadingState from "@/components/common/LoadingState";
+import Badge from "@/components/common/Badge";
 import { Plus, Edit, Trash2, Eye, Calendar, Filter, X } from "lucide-react";
 
 // Affiliation options (standardized)
@@ -82,9 +83,7 @@ const OldQuestionTable = () => {
         label: "Subject",
         sortable: true,
         render: (row) => (
-          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-            {row.subject || "N/A"}
-          </span>
+          <Badge variant="subject">{row.subject || "N/A"}</Badge>
         ),
       },
       {
@@ -92,9 +91,7 @@ const OldQuestionTable = () => {
         label: "Course",
         sortable: true,
         render: (row) => (
-          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-            {row.courseName || "N/A"}
-          </span>
+          <Badge variant="course">{row.courseName || "N/A"}</Badge>
         ),
       },
       { key: "year", label: "Year", sortable: true },

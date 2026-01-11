@@ -1,3 +1,4 @@
+// No change needed for this file as getting ready for verification
 import Layout from "@/components/layout/Layout";
 
 import { createColleges } from "../../http/colleges";

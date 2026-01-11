@@ -14,7 +14,9 @@ import {
   BookOpen, FileCheck, Image, Folder, Bell,
   HelpCircle,
   Newspaper,
-  Shield
+  Shield,
+  Archive,
+  Presentation
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import tokenService from "@/auth/services/tokenService";
@@ -56,25 +58,17 @@ const Sidebar = () => {
     {
       name: "Courses",
       icon: <FileText size={20} />,
-      submenu: [
-        { name: "All Courses", path: "/course/all" },
-        { name: "Add Course", path: "/course/add" },
-      ],
+      path: "/course/all",
     },
     {
       name: "Notes",
       icon: <BookOpen size={20} />,
-      submenu: [
-        { name: "All Notes", path: "/notespage" },
-        { name: "Add Note", path: "/notes/add" },
-      ],
-    }, {
+      path: "/notespage",
+    },
+    {
       name: "Syllabus",
       icon: <FileCheck size={20} />,
-      submenu: [
-        { name: "All Syllabus", path: "/syllabus/all" },
-        { name: "Add Syllabus", path: "/syllabus/add" },
-      ],
+      path: "/syllabus/all",
     },
     {
       name: "Ads",
@@ -87,39 +81,26 @@ const Sidebar = () => {
 
     {
       name: "Old Questions",
-      icon: <FileText size={20} />,
-      submenu: [
-        { name: "All Old Questions", path: "/old-questions/all" },
-        { name: "Add Old Question", path: "/old-questions/add" },
-      ],
+      icon: <Archive size={20} />,
+      path: "/old-questions/all",
     },
     {
       name: "Notices",
       icon: <Bell size={20} />,
-      submenu: [
-        { name: "All Notices", path: "/notices/all" },
-        { name: "Add Notices", path: "/notices/add" },
-      ],
+      path: "/notices/all",
     },
     {
       name: "Blogs",
-      icon: <Newspaper size={20} />,
-      submenu: [
-        { name: "All Blogs", path: "/blogs" },
-        { name: "Add Blog", path: "/blogs/add" },
-      ],
+      icon: <FileText size={20} />,
+      path: "/blogs",
     },
     {
       name: "Colleges",
       icon: <GraduationCap size={20} />,
-      submenu: [
-
-        { name: "All Colleges", path: "/college/all" },
-        { name: "Add Colleges", path: "/college/add" },
-      ],
+      path: "/college/all",
     },
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
-    { name: "Training", icon: <BookOpen size={18} />, path: "/training/add" },
+    { name: "Training", icon: <Presentation size={20} />, path: "/training/add" },
     {
       name: "Quiz Management",
       icon: <HelpCircle size={20} />,
@@ -138,7 +119,10 @@ const Sidebar = () => {
     setOpenSubmenu(openSubmenu === name ? null : name);
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === "/" || path === "/dashboard") return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  };
   const isParentActive = (submenu) => submenu?.some((sub) => isActive(sub.path));
 
   const handleLogout = async () => {
@@ -240,7 +224,7 @@ const Sidebar = () => {
                   ) : (
                     <Link
                       to={item.path}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
                         ${isActive(item.path)
                           ? "bg-gray-800 text-white shadow-lg font-semibold ring-1 ring-gray-700"
                           : "hover:bg-gray-800 hover:text-white hover:shadow-md"

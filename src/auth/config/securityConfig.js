@@ -90,10 +90,11 @@ export const RBAC_CONFIG = {
 export const API_ENDPOINTS = {
   // Use relative path ONLY in DEV mode AND on localhost to use Vite proxy
   // Otherwise use absolute URL (Production or Dev on remote host)
-  baseUrl: (import.meta.env.DEV && typeof window !== 'undefined' &&
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 
+    ((import.meta.env.DEV && typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
     ? ''
-    : (import.meta.env.VITE_API_BASE_URL || 'https://api.entrancegateway.com'),
+    : 'https://api.entrancegateway.com'),
   auth: {
     login: '/api/v1/auth/login',
     logout: '/api/v1/auth/logout',

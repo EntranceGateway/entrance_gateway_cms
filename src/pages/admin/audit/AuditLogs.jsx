@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import auditLogService from "../../../http/auditLogService";
+import DataTable from "@/components/common/DataTable";
+import Badge from "@/components/common/Badge";
+import PageHeader from "@/components/common/PageHeader";
 import {
-  Search, Filter, Calendar, Download, RefreshCw,
-  ChevronLeft, ChevronRight, Eye, AlertCircle,
-  Shield, CheckCircle, XCircle, Clock
+  Filter, RefreshCw, Eye, XCircle, Clock, Shield
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -112,39 +113,104 @@ export default function AuditLogs() {
     }, 100);
   };
 
-  // Helper to get color for action type
-  const getActionColor = (action) => {
-    const map = {
-      'CREATE': 'bg-green-100 text-green-800',
-      'UPDATE': 'bg-blue-100 text-blue-800',
-      'DELETE': 'bg-red-100 text-red-800',
-      'LOGIN_SUCCESS': 'bg-teal-100 text-teal-800',
-      'LOGIN_FAILED': 'bg-orange-100 text-orange-800',
-      'LOGOUT': 'bg-gray-100 text-gray-800',
-      'PASSWORD_CHANGE': 'bg-purple-100 text-purple-800',
-    };
-    return map[action] || 'bg-gray-100 text-gray-800';
-  };
+  // Column Definition
+  const columns = [
+    {
+      key: "timestamp",
+      label: "Timestamp",
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <Clock size={14} className="text-gray-400" />
+          <span className="text-gray-600">{new Date(row.timestamp).toLocaleString()}</span>
+        </div>
+      ),
+    },
+    {
+      key: "admin",
+      label: "Admin",
+      render: (row) => (
+        <div>
+          <div className="font-medium text-gray-900">{row.adminName || "System"}</div>
+          <div className="text-xs text-gray-500">{row.adminEmail}</div>
+        </div>
+      ),
+    },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) => {
+        let variant = "default";
+        const action = row.action || "";
+        if (action.includes("CREATE")) variant = "create";
+        else if (action.includes("UPDATE")) variant = "update";
+        else if (action.includes("DELETE")) variant = "delete";
+        else if (action.includes("LOGIN_SUCCESS")) variant = "active";
+        else if (action.includes("LOGIN_FAILED")) variant = "delete";
+        
+        return <Badge variant={variant}>{action.replace(/_/g, " ")}</Badge>;
+      },
+    },
+    {
+      key: "entity",
+      label: "Entity",
+      render: (row) => (
+        <div className="text-gray-600">
+          {row.entityType}
+          {row.entityId && (
+            <span className="text-xs text-gray-400 block font-mono mt-0.5 truncate max-w-[100px]">
+              {row.entityId}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "description",
+      label: "Description",
+      render: (row) => (
+        <div className="max-w-xs truncate text-gray-600" title={row.description}>
+          {row.description}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (row) => (
+        <Badge variant={row.responseStatus < 300 ? "active" : "delete"}>
+          {row.responseStatus}
+        </Badge>
+      ),
+    },
+    {
+      key: "details",
+      label: "Details",
+      render: (row) => (
+        <button
+          onClick={() => setSelectedLog(row)}
+          className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+        >
+          <Eye size={18} />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <Layout>
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Shield className="text-indigo-600" />
-              Security Audit Logs
-            </h1>
-            <p className="text-gray-500 text-sm mt-1">
-              Track and monitor all administrative actions
-            </p>
-          </div>
-
+      <PageHeader
+        title="Security Audit Logs"
+        subtitle="Track and monitor all administrative actions"
+        icon={Shield}
+        actions={
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                showFilters
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
             >
               <Filter size={18} />
               Filters
@@ -157,41 +223,55 @@ export default function AuditLogs() {
               <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
             </button>
           </div>
-        </div>
+        }
+      />
 
+      <div className="space-y-6">
         {/* Filters Panel */}
         {showFilters && (
-          <div className="p-6 bg-gray-50 border-b border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 grid grid-cols-1 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Action Type
+              </label>
               <select
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
               >
                 <option value="">All Actions</option>
-                {availableActions.map(action => (
-                  <option key={action} value={action}>{action.replace('_', ' ')}</option>
+                {availableActions.map((action) => (
+                  <option key={action} value={action}>
+                    {action.replace("_", " ")}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
               <input
                 type="datetime-local"
                 value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                onChange={(e) =>
+                  setDateRange({ ...dateRange, start: e.target.value })
+                }
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Date
+              </label>
               <input
                 type="datetime-local"
                 value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                onChange={(e) =>
+                  setDateRange({ ...dateRange, end: e.target.value })
+                }
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
               />
             </div>
@@ -213,108 +293,19 @@ export default function AuditLogs() {
           </div>
         )}
 
-        {/* Table Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold">
-                <th className="px-6 py-4">Timestamp</th>
-                <th className="px-6 py-4">Admin</th>
-                <th className="px-6 py-4">Action</th>
-                <th className="px-6 py-4">Entity</th>
-                <th className="px-6 py-4">Description</th>
-                <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4 text-center">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {loading ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
-                    Loading audit records...
-                  </td>
-                </tr>
-              ) : logs.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
-                    <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                    No audit logs found matching your criteria
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-gray-400" />
-                        {new Date(log.timestamp).toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{log.adminName || "System"}</div>
-                      <div className="text-xs text-gray-500">{log.adminEmail}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${getActionColor(log.action)}`}>
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {log.entityType}
-                      {log.entityId && <span className="text-xs text-gray-400 block font-mono mt-0.5 max-w-[100px] truncate">{log.entityId}</span>}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600 max-w-xs truncate" title={log.description}>
-                      {log.description}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.responseStatus >= 200 && log.responseStatus < 300
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                        }`}>
-                        {log.responseStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => setSelectedLog(log)}
-                        className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                      >
-                        <Eye size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing <span className="font-medium">{pagination.page * pagination.size + 1}</span> to <span className="font-medium">{Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}</span> of <span className="font-medium">{pagination.totalElements}</span> results
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 0}
-              className="p-2 border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-sm font-medium text-gray-700">
-              Page {pagination.page + 1} of {pagination.totalPages || 1}
-            </span>
-            <button
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page >= pagination.totalPages - 1}
-              className="p-2 border rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+        <DataTable
+          data={logs}
+          columns={columns}
+          loading={loading}
+          pagination={{
+            currentPage: pagination.page,
+            totalPages: pagination.totalPages,
+            totalItems: pagination.totalElements,
+            pageSize: pagination.size,
+          }}
+          onPageChange={handlePageChange}
+          emptyMessage="No audit logs found matching your criteria"
+        />
       </div>
 
       {/* Detail Modal */}
@@ -324,13 +315,18 @@ export default function AuditLogs() {
             <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 Audit Log Details
-                <span className="text-xs font-mono bg-gray-200 px-2 py-0.5 rounded text-gray-600">#{selectedLog.id}</span>
+                <span className="text-xs font-mono bg-gray-200 px-2 py-0.5 rounded text-gray-600">
+                  #{selectedLog.id}
+                </span>
               </h3>
               <button
                 onClick={() => setSelectedLog(null)}
                 className="p-1 hover:bg-gray-200 rounded-full transition-colors"
               >
-                <XCircle size={24} className="text-gray-400 hover:text-gray-600" />
+                <XCircle
+                  size={24}
+                  className="text-gray-400 hover:text-gray-600"
+                />
               </button>
             </div>
 
@@ -338,23 +334,46 @@ export default function AuditLogs() {
               {/* Main Info Grid */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Actor</label>
-                  <div className="mt-1 font-medium text-gray-900">{selectedLog.adminName}</div>
-                  <div className="text-sm text-gray-500">{selectedLog.adminEmail}</div>
-                  <div className="mt-1 inline-block px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800 font-medium">
-                    {selectedLog.adminRole}
+                  <label className="text-xs font-semibold text-gray-500 uppercase">
+                    Actor
+                  </label>
+                  <div className="mt-1 font-medium text-gray-900">
+                    {selectedLog.adminName}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {selectedLog.adminEmail}
+                  </div>
+                  <div className="mt-1 inline-block">
+                    <Badge variant="code">{selectedLog.adminRole}</Badge>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Action</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">
+                    Action
+                  </label>
                   <div className="mt-1">
-                    <span className={`px-2 py-1 rounded text-sm font-bold ${getActionColor(selectedLog.action)}`}>
+                    <Badge
+                      variant={
+                        selectedLog.action.includes("CREATE")
+                          ? "create"
+                          : selectedLog.action.includes("UPDATE")
+                          ? "update"
+                          : selectedLog.action.includes("DELETE")
+                          ? "delete"
+                          : selectedLog.responseStatus < 300
+                          ? "active"
+                          : "default"
+                      }
+                    >
                       {selectedLog.action}
-                    </span>
+                    </Badge>
                   </div>
                   <div className="mt-2 text-sm text-gray-600">
-                    <span className="font-semibold">{selectedLog.requestMethod}</span> {selectedLog.requestUri}
+                    <span className="font-semibold">
+                      {selectedLog.requestMethod}
+                    </span>{" "}
+                    {selectedLog.requestUri}
                   </div>
                 </div>
               </div>
@@ -363,23 +382,35 @@ export default function AuditLogs() {
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500">IP Address:</span>
-                  <span className="font-mono text-gray-700">{selectedLog.ipAddress}</span>
+                  <span className="font-mono text-gray-700">
+                    {selectedLog.ipAddress}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500">Status Code:</span>
-                  <span className={`font-mono font-bold ${selectedLog.responseStatus < 300 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span
+                    className={`font-mono font-bold ${
+                      selectedLog.responseStatus < 300
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
                     {selectedLog.responseStatus}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500">Timestamp:</span>
-                  <span className="text-gray-700">{new Date(selectedLog.timestamp).toLocaleString()}</span>
+                  <span className="text-gray-700">
+                    {new Date(selectedLog.timestamp).toLocaleString()}
+                  </span>
                 </div>
               </div>
 
               {/* User Agent */}
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">User Agent</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  User Agent
+                </label>
                 <div className="mt-1 text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 font-mono break-all">
                   {selectedLog.userAgent}
                 </div>
@@ -387,7 +418,9 @@ export default function AuditLogs() {
 
               {/* Full Description */}
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">Description</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  Description
+                </label>
                 <p className="mt-1 text-gray-700 leading-relaxed bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm">
                   {selectedLog.description}
                 </p>

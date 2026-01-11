@@ -1,10 +1,9 @@
 import { useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { registerAdmin } from "../../../http/adminget";
-import { AlertCircle, User, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import PageHeader from "@/components/common/PageHeader";
+import { AlertCircle, User, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
 
 const AddAdmin = () => {
   const navigate = useNavigate();
@@ -16,8 +15,6 @@ const AddAdmin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, success: "", error: "" });
-
-
 
   // Validate form
   const validate = () => {
@@ -70,7 +67,6 @@ const AddAdmin = () => {
     } catch (err) {
       // Handle field-specific validation errors from backend
       if (err && typeof err === "object" && !err.message && !err.error) {
-        // Backend returned field-specific errors like { name: "...", password: "..." }
         setErrors(err);
         setStatus({
           loading: false,
@@ -88,48 +84,41 @@ const AddAdmin = () => {
   };
 
   const inputClass = (field) =>
-    `mt-1 block w-full rounded-lg border px-3 py-3 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200
-    ${errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"}`;
+    `mt-1 block w-full rounded-xl border px-3 py-3 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 outline-none
+    ${errors[field] ? "border-red-300 ring-1 ring-red-300 bg-red-50" : "border-gray-200"}`;
 
   return (
     <Layout>
-      <div className="p-6 max-w-xl mx-auto">
-        {/* Back Link */}
-        <Link
-          to="/admin/users"
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft size={20} />
-          Back to Admin Users
-        </Link>
+      <PageHeader
+        title="Register New Admin"
+        subtitle="Create a new admin account with default permissions"
+        icon={UserPlus}
+        breadcrumbs={[
+          { label: "Admin Users", path: "/admin/users" },
+          { label: "Add Admin" },
+        ]}
+      />
 
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
-            <h2 className="text-2xl font-bold text-white">Register New Admin</h2>
-            <p className="text-indigo-100 mt-1">
-              Create a new admin account with default ADMIN role
-            </p>
-          </div>
-
+      <div className="max-w-xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <form onSubmit={handleSubmit} className="p-8 space-y-6">
             {/* Status Messages */}
             {status.error && (
-              <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                <AlertCircle size={20} />
-                {status.error}
+              <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+                <AlertCircle size={20} className="shrink-0" />
+                <span className="text-sm font-medium">{status.error}</span>
               </div>
             )}
             {status.success && (
-              <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+              <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm font-medium">
                 {status.success}
               </div>
             )}
 
             {/* Name */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <User size={16} />
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
+                <User size={16} className="text-gray-400" />
                 Full Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -137,18 +126,18 @@ const AddAdmin = () => {
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                placeholder="Enter full name (min 5 characters)"
+                placeholder="Enter full name"
                 className={inputClass("name")}
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                <p className="mt-1 text-sm text-red-500 animate-in slide-in-from-top-1">{errors.name}</p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Mail size={16} />
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
+                <Mail size={16} className="text-gray-400" />
                 Email Address <span className="text-red-500">*</span>
               </label>
               <input
@@ -156,18 +145,18 @@ const AddAdmin = () => {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                placeholder="admin@example.com"
+                placeholder="admin@company.com"
                 className={inputClass("email")}
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                <p className="mt-1 text-sm text-red-500 animate-in slide-in-from-top-1">{errors.email}</p>
               )}
             </div>
 
             {/* Password */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Lock size={16} />
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
+                <Lock size={16} className="text-gray-400" />
                 Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -182,41 +171,48 @@ const AddAdmin = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              {errors.password ? (
+                 <p className="mt-1 text-sm text-red-500 animate-in slide-in-from-top-1">{errors.password}</p>
+              ) : (
+                 <p className="mt-1 text-xs text-gray-500 flex items-center gap-1">
+                    <AlertCircle size={12} />
+                    Secure password required
+                 </p>
               )}
             </div>
 
             {/* Info */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
-              <strong>Note:</strong> New admins will be assigned the{" "}
-              <span className="font-semibold">ADMIN</span> role by default. You can
-              change their role after creation from the admin list.
+            <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 text-sm flex items-start gap-2">
+              <AlertCircle size={18} className="mt-0.5 shrink-0" />
+              <p>
+                New admins will be assigned the <span className="font-bold">ADMIN</span> role by default. 
+                You can change their permissions later from the admin list.
+              </p>
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-2">
               <button
                 type="button"
                 onClick={() => navigate("/admin/users")}
-                className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all duration-200"
+                className="flex-1 py-3 px-4 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={status.loading}
-                className={`flex-1 py-3 px-4 text-white rounded-lg font-medium transition-all duration-200 ${status.loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
+                className={`flex-1 py-3 px-4 text-white rounded-xl font-bold shadow-sm transition-all duration-200 flex items-center justify-center gap-2 ${status.loading
+                  ? "bg-indigo-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-md hover:-translate-y-0.5"
                   }`}
               >
-                {status.loading ? "Creating..." : "Create Admin"}
+                {status.loading ? "Creating Account..." : "Create Admin User"}
               </button>
             </div>
           </form>

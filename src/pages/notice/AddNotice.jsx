@@ -10,9 +10,7 @@ const AddNotice = () => {
 
   return (
     <Layout>
-      <div className="p-6">
-        <NoticeForm mode="add" onSubmit={handleSubmit} />
-      </div>
+      <NoticeForm mode="add" onSubmit={handleSubmit} />
     </Layout>
   );
 };

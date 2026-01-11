@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Image, FileText, File } from "lucide-react";
+import PageHeader from "@/components/common/PageHeader";
+import { AlertCircle, Image, FileText, File, Save, Bell } from "lucide-react";
 
 // -----------------------------
 // Default Form Shape
@@ -17,22 +18,13 @@ const isPdfFile = (filename) => {
   return filename.toLowerCase().endsWith(".pdf");
 };
 
-// Helper to check if file is image
-const isImageFile = (filename) => {
-  if (!filename) return false;
-  const ext = filename.toLowerCase();
-  return ext.endsWith(".jpg") || ext.endsWith(".jpeg") || ext.endsWith(".png") || ext.endsWith(".gif") || ext.endsWith(".webp");
-};
-
 // -----------------------------
 // Validation Logic
 // -----------------------------
 const validateForm = (form) => {
   const errors = {};
-
   if (!form.title.trim()) errors.title = "Notice title is required";
   if (form.title.length > 255) errors.title = "Title must be less than 255 characters";
-
   return errors;
 };
 
@@ -76,8 +68,9 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // -----------------------------
   const inputClass = useCallback(
     (field) =>
-      `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200
-      ${errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"}`,
+      `block w-full rounded-xl border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+        errors[field] ? "border-red-300 ring-red-200" : "border-gray-200 bg-gray-50/50 focus:bg-white"
+      }`,
     [errors]
   );
 
@@ -123,14 +116,9 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // -----------------------------
   const buildPayload = useCallback(() => {
     const formData = new FormData();
-    
     formData.append("title", form.title.trim());
     if (form.description) formData.append("description", form.description.trim());
-    
-    if (form.file) {
-      formData.append("image", form.file);
-    }
-
+    if (form.file) formData.append("image", form.file);
     return formData;
   }, [form]);
 
@@ -139,7 +127,6 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // -----------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const validationErrors = validateForm(form);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -151,13 +138,10 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
     try {
       const payload = buildPayload();
       await onSubmit(payload);
-
       setStatus({
         loading: false,
         success: mode === "add" ? "Notice created successfully!" : "Notice updated successfully!",
       });
-
-      // Redirect to notices list after success
       setTimeout(() => {
         navigate("/notices/all");
       }, 1500);
@@ -171,41 +155,38 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          {mode === "add" ? "Create New Notice" : "Edit Notice"}
-        </h1>
-        <p className="text-gray-600">
-          {mode === "add" ? "Add a new notice for users" : "Update notice information"}
-        </p>
-      </div>
+    <div className="w-full">
+      <PageHeader
+        title={mode === "add" ? "Create New Notice" : "Edit Notice"}
+        subtitle={mode === "add" ? "Announce important updates to students" : "Update notice details"}
+        breadcrumbs={[
+            { label: "Notices", to: "/notices/all" },
+            { label: mode === "add" ? "Create" : "Edit" }
+        ]}
+        icon={Bell}
+      />
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
-      >
-        <div className="p-8 space-y-6">
-          {/* Global Error */}
-          {errors.global && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-              <AlertCircle size={20} />
-              {errors.global}
-            </div>
-          )}
+      <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden p-8">
+        
+        {/* Messages */}
+        {errors.global && (
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            {errors.global}
+          </div>
+        )}
+        {status.success && (
+          <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm flex items-center gap-2">
+            <Save size={16} />
+            {status.success}
+          </div>
+        )}
 
-          {/* Success Message */}
-          {status.success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-              ✓ {status.success}
-            </div>
-          )}
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-              <FileText size={18} className="text-indigo-600" />
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               Notice Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -214,119 +195,77 @@ const NoticeForm = ({ mode = "add", initialData = null, onSubmit }) => {
               value={form.title}
               onChange={handleChange}
               className={inputClass("title")}
-              placeholder="Enter notice title..."
+              placeholder="e.g., Exam Schedule 2024"
               maxLength={255}
             />
-            <div className="flex justify-between mt-1">
-              {errors.title && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <AlertCircle size={14} /> {errors.title}
-                </p>
-              )}
-              <span className="text-xs text-gray-400 ml-auto">{form.title.length}/255</span>
-            </div>
+             {errors.title && <p className="text-xs text-red-600 mt-1 flex items-center gap-1">{errors.title}</p>}
           </div>
 
           {/* Description */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-              <FileText size={18} className="text-indigo-600" />
-              Description
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
-              rows={6}
+              rows={5}
               className={inputClass("description")}
-              placeholder="Enter notice description (optional)..."
+              placeholder="Detailed information about the notice..."
             />
           </div>
 
-          {/* File Upload (Image or PDF) */}
+          {/* File Upload */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-              <File size={18} className="text-indigo-600" />
-              Attachment (Image or PDF)
-            </label>
-            <div className="mt-1">
-              <input
-                type="file"
-                name="file"
-                accept="image/*,.pdf,application/pdf"
-                onChange={handleChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-              />
-              <p className="mt-1 text-xs text-gray-500">Supported formats: JPG, PNG, GIF, WebP, PDF</p>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Attachment (Image or PDF)</label>
+            <div className={`relative flex items-center justify-center w-full rounded-xl border-2 border-dashed transition-all p-6 ${errors.file ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'}`}>
+               <label className="flex flex-col items-center justify-center w-full cursor-pointer">
+                  {filePreview ? (
+                     <div className="flex flex-col items-center">
+                        {fileType === "image" ? (
+                           <img src={filePreview} alt="Preview" className="h-40 object-contain rounded-lg shadow-sm border border-gray-200" />
+                        ) : (
+                           <div className="flex items-center gap-2 text-red-600 bg-white px-4 py-2 rounded-lg border border-red-100 shadow-sm">
+                              <FileText size={24} />
+                              <span className="font-medium">
+                                 {typeof filePreview === "string" && filePreview.startsWith("http") ? initialData?.imageName : filePreview}
+                              </span>
+                           </div>
+                        )}
+                        <span className="mt-2 text-xs text-indigo-600 font-medium">Click to change file</span>
+                     </div>
+                  ) : (
+                     <div className="flex flex-col items-center text-gray-500">
+                        <File size={32} className="mb-2 text-gray-400" />
+                        <span className="text-sm font-medium">Click to upload text/image/PDF</span>
+                        <span className="text-xs text-gray-400 mt-1">Supports JPG, PNG, PDF</span>
+                     </div>
+                  )}
+                  <input type="file" name="file" onChange={handleChange} accept="image/*,.pdf,application/pdf" className="hidden" />
+               </label>
             </div>
-            {filePreview && (
-              <div className="mt-3">
-                {fileType === "image" ? (
-                  <img
-                    src={filePreview}
-                    alt="Preview"
-                    className="h-40 w-auto object-cover rounded-lg border border-gray-200"
-                  />
-                ) : fileType === "pdf" ? (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <FileText size={24} className="text-red-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">PDF Document</p>
-                      <p className="text-sm text-gray-500">
-                        {typeof filePreview === "string" && filePreview.startsWith("http") 
-                          ? initialData?.imageName 
-                          : filePreview}
-                      </p>
-                    </div>
-                    {typeof filePreview === "string" && filePreview.startsWith("http") && (
-                      <a
-                        href={filePreview}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-auto px-3 py-1 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
-                      >
-                        View PDF
-                      </a>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <File size={24} className="text-gray-600" />
-                    <span className="text-gray-700">{filePreview}</span>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="bg-gray-50 px-8 py-4 flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={() => navigate("/notices/all")}
-            className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-all duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={status.loading}
-            className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
-          >
-            {status.loading ? (
-              <>
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                {mode === "add" ? "Creating..." : "Updating..."}
-              </>
-            ) : (
-              mode === "add" ? "Create Notice" : "Update Notice"
-            )}
-          </button>
-        </div>
-      </form>
+          {/* Actions */}
+          <div className="flex gap-4 pt-4 border-t border-gray-100 mt-6">
+            <button
+              type="button"
+              onClick={() => navigate("/notices/all")}
+              className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={status.loading}
+              className="flex-1 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <Save size={18} />
+              {status.loading ? "Saving..." : mode === "add" ? "Create Notice" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+      </div>
     </div>
   );
 };

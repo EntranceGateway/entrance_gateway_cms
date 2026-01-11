@@ -27,7 +27,7 @@ const EditNotice = () => {
     };
 
     fetchNotice();
-  }, [id, token]);
+  }, [id]);
 
   const handleSubmit = async (formData) => {
     await updateNotice(id, formData);
@@ -57,9 +57,7 @@ const EditNotice = () => {
 
   return (
     <Layout>
-      <div className="p-6">
-        <NoticeForm mode="edit" initialData={notice} onSubmit={handleSubmit} />
-      </div>
+      <NoticeForm mode="edit" initialData={notice} onSubmit={handleSubmit} />
     </Layout>
   );
 };

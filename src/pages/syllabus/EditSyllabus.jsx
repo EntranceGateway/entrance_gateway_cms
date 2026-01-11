@@ -49,7 +49,7 @@ const EditSyllabus = () => {
 
   useEffect(() => {
     loadSyllabus();
-  }, [id, token]);
+  }, [id]);
 
   // -------------------------------
   // Handle form update

@@ -4,9 +4,7 @@ import NoticeTable from "./components/NoticeTable";
 const NoticePage = () => {
   return (
     <Layout>
-      <div className="p-6">
-        <NoticeTable />
-      </div>
+      <NoticeTable />
     </Layout>
   );
 };

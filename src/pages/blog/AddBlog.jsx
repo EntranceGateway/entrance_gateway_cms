@@ -10,9 +10,7 @@ const AddBlog = () => {
 
   return (
     <Layout>
-      <div className="p-6">
-        <BlogForm mode="add" onSubmit={handleSubmit} />
-      </div>
+      <BlogForm mode="add" onSubmit={handleSubmit} />
     </Layout>
   );
 };

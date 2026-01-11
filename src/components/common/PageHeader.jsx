@@ -8,13 +8,19 @@ import { Link } from "react-router-dom";
  * @param {Array} breadcrumbs - Array of { label, path }
  * @param {Array} actions - Array of actions { label, onClick, icon, variant }
  */
-const PageHeader = ({ title, breadcrumbs = [], actions = [] }) => {
+const PageHeader = ({ 
+    title, 
+    subtitle, 
+    icon: Icon, 
+    breadcrumbs = [], 
+    actions = [] 
+}) => {
     return (
-        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div>
                 {/* Breadcrumbs */}
                 {breadcrumbs.length > 0 && (
-                    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-2 overflow-x-auto whitespace-nowrap pb-1">
+                    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-3 overflow-x-auto whitespace-nowrap pb-1">
                         <Link to="/" className="hover:text-indigo-600 transition-colors flex items-center gap-1">
                             <Home size={14} />
                             <span>Home</span>
@@ -33,12 +39,23 @@ const PageHeader = ({ title, breadcrumbs = [], actions = [] }) => {
                         ))}
                     </nav>
                 )}
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{title}</h1>
+                
+                <div className="flex items-center gap-3">
+                    {Icon && (
+                        <div className="hidden sm:flex p-2.5 bg-indigo-50 rounded-xl text-indigo-600 border border-indigo-100 shadow-sm">
+                            <Icon size={24} />
+                        </div>
+                    )}
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">{title}</h1>
+                        {subtitle && <p className="text-gray-500 text-sm sm:text-base mt-1 font-medium">{subtitle}</p>}
+                    </div>
+                </div>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap items-center gap-3">
-                {actions.map((action, index) => {
+            <div className="flex flex-wrap items-center gap-3 mt-1">
+                {Array.isArray(actions) ? actions.map((action, index) => {
                     const isPrimary = action.variant === "primary" || !action.variant;
                     const isDanger = action.variant === "danger";
 
@@ -58,7 +75,7 @@ const PageHeader = ({ title, breadcrumbs = [], actions = [] }) => {
                             {action.label}
                         </button>
                     );
-                })}
+                }) : actions}
             </div>
         </div>
     );

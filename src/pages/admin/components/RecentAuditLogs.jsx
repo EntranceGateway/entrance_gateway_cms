@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Shield, Clock, ArrowRight } from "lucide-react";
 import auditLogService from "../../../http/auditLogService";
+import Badge from "@/components/common/Badge";
 
 const RecentAuditLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -68,9 +69,9 @@ const RecentAuditLogs = () => {
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                <Badge variant="default" className="font-mono text-gray-500">
                   {log.entityType}
-                </span>
+                </Badge>
               </div>
             ))}
           </div>

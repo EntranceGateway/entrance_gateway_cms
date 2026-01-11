@@ -5,6 +5,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import LoadingState from "@/components/common/LoadingState";
+import Badge from "@/components/common/Badge";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 
 const NoteTable = () => {
@@ -51,18 +52,14 @@ const NoteTable = () => {
         key: "subjectCode",
         label: "Code",
         render: (row) => (
-          <span className="px-2 py-1 text-xs font-semibold rounded-md bg-purple-100 text-purple-700">
-            {row.subjectCode || "N/A"}
-          </span>
+          <Badge variant="code">{row.subjectCode || "N/A"}</Badge>
         ),
       },
       {
         key: "courseName",
         label: "Course",
         render: (row) => (
-          <span className="px-2 py-1 text-xs font-semibold rounded-md bg-green-100 text-green-700">
-            {row.courseName || "N/A"}
-          </span>
+          <Badge variant="course">{row.courseName || "N/A"}</Badge>
         ),
       },
       { key: "semester", label: "Sem", sortable: true },
@@ -71,9 +68,9 @@ const NoteTable = () => {
         key: "affiliation",
         label: "Affiliation",
         render: (row) => (
-          <span className="px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-700">
+          <Badge variant="affiliation">
             {row.affiliation?.replace(/_/g, " ") || "N/A"}
-          </span>
+          </Badge>
         ),
       },
       {

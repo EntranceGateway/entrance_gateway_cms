@@ -1,25 +1,26 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import PageHeader from "@/components/common/PageHeader";
 import { getNoticeById } from "../../http/notice";
 import { noticeFile } from "../../http/fetchpdf";
 import FileViewer from "@/components/pdf/FileViewer";
-import Spinner from "@/components/common/Spinner";
-import { ArrowLeft, Calendar, Edit } from "lucide-react";
+import LoadingState from "@/components/common/LoadingState";
+import { Calendar, Edit, Bell } from "lucide-react";
 
 const ViewNotice = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-
 
   useEffect(() => {
     const fetchNotice = async () => {
       try {
         const res = await getNoticeById(id);
-        setNotice(res.data.data);
+        const data = res.data?.data || res.data;
+        setNotice(data);
       } catch (err) {
         setError(err.error || "Failed to load notice");
       } finally {
@@ -28,7 +29,7 @@ const ViewNotice = () => {
     };
 
     fetchNotice();
-  }, [id, token]);
+  }, [id]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -43,9 +44,7 @@ const ViewNotice = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-64">
-          <Spinner />
-        </div>
+        <LoadingState />
       </Layout>
     );
   }
@@ -53,9 +52,13 @@ const ViewNotice = () => {
   if (error) {
     return (
       <Layout>
-        <div className="p-6">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
+        <div className="p-8">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl shadow-sm text-center">
+             <h3 className="font-semibold text-lg mb-1">Error Loading Notice</h3>
+             <p>{error}</p>
+             <button onClick={() => navigate("/notices/all")} className="mt-4 text-sm font-medium underline text-red-800 hover:text-red-900">
+                Go back to Notices
+             </button>
           </div>
         </div>
       </Layout>
@@ -64,57 +67,56 @@ const ViewNotice = () => {
 
   return (
     <Layout>
-      <div className="p-6 max-w-4xl mx-auto">
-        {/* Back Button & Actions */}
-        <div className="flex justify-between items-center mb-6">
-          <Link
-            to="/notices/all"
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft size={20} />
-            Back to Notices
-          </Link>
-          <Link
-            to={`/notices/edit/${id}`}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-all duration-200"
-          >
-            <Edit size={18} />
-            Edit Notice
-          </Link>
-        </div>
+      <PageHeader
+        title="Notice Details"
+        subtitle={notice?.title}
+        breadcrumbs={[
+            { label: "Notices", to: "/notices/all" },
+            { label: "View Notice" }
+        ]}
+        icon={Bell}
+        actions={[
+            {
+                label: "Edit Notice",
+                icon: <Edit size={16} />,
+                onClick: () => navigate(`/notices/edit/${id}`),
+                variant: "secondary"
+            }
+        ]}
+      />
 
-        {/* Notice Content */}
-        <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Featured File (Image or PDF or Video) */}
           {notice?.imageName && (
-            <div className="w-full bg-gray-100 border-b border-gray-200">
+            <div className="w-full bg-gray-50 border-b border-gray-100 min-h-[300px] flex items-center justify-center">
               <FileViewer
                 fileUrl={noticeFile(id)}
                 fileName={notice.imageName}
-                className="w-full"
+                className="w-full h-full object-contain max-h-[600px]"
               />
             </div>
           )}
 
-          <div className="p-8">
+          <div className="p-8 md:p-10">
+            {/* Meta Info */}
+            <div className="flex items-center gap-2 text-indigo-600 font-medium text-sm mb-4 bg-indigo-50 w-fit px-3 py-1 rounded-full border border-indigo-100">
+               <Calendar size={14} />
+               {formatDate(notice?.createdDate)}
+            </div>
+
             {/* Title */}
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
               {notice?.title}
             </h1>
 
-            {/* Meta Info */}
-            <div className="flex flex-wrap items-center gap-4 text-gray-500 mb-6 pb-6 border-b">
-              <div className="flex items-center gap-1">
-                <Calendar size={16} />
-                {formatDate(notice?.createdDate)}
-              </div>
-            </div>
-
             {/* Description */}
-            {notice?.description && (
-              <div className="prose prose-lg max-w-none text-gray-700 whitespace-pre-wrap">
+            {notice?.description ? (
+              <div className="prose prose-lg max-w-none text-gray-600 space-y-4 whitespace-pre-wrap leading-relaxed">
                 {notice.description}
               </div>
+            ) : (
+                <p className="text-gray-400 italic">No description provided.</p>
             )}
           </div>
         </article>

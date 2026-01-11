@@ -5,6 +5,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import LoadingState from "@/components/common/LoadingState";
+import Badge from "@/components/common/Badge";
 import { Plus, Edit, Trash2, FileText, Search, Filter, X, ChevronRight } from "lucide-react";
 
 // Affiliation options (standardized)
@@ -83,12 +84,12 @@ const CourseTable = () => {
         label: "Level & Type",
         render: (row) => (
           <div className="flex flex-wrap gap-1.5">
-            <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase">
+            <Badge variant="code" className="uppercase">
               {row.courseLevel?.replace(/_/g, " ") || "N/A"}
-            </span>
-            <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase">
+            </Badge>
+            <Badge variant="course" className="uppercase">
               {row.courseType?.replace(/_/g, " ") || "N/A"}
-            </span>
+            </Badge>
           </div>
         ),
       },
@@ -96,34 +97,33 @@ const CourseTable = () => {
         key: "affiliation",
         label: "Affiliation",
         render: (row) => (
-          <span className="text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-            {row.affiliation?.replace(/_/g, " ")}
-          </span>
+          <Badge variant="affiliation">
+             {row.affiliation?.replace(/_/g, " ")}
+          </Badge>
         ),
       },
       {
         key: "actions",
         label: "Actions",
         render: (row) => (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Link
               to={`/syllabus/add/${row.courseId}`}
-              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100 flex items-center gap-1"
+              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
               title="Add Syllabus"
             >
               <FileText size={18} />
-              <span className="text-xs font-bold hidden xl:inline">Syllabus</span>
             </Link>
             <Link
               to={`/course/edit/${row.courseId}`}
-              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100"
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
               title="Edit Course"
             >
               <Edit size={18} />
             </Link>
             <button
               onClick={() => setDeleteId(row.courseId)}
-              className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Course"
             >
               <Trash2 size={18} />

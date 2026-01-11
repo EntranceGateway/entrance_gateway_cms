@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { BookOpen, Building2, Plus, X, Check, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import PageHeader from "@/components/common/PageHeader";
+import LoadingState from "@/components/common/LoadingState";
 import { getSingle, addCourseToCollege } from "../../http/colleges";
 import { getCourses } from "../../http/course";
 
@@ -87,65 +89,65 @@ const AddCourseToCollege = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Loading...</span>
-        </div>
+        <LoadingState />
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Building2 className="w-8 h-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">
-                  Manage Courses
-                </h1>
-                <p className="text-gray-500">
-                  Add or view courses for{" "}
-                  <span className="font-semibold text-blue-600">
-                    {college?.collegeName}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {/* College Info Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
-              <div>
-                <span className="text-xs text-gray-500">Location</span>
-                <p className="font-medium">{college?.location || "N/A"}</p>
-              </div>
-              <div>
-                <span className="text-xs text-gray-500">Affiliation</span>
-                <p className="font-medium">
-                  {college?.affiliation?.replace(/_/g, " ") || "N/A"}
-                </p>
-              </div>
-              <div>
-                <span className="text-xs text-gray-500">Type</span>
-                <p className="font-medium">{college?.collegeType || "N/A"}</p>
-              </div>
-              <div>
-                <span className="text-xs text-gray-500">Priority</span>
-                <span
-                  className={`inline-block px-2 py-1 text-xs rounded-md font-semibold ${college?.priority === "HIGH"
-                    ? "bg-red-100 text-red-700"
-                    : college?.priority === "MEDIUM"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-green-100 text-green-700"
-                    }`}
-                >
-                  {college?.priority}
-                </span>
-              </div>
-            </div>
+      <PageHeader
+        title="Manage Courses"
+        subtitle={`Add or view courses for ${college?.collegeName}`}
+        breadcrumbs={[
+            { label: "Colleges", to: "/college/all" },
+            { label: "Manage Courses" },
+        ]}
+        icon={BookOpen}
+        actions={[
+            {
+                label: "Back to Colleges",
+                onClick: () => navigate("/college/all"),
+                variant: "secondary"
+            }
+        ]}
+      />
+      
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        
+          {/* College Info Summary */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Building2 size={16} /> College Details
+             </h3>
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="p-4 bg-gray-50 rounded-xl">
+                    <span className="text-xs font-medium text-gray-500 block mb-1">Location</span>
+                    <p className="font-semibold text-gray-900">{college?.location || "N/A"}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl">
+                    <span className="text-xs font-medium text-gray-500 block mb-1">Affiliation</span>
+                    <p className="font-semibold text-gray-900 text-sm">{college?.affiliation?.replace(/_/g, " ") || "N/A"}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl">
+                    <span className="text-xs font-medium text-gray-500 block mb-1">Type</span>
+                    <p className="font-semibold text-gray-900">{college?.collegeType || "N/A"}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl">
+                    <span className="text-xs font-medium text-gray-500 block mb-1">Priority</span>
+                    <span
+                        className={`inline-flex px-2.5 py-0.5 text-xs rounded-full font-bold uppercase tracking-wide
+                           ${college?.priority === "HIGH"
+                                ? "bg-red-100 text-red-700"
+                                : college?.priority === "MEDIUM"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-emerald-100 text-emerald-700"
+                        }`}
+                    >
+                        {college?.priority}
+                    </span>
+                </div>
+             </div>
           </div>
 
           {/* Alerts */}
@@ -275,7 +277,6 @@ const AddCourseToCollege = () => {
               Edit College Details
             </button>
           </div>
-        </div>
       </div>
     </Layout>
   );

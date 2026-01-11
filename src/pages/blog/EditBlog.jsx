@@ -4,15 +4,13 @@ import { useParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import BlogForm from "./components/BlogForm";
 import { getBlogById, updateBlog } from "../../http/blog";
-import Spinner from "@/components/common/Spinner";
+import LoadingState from "@/components/common/LoadingState";
 
 const EditBlog = () => {
   const { id } = useParams();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -27,7 +25,7 @@ const EditBlog = () => {
     };
 
     fetchBlog();
-  }, [id, token]);
+  }, [id]);
 
   const handleSubmit = async (formData) => {
     await updateBlog(id, formData);
@@ -36,9 +34,7 @@ const EditBlog = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-64">
-          <Spinner />
-        </div>
+        <LoadingState />
       </Layout>
     );
   }
@@ -46,8 +42,8 @@ const EditBlog = () => {
   if (error) {
     return (
       <Layout>
-        <div className="p-6">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="p-8">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
             {error}
           </div>
         </div>
@@ -57,9 +53,7 @@ const EditBlog = () => {
 
   return (
     <Layout>
-      <div className="p-6">
-        <BlogForm mode="edit" initialData={blog} onSubmit={handleSubmit} />
-      </div>
+      <BlogForm mode="edit" initialData={blog} onSubmit={handleSubmit} />
     </Layout>
   );
 };

@@ -1,6 +1,16 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Loader2, AlertCircle } from "lucide-react";
+import { 
+  Loader2, 
+  AlertCircle,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileText
+} from "lucide-react";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -383,15 +393,50 @@ const PdfViewer = ({
     setError("Failed to render PDF document. The file may be corrupted.");
   };
 
+  /* ---------- Zoom & Fullscreen ---------- */
+  const [scale, setScale] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3));
+  const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      viewerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  const handleDownload = useCallback(() => {
+    if (pdfUrl) {
+      const link = document.createElement("a");
+      link.href = pdfUrl;
+      link.download = `document_${noteId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }, [pdfUrl, noteId]);
+
+  /* ---------- Render Helpers ---------- */
   if (isLoading)
     return (
-      <div className="flex flex-col justify-center items-center h-64 text-gray-600">
-        <Loader2 className="animate-spin mr-3" size={28} />
-        <span className="mt-2">Loading document...</span>
+      <div className="flex flex-col justify-center items-center h-full min-h-[400px]">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-indigo-100 rounded-full animate-pulse" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <FileText className="text-indigo-600" size={24} />
+          </div>
+        </div>
+        <p className="mt-4 text-gray-600 font-medium">Loading document...</p>
+        
         {loadProgress > 0 && loadProgress < 100 && (
-          <div className="w-48 h-2 bg-gray-200 rounded-full mt-3">
+          <div className="w-48 h-1.5 bg-gray-200 rounded-full mt-3 overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all"
+              className="h-full bg-indigo-500 rounded-full transition-all duration-300"
               style={{ width: `${loadProgress}%` }}
             />
           </div>
@@ -401,13 +446,15 @@ const PdfViewer = ({
 
   if (error || !pdfUrl)
     return (
-      <div className="flex flex-col items-center justify-center py-10 text-red-600">
-        <AlertCircle size={48} className="mb-3" />
-        <p className="text-xl font-semibold">Failed to load PDF document</p>
-        <p className="text-sm text-gray-500 mt-2">{error || "Unknown error occurred"}</p>
+      <div className="flex flex-col items-center justify-center py-20 text-red-600">
+        <div className="bg-red-50 p-4 rounded-full mb-4">
+          <AlertCircle size={40} />
+        </div>
+        <p className="text-xl font-bold text-gray-900">Failed to load PDF</p>
+        <p className="text-sm text-gray-500 mt-2 mb-6">{error || "Unknown error occurred"}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
         >
           Try Again
         </button>
@@ -417,60 +464,95 @@ const PdfViewer = ({
   return (
     <div
       ref={viewerRef}
-      className={`flex flex-col h-full bg-white pdf-viewer-container ${className || ""}`}
+      className={`flex flex-col h-full bg-white pdf-viewer-container relative ${className || ""}`}
     >
-      {/* Page Indicator & Navigation */}
-      <div className="flex flex-wrap justify-center items-center gap-3 p-3 bg-white border-b border-gray-200">
-        {/* Previous Button */}
-        <button 
-          onClick={goToPrevPage} 
-          disabled={currentPage <= 1}
-          className="px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-        >
-          ← Prev
-        </button>
-
-        {/* Current Page Display */}
-        <span className="text-sm font-medium text-gray-700">
-          Page <strong>{currentPage}</strong> / <strong>{numPages}</strong>
-        </span>
-
-        {/* Next Button */}
-        <button 
-          onClick={goToNextPage} 
-          disabled={currentPage >= numPages}
-          className="px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-        >
-          Next →
-        </button>
-
-        {/* Divider */}
-        <div className="hidden sm:block w-px h-6 bg-gray-300 mx-2"></div>
-
-        {/* Go to Page Input */}
-        <form onSubmit={handleGoToPageSubmit} className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Go to:</label>
-          <input
-            type="text"
-            value={goToPageInput}
-            onChange={handleGoToPageInputChange}
-            placeholder={`1-${numPages}`}
-            className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <button
-            type="submit"
-            disabled={!goToPageInput || parseInt(goToPageInput, 10) < 1 || parseInt(goToPageInput, 10) > numPages}
-            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      {/* Enhanced Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border-b border-gray-200 shadow-sm z-10">
+        
+        {/* Left: Page Navigation */}
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={goToPrevPage} 
+            disabled={currentPage <= 1}
+            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-600 transition-all"
+            title="Previous Page"
           >
-            Go
+            <ChevronLeft size={20} />
           </button>
+          
+          <span className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 tabular-nums">
+            {currentPage} / {numPages}
+          </span>
+          
+          <button 
+            onClick={goToNextPage} 
+            disabled={currentPage >= numPages}
+            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-600 transition-all"
+            title="Next Page"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        {/* Center: Go to Page */}
+        <form onSubmit={handleGoToPageSubmit} className="hidden sm:flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-400 uppercase">Go to</span>
+          <div className="relative">
+            <input
+              type="text"
+              value={goToPageInput}
+              onChange={handleGoToPageInputChange}
+              placeholder="#"
+              className="w-12 px-2 py-1 text-center text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
         </form>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1 border-l border-gray-200 pl-3">
+          <button 
+            onClick={handleZoomOut}
+            className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Zoom Out"
+          >
+            <ZoomOut size={18} />
+          </button>
+          
+          <span className="text-xs font-medium text-gray-400 w-12 text-center">
+            {Math.round(scale * 100)}%
+          </span>
+
+          <button 
+            onClick={handleZoomIn}
+            className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Zoom In"
+          >
+            <ZoomIn size={18} />
+          </button>
+
+          <div className="w-px h-6 bg-gray-200 mx-1"></div>
+
+          <button 
+            onClick={handleDownload}
+            className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="Download PDF"
+          >
+            <Download size={18} />
+          </button>
+
+          <button 
+            onClick={toggleFullscreen}
+            className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            <Maximize2 size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* PDF Content - Single page with scroll navigation */}
       <div
         ref={pageWrapperRef}
-        className="flex-1 flex flex-col items-center py-4 overflow-y-auto bg-gray-100"
+        className="flex-1 flex flex-col items-center py-6 overflow-y-auto bg-gray-100/50"
       >
         <Document
           file={pdfUrl}
@@ -478,25 +560,26 @@ const PdfViewer = ({
           onLoadError={onDocumentLoadError}
           loading={
             <div className="flex justify-center items-center h-32">
-              <Loader2 className="animate-spin" size={24} />
+              <Loader2 className="animate-spin text-indigo-500" size={32} />
             </div>
           }
           error={
-            <div className="text-red-500 text-center p-4">
-              <AlertCircle size={32} className="mx-auto mb-2" />
-              <p>Error loading PDF</p>
+            <div className="text-red-500 text-center p-4 bg-red-50 rounded-lg">
+              <AlertCircle size={24} className="mx-auto mb-2" />
+              <p>Error loading PDF pages</p>
             </div>
           }
         >
           <Page
             pageNumber={currentPage}
             width={pageWidth}
+            scale={scale}
             renderTextLayer={true}
             renderAnnotationLayer={true}
-            className="shadow-2xl mb-4"
+            className="shadow-2xl mb-4 transition-transform duration-200"
             loading={
-              <div className="flex justify-center items-center h-64 w-full">
-                <Loader2 className="animate-spin" size={24} />
+              <div className="flex justify-center items-center h-96 w-full bg-white rounded-lg shadow-sm">
+                <Loader2 className="animate-spin text-indigo-400" size={40} />
               </div>
             }
           />

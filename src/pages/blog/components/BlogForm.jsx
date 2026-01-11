@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Image, FileText, Mail, Phone, Hash, Tag } from "lucide-react";
+import PageHeader from "@/components/common/PageHeader";
+import { AlertCircle, Image, FileText, Mail, Phone, Hash, Tag, Save, BookOpen } from "lucide-react";
 import { getBlogFileUrl } from "../../../http/blog";
 
 // -----------------------------
@@ -22,27 +23,21 @@ const DEFAULT_FORM = Object.freeze({
 // -----------------------------
 const validateForm = (form) => {
   const errors = {};
-
   if (!form.title.trim()) errors.title = "Blog title is required";
   if (form.title.length > 255) errors.title = "Title must be less than 255 characters";
   if (!form.content.trim()) errors.content = "Blog content is required";
-
   if (form.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail)) {
     errors.contactEmail = "Invalid email format";
   }
-
   if (form.metaTitle && form.metaTitle.length > 60) {
     errors.metaTitle = "Meta title must be less than 60 characters";
   }
-
   if (form.metaDescription && form.metaDescription.length > 160) {
     errors.metaDescription = "Meta description must be less than 160 characters";
   }
-
   if (form.keywords && form.keywords.length > 255) {
     errors.keywords = "Keywords must be less than 255 characters";
   }
-
   return errors;
 };
 
@@ -87,8 +82,9 @@ const BlogForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // -----------------------------
   const inputClass = useCallback(
     (field) =>
-      `mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200
-      ${errors[field] ? "border-red-500 ring-1 ring-red-500" : "border-gray-300"}`,
+      `block w-full rounded-xl border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+        errors[field] ? "border-red-300 ring-red-200" : "border-gray-200 bg-gray-50/50 focus:bg-white"
+      }`,
     [errors]
   );
 
@@ -122,20 +118,14 @@ const BlogForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // -----------------------------
   const buildPayload = useCallback(() => {
     const formData = new FormData();
-    
     formData.append("title", form.title.trim());
     formData.append("content", form.content.trim());
-    
     if (form.contactEmail) formData.append("contactEmail", form.contactEmail.trim());
     if (form.contactPhone) formData.append("contactPhone", form.contactPhone.trim());
     if (form.metaTitle) formData.append("metaTitle", form.metaTitle.trim());
     if (form.metaDescription) formData.append("metaDescription", form.metaDescription.trim());
     if (form.keywords) formData.append("keywords", form.keywords.trim());
-    
-    if (form.image) {
-      formData.append("image", form.image);
-    }
-
+    if (form.image) formData.append("image", form.image);
     return formData;
   }, [form]);
 
@@ -144,7 +134,6 @@ const BlogForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // -----------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const validationErrors = validateForm(form);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -156,13 +145,10 @@ const BlogForm = ({ mode = "add", initialData = null, onSubmit }) => {
     try {
       const payload = buildPayload();
       await onSubmit(payload);
-
       setStatus({
         loading: false,
         success: mode === "add" ? "Blog created successfully!" : "Blog updated successfully!",
       });
-
-      // Redirect to blogs list after success
       setTimeout(() => {
         navigate("/blogs");
       }, 1500);
@@ -176,258 +162,197 @@ const BlogForm = ({ mode = "add", initialData = null, onSubmit }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          {mode === "add" ? "Create New Blog" : "Edit Blog"}
-        </h1>
-        <p className="text-gray-600">
-          {mode === "add" ? "Write and publish your blog post" : "Update your blog post"}
-        </p>
-      </div>
+    <div className="w-full">
+      <PageHeader
+        title={mode === "add" ? "Create New Blog Post" : "Edit Blog Post"}
+        subtitle={mode === "add" ? "Share news and updates" : "Update blog content"}
+        breadcrumbs={[
+            { label: "Blogs", to: "/blogs" },
+            { label: mode === "add" ? "Create" : "Edit" }
+        ]}
+        icon={BookOpen}
+      />
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
-      >
-        <div className="p-8 space-y-6">
-          {/* Global Error */}
-          {errors.global && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-              <AlertCircle size={20} />
-              {errors.global}
-            </div>
-          )}
-
-          {/* Success Message */}
-          {status.success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-              ✓ {status.success}
-            </div>
-          )}
-
-          {/* Title */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-              <FileText size={18} className="text-indigo-600" />
-              Blog Title <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              className={inputClass("title")}
-              placeholder="Enter blog title..."
-              maxLength={255}
-            />
-            <div className="flex justify-between mt-1">
-              {errors.title && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <AlertCircle size={14} /> {errors.title}
-                </p>
-              )}
-              <span className="text-xs text-gray-400 ml-auto">{form.title.length}/255</span>
-            </div>
+      <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden p-8">
+        
+        {/* Messages */}
+        {errors.global && (
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            {errors.global}
           </div>
-
-          {/* Content */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-              <FileText size={18} className="text-indigo-600" />
-              Content <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="content"
-              value={form.content}
-              onChange={handleChange}
-              rows={8}
-              className={inputClass("content")}
-              placeholder="Write your blog content here..."
-            />
-            {errors.content && (
-              <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                <AlertCircle size={14} /> {errors.content}
-              </p>
-            )}
+        )}
+        {status.success && (
+          <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm flex items-center gap-2">
+            <Save size={16} />
+            {status.success}
           </div>
+        )}
 
-          {/* Image Upload */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-              <Image size={18} className="text-indigo-600" />
-              Featured Image
-            </label>
-            <div className="mt-1 flex items-center gap-4">
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={handleChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-              />
-            </div>
-            {imagePreview && (
-              <div className="mt-3">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="h-40 w-auto object-cover rounded-lg border border-gray-200"
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          {/* Main Content Section */}
+          <div className="space-y-6">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Blog Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  className={inputClass("title")}
+                  placeholder="Enter catchy title..."
+                  maxLength={255}
                 />
+                 {errors.title && <p className="text-xs text-red-600 mt-1 flex items-center gap-1">{errors.title}</p>}
               </div>
-            )}
+
+              {/* Content */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                   Content <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="content"
+                  value={form.content}
+                  onChange={handleChange}
+                  rows={10}
+                  className={inputClass("content")}
+                  placeholder="Write your blog post content..."
+                />
+                 {errors.content && <p className="text-xs text-red-600 mt-1 flex items-center gap-1">{errors.content}</p>}
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Featured Image</label>
+                <div className={`relative flex items-center justify-center w-full rounded-xl border-2 border-dashed transition-all p-6 ${errors.image ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'}`}>
+                    <label className="flex flex-col items-center justify-center w-full cursor-pointer">
+                        {imagePreview ? (
+                            <div className="relative group">
+                                <img src={imagePreview} alt="Preview" className="h-48 object-cover rounded-lg shadow-sm border border-gray-200" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                                    <span className="text-white text-sm font-medium">Click to change</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center text-gray-500">
+                                <Image size={32} className="mb-2 text-gray-400" />
+                                <span className="text-sm font-medium">Click to upload image</span>
+                                <span className="text-xs text-gray-400 mt-1">Supports JPG, PNG, WEBP</span>
+                            </div>
+                        )}
+                        <input type="file" name="image" onChange={handleChange} accept="image/*" className="hidden" />
+                    </label>
+                </div>
+              </div>
           </div>
 
           {/* Contact Info Section */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Email */}
+          <div className="pt-6 border-t border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Mail size={18} className="text-indigo-600"/> Contact Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                  <Mail size={18} className="text-indigo-600" />
-                  Contact Email
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Contact Email</label>
                 <input
                   type="email"
                   name="contactEmail"
                   value={form.contactEmail}
                   onChange={handleChange}
                   className={inputClass("contactEmail")}
-                  placeholder="email@example.com"
+                  placeholder="contact@example.com"
                 />
-                {errors.contactEmail && (
-                  <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                    <AlertCircle size={14} /> {errors.contactEmail}
-                  </p>
-                )}
+                 {errors.contactEmail && <p className="text-xs text-red-600 mt-1 flex items-center gap-1">{errors.contactEmail}</p>}
               </div>
-
-              {/* Phone */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                  <Phone size={18} className="text-indigo-600" />
-                  Contact Phone
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Contact Phone</label>
                 <input
                   type="tel"
                   name="contactPhone"
                   value={form.contactPhone}
                   onChange={handleChange}
                   className={inputClass("contactPhone")}
-                  placeholder="+977-9800000000"
+                  placeholder="+977-..."
                 />
               </div>
             </div>
           </div>
 
           {/* SEO Section */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">SEO Settings</h3>
-            
-            {/* Meta Title */}
-            <div className="mb-4">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                <Tag size={18} className="text-indigo-600" />
-                Meta Title
-              </label>
-              <input
-                type="text"
-                name="metaTitle"
-                value={form.metaTitle}
-                onChange={handleChange}
-                className={inputClass("metaTitle")}
-                placeholder="SEO-friendly title (max 60 chars)"
-                maxLength={60}
-              />
-              <div className="flex justify-between mt-1">
-                {errors.metaTitle && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <AlertCircle size={14} /> {errors.metaTitle}
-                  </p>
-                )}
-                <span className="text-xs text-gray-400 ml-auto">{form.metaTitle.length}/60</span>
-              </div>
-            </div>
+          <div className="pt-6 border-t border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Hash size={18} className="text-indigo-600"/> SEO Settings
+            </h3>
+            <div className="space-y-4">
+                <div>
+                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Meta Title</label>
+                   <input
+                    type="text"
+                    name="metaTitle"
+                    value={form.metaTitle}
+                    onChange={handleChange}
+                    className={inputClass("metaTitle")}
+                    maxLength={60}
+                    placeholder="SEO Title"
+                   />
+                   <div className="flex justify-end mt-1"><span className="text-xs text-gray-400">{form.metaTitle.length}/60</span></div>
+                </div>
 
-            {/* Meta Description */}
-            <div className="mb-4">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                <FileText size={18} className="text-indigo-600" />
-                Meta Description
-              </label>
-              <textarea
-                name="metaDescription"
-                value={form.metaDescription}
-                onChange={handleChange}
-                rows={3}
-                className={inputClass("metaDescription")}
-                placeholder="Brief description for search engines (max 160 chars)"
-                maxLength={160}
-              />
-              <div className="flex justify-between mt-1">
-                {errors.metaDescription && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <AlertCircle size={14} /> {errors.metaDescription}
-                  </p>
-                )}
-                <span className="text-xs text-gray-400 ml-auto">{form.metaDescription.length}/160</span>
-              </div>
-            </div>
+                <div>
+                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Meta Description</label>
+                   <textarea
+                    name="metaDescription"
+                    value={form.metaDescription}
+                    onChange={handleChange}
+                    rows={3}
+                    className={inputClass("metaDescription")}
+                    maxLength={160}
+                    placeholder="Short description for search results"
+                   />
+                   <div className="flex justify-end mt-1"><span className="text-xs text-gray-400">{form.metaDescription.length}/160</span></div>
+                </div>
 
-            {/* Keywords */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                <Hash size={18} className="text-indigo-600" />
-                Keywords
-              </label>
-              <input
-                type="text"
-                name="keywords"
-                value={form.keywords}
-                onChange={handleChange}
-                className={inputClass("keywords")}
-                placeholder="keyword1, keyword2, keyword3"
-                maxLength={255}
-              />
-              <div className="flex justify-between mt-1">
-                {errors.keywords && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <AlertCircle size={14} /> {errors.keywords}
-                  </p>
-                )}
-                <span className="text-xs text-gray-400 ml-auto">{form.keywords.length}/255</span>
-              </div>
+                <div>
+                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Keywords</label>
+                   <input
+                    type="text"
+                    name="keywords"
+                    value={form.keywords}
+                    onChange={handleChange}
+                    className={inputClass("keywords")}
+                    placeholder="comma, separated, keywords"
+                   />
+                </div>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="bg-gray-50 px-8 py-4 flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={() => navigate("/blogs")}
-            className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-all duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={status.loading}
-            className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
-          >
-            {status.loading ? (
-              <>
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                {mode === "add" ? "Creating..." : "Updating..."}
-              </>
-            ) : (
-              mode === "add" ? "Create Blog" : "Update Blog"
-            )}
-          </button>
-        </div>
-      </form>
+          {/* Actions */}
+          <div className="flex gap-4 pt-4 border-t border-gray-100 mt-6">
+            <button
+              type="button"
+              onClick={() => navigate("/blogs")}
+              className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={status.loading}
+              className="flex-1 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <Save size={18} />
+              {status.loading ? "Saving..." : mode === "add" ? "Create Blog" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+      </div>
     </div>
   );
 };

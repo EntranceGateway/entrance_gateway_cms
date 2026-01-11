@@ -5,10 +5,7 @@ const NotePage = () => {
   return (
     <Layout>
 
-      <div className="p-6">
-
-        <NotesTable />
-      </div>
+      <NotesTable />
     </Layout>
 
   );

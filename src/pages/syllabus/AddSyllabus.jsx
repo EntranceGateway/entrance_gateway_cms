@@ -18,11 +18,7 @@ const AddSyllabusPage = () => {
 
   return (
     <Layout>
-      <div className="p-6 flex justify-center bg-gray-50">
-        <div className="w-full max-w-2xl">
-          <SyllabusForm mode="add" onSubmit={handleAddSyllabus} />
-        </div>
-      </div>
+      <SyllabusForm mode="add" onSubmit={handleAddSyllabus} />
     </Layout>
   );
 };

@@ -16,11 +16,7 @@ const AddOldQuestion = () => {
 
   return (
     <Layout>
-      <div className="p-6 flex justify-center bg-gray-50 min-h-screen">
-        <div className="w-full max-w-2xl">
-          <OldQuestionForm mode="add" onSubmit={handleAddOldQuestion} />
-        </div>
-      </div>
+      <OldQuestionForm mode="add" onSubmit={handleAddOldQuestion} />
     </Layout>
   );
 };
