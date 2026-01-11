@@ -1,9 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getOldQuestions, filterOldQuestions, addOldQuestion, deleteOldQuestion, updateOldQuestion } from "@/http/oldQuestionCollection";
+import { getAllOldQuestions, filterOldQuestions, addOldQuestion, deleteOldQuestion, updateOldQuestion } from "@/http/oldQuestionCollection";
 
 /**
  * Hook for fetching old questions (switches between list and filter endpoints)
  * @param {Object} params - Query parameters
+ * 
+ * Endpoints:
+ * - Default list: GET /api/v1/old-question-collections?page=0&size=10&sortBy=year&sortDir=desc
+ * - Filtered (with courseId): GET /api/v1/old-question-collections/filter
  */
 export const useOldQuestions = (params = {}) => {
     const { courseId } = params;
@@ -12,7 +16,7 @@ export const useOldQuestions = (params = {}) => {
     return useQuery({
         queryKey: ["oldQuestions", params],
         queryFn: async () => {
-            const res = isFiltered ? await filterOldQuestions(params) : await getOldQuestions(params);
+            const res = isFiltered ? await filterOldQuestions(params) : await getAllOldQuestions(params);
             return res.data.data || res.data;
         },
     });

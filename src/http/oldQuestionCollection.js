@@ -2,6 +2,18 @@ import api from "./index";
 import { handleApiError } from "./utils/errorHandler";
 
 // ===============================
+// GET ALL OLD QUESTION COLLECTIONS (Base Path - Paginated)
+// Endpoint: /api/v1/old-question-collections?page=0&size=10&sortBy=year&sortDir=desc
+// ===============================
+export const getAllOldQuestions = async (params = {}) => {
+  try {
+    return await api.get("/api/v1/old-question-collections", { params });
+  } catch (err) {
+    handleApiError(err);
+  }
+};
+
+// ===============================
 // CREATE OLD QUESTION COLLECTION
 // ===============================
 export const addOldQuestion = async (formData) => {
