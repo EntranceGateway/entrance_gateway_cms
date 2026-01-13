@@ -70,7 +70,6 @@ const AdminQuestionForm = ({ onSubmit }) => {
     });
 
     onSubmit?.(formData);
-    console.log("Submitted FormData");
 
     // Optional: Show success feedback
     alert("Question submitted successfully!");

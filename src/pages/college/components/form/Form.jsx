@@ -306,6 +306,7 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all bg-white"
                         >
                           <option value="">Select University...</option>
+                          <option value="NEB">NEB (National Examination Board)</option>
                           <option value="TRIBHUVAN_UNIVERSITY">Tribhuvan University</option>
                           <option value="KATHMANDU_UNIVERSITY">Kathmandu University</option>
                           <option value="POKHARA_UNIVERSITY">Pokhara University</option>

@@ -9,7 +9,7 @@ export const RouteChangeDetector = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('🔄 Route changed to:', location.pathname);
+    // Route change detected
   }, [location.pathname]);
 
   return null;

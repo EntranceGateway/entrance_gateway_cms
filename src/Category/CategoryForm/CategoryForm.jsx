@@ -32,7 +32,6 @@ const CategoryForm = ({ token }) => {
         }
       );
 
-      console.log("Response:", res.data);
       alert("Category created successfully");
       setLoading(false);
     } catch (err) {

@@ -18,6 +18,7 @@ const DEFAULT_FORM = {
 };
 
 const AFFILIATIONS = [
+  { value: "NEB", label: "NEB (National Examination Board)" },
   { value: "TRIBHUVAN_UNIVERSITY", label: "Tribhuvan University" },
   { value: "POKHARA_UNIVERSITY", label: "Pokhara University" },
   { value: "KATHMANDU_UNIVERSITY", label: "Kathmandu University" },

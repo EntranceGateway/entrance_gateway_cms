@@ -11,8 +11,6 @@ const ProgressiveLoader = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    console.log('🎯 ProgressiveLoader: Route changed to', location.pathname);
-    
     // Start loading animation on route change
     setIsVisible(true);
     setProgress(10);
@@ -42,8 +40,6 @@ const ProgressiveLoader = () => {
       clearTimeout(completeTimer);
     };
   }, [location.pathname, location.search]); // Trigger on any location change
-
-  console.log('🎨 ProgressiveLoader render:', { isVisible, progress });
 
   if (!isVisible) return null;
 

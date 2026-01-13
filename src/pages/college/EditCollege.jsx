@@ -17,7 +17,6 @@ function EditCollege() {
       const response = await getSingle(id);
       if (response.status === 200) {
         setCollegeData(response.data.data);
-        console.log("College data loaded");
       } else {
         setError("College not found");
       }

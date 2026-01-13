@@ -10,6 +10,7 @@ import { Plus, Edit, Trash2, FileText, Search, Filter, X, ChevronRight } from "l
 
 // Affiliation options (standardized)
 const AFFILIATIONS = [
+  { value: "NEB", label: "NEB (National Examination Board)" },
   { value: "TRIBHUVAN_UNIVERSITY", label: "Tribhuvan University" },
   { value: "POKHARA_UNIVERSITY", label: "Pokhara University" },
   { value: "KATHMANDU_UNIVERSITY", label: "Kathmandu University" },

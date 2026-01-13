@@ -164,6 +164,7 @@ const SyllabusTable = () => {
              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none text-gray-700"
            >
              <option value="">All Affiliations</option>
+             <option value="NEB">NEB (National Examination Board)</option>
              <option value="TRIBHUVAN_UNIVERSITY">Tribhuvan University</option>
              <option value="POKHARA_UNIVERSITY">Pokhara University</option>
              <option value="KATHMANDU_UNIVERSITY">Kathmandu University</option>

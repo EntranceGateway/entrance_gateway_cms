@@ -90,7 +90,6 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
         navigate("/course/all");
       }, 1500);
     } catch (err) {
-      console.log("ERR:", err);
 
       let backendFieldErrors = {};
       let backendGlobalMessage = "";
@@ -212,6 +211,7 @@ const CourseForm = ({ mode = "add", initialData = {}, onSubmit }) => {
                       }`}
                     >
                       <option value="">-- Select University --</option>
+                      <option value="NEB">NEB (National Examination Board)</option>
                       <option value="TRIBHUVAN_UNIVERSITY">Tribhuvan University</option>
                       <option value="KATHMANDU_UNIVERSITY">Kathmandu University</option>
                       <option value="POKHARA_UNIVERSITY">Pokhara University</option>
