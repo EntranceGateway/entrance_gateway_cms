@@ -54,6 +54,12 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
         fileUrl: initialData.fileUrl || "",
         file: null,
       });
+    } else if (mode === "add" && initialData?.syllabusId) {
+      // Pre-fill syllabusId when coming from syllabus table
+      setForm({
+        ...DEFAULT_FORM,
+        syllabusId: initialData.syllabusId || id || "",
+      });
     } else {
       setForm({
         ...DEFAULT_FORM,
