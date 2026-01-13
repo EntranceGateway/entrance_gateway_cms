@@ -4,7 +4,7 @@ import { useColleges, useDeleteCollege } from "@/hooks/useColleges";
 import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { TableSkeleton } from "@/components/loaders";
 import { BookOpen, Plus, Edit, Trash2, Globe, MapPin, Mail, Phone, Info, Search, Filter, X } from "lucide-react";
 
 const CollegeTable = () => {
@@ -287,7 +287,7 @@ const CollegeTable = () => {
       </div>
 
       {isLoading ? (
-        <LoadingState type="table" />
+        <TableSkeleton rows={10} columns={8} />
       ) : (
         <DataTable
           data={data?.content || []}

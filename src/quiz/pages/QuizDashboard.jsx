@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
 import { BookOpen, FolderOpen, FileText, Trophy, Plus, HelpCircle, LayoutDashboard, TrendingUp } from 'lucide-react';
 import { useQuizStats } from "@/hooks/useQuiz";
-import LoadingState from "@/components/common/LoadingState";
+import { StatsSkeleton } from "@/components/loaders";
 
 const QuizDashboard = () => {
   const { data: stats, isLoading } = useQuizStats();
@@ -18,7 +18,7 @@ const QuizDashboard = () => {
   if (isLoading) {
     return (
       <div className="p-8">
-        <LoadingState type="stats" />
+        <StatsSkeleton count={4} />
       </div>
     );
   }

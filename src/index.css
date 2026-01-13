@@ -23,3 +23,13 @@
     scrollbar-color: #4b5563 #111827;
   }
 }
+
+/* Shimmer animation for progressive loader */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

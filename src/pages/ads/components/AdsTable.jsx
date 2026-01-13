@@ -5,7 +5,7 @@ import { AD_POSITIONS, AD_STATUSES, AD_PRIORITIES } from "@/constants/ads.consta
 import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { TableSkeleton } from "@/components/loaders";
 import { Plus, Edit, Trash2, Calendar, Image as ImageIcon, DollarSign } from "lucide-react";
 
 const AdsTable = () => {
@@ -189,7 +189,7 @@ const AdsTable = () => {
       />
 
       {isLoading ? (
-        <LoadingState type="table" />
+        <TableSkeleton rows={10} columns={8} />
       ) : (
         <DataTable
           data={data?.content || []}

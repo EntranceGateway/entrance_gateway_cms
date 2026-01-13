@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import PageHeader from "@/components/common/PageHeader";
 import { getBlogById, downloadBlogFile, getBlogFileUrl } from "../../http/blog";
-import LoadingState from "@/components/common/LoadingState";
+import { PulseLoader } from "@/components/loaders";
 import { Calendar, Mail, Phone, Tag, Hash, Edit, Download, ExternalLink, BookOpen } from "lucide-react";
 
 const ViewBlog = () => {
@@ -66,7 +66,9 @@ const ViewBlog = () => {
   if (loading) {
     return (
       <Layout>
-        <LoadingState />
+        <div className="p-8">
+          <PulseLoader lines={10} />
+        </div>
       </Layout>
     );
   }

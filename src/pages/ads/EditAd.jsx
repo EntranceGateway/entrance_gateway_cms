@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AdsForm from "./components/AdsForm";
-import Spinner from "@/components/common/Spinner";
+import { InlineSpinner } from "@/components/loaders";
 import { getAds } from "../../http/ads";
 
 function EditAd() {
@@ -36,7 +36,7 @@ function EditAd() {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
-          <Spinner />
+          <InlineSpinner size="xl" />
         </div>
       </Layout>
     );

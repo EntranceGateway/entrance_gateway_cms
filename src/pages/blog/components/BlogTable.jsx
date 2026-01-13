@@ -5,7 +5,7 @@ import { getBlogFileUrl } from "@/http/blog";
 import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { TableSkeleton } from "@/components/loaders";
 import { Plus, Edit, Trash2, Eye, Calendar, Mail, Phone, Search } from "lucide-react";
 
 const BlogTable = () => {
@@ -199,7 +199,7 @@ const BlogTable = () => {
       </div>
 
       {isLoading ? (
-        <LoadingState type="table" />
+        <TableSkeleton rows={10} columns={6} />
       ) : (
         <DataTable
           data={filteredBlogs}

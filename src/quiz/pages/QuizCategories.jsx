@@ -9,7 +9,7 @@ import {
 import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { TableSkeleton } from "@/components/loaders";
 import Layout from "@/components/layout/Layout";
 
 const QuizCategories = () => {
@@ -160,7 +160,7 @@ const QuizCategories = () => {
         />
 
         {isLoading ? (
-          <LoadingState type="table" />
+          <TableSkeleton rows={10} columns={4} />
         ) : (
           <DataTable
             data={data?.content || []}

@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import BlogForm from "./components/BlogForm";
 import { getBlogById, updateBlog } from "../../http/blog";
-import LoadingState from "@/components/common/LoadingState";
+import { FormSkeleton } from "@/components/loaders";
 
 const EditBlog = () => {
   const { id } = useParams();
@@ -34,7 +34,7 @@ const EditBlog = () => {
   if (loading) {
     return (
       <Layout>
-        <LoadingState />
+        <FormSkeleton />
       </Layout>
     );
   }

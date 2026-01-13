@@ -5,7 +5,7 @@ import PageHeader from "@/components/common/PageHeader";
 import { getNoticeById } from "../../http/notice";
 import { noticeFile } from "../../http/fetchpdf";
 import FileViewer from "@/components/pdf/FileViewer";
-import LoadingState from "@/components/common/LoadingState";
+import { PulseLoader } from "@/components/loaders";
 import { Calendar, Edit, Bell } from "lucide-react";
 
 const ViewNotice = () => {
@@ -44,7 +44,9 @@ const ViewNotice = () => {
   if (loading) {
     return (
       <Layout>
-        <LoadingState />
+        <div className="p-8">
+          <PulseLoader lines={8} />
+        </div>
       </Layout>
     );
   }

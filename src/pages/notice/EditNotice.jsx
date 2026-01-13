@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import NoticeForm from "./components/NoticeForm";
 import { getNoticeById, updateNotice } from "../../http/notice";
-import Spinner from "@/components/common/Spinner";
+import { InlineSpinner } from "@/components/loaders";
 
 const EditNotice = () => {
   const { id } = useParams();
@@ -37,7 +37,7 @@ const EditNotice = () => {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
-          <Spinner />
+          <InlineSpinner size="xl" />
         </div>
       </Layout>
     );

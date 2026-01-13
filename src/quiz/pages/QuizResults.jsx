@@ -3,7 +3,7 @@ import { Trophy, Eye, TrendingUp, TrendingDown, Minus, Clock, Target, Award, Cal
 import { useQuizResults, useQuizResult } from "@/hooks/useQuiz";
 import DataTable from "@/components/common/DataTable";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { TableSkeleton } from "@/components/loaders";
 import Layout from "@/components/layout/Layout";
 
 const QuizResults = () => {
@@ -141,7 +141,7 @@ const QuizResults = () => {
         />
 
         {isLoading ? (
-          <LoadingState type="table" />
+          <TableSkeleton rows={10} columns={6} />
         ) : (
           <DataTable
             data={data?.content || []}

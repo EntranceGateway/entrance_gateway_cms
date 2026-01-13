@@ -3,7 +3,7 @@ import { BookOpen, Search, Filter } from "lucide-react";
 import { useQuizCourses } from "@/hooks/useQuiz";
 import DataTable from "@/components/common/DataTable";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { TableSkeleton } from "@/components/loaders";
 import Layout from "@/components/layout/Layout";
 
 const QuizCourses = () => {
@@ -82,7 +82,7 @@ const QuizCourses = () => {
         />
 
         {isLoading ? (
-          <LoadingState type="table" />
+          <TableSkeleton rows={10} columns={5} />
         ) : (
           <DataTable
             data={data?.content || []}

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { BookOpen, Building2, Plus, X, Check, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { FormSkeleton } from "@/components/loaders";
 import { getSingle, addCourseToCollege } from "../../http/colleges";
 import { getCourses } from "../../http/course";
 
@@ -89,7 +89,7 @@ const AddCourseToCollege = () => {
   if (loading) {
     return (
       <Layout>
-        <LoadingState />
+        <FormSkeleton />
       </Layout>
     );
   }

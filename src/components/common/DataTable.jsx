@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { TableSkeleton } from "@/components/loaders";
 
 /**
  * Reusable Data Table Component
@@ -30,27 +31,7 @@ const DataTable = ({
   };
 
   if (loading) {
-    return (
-      <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
-        {/* Header Skeleton */}
-        <div className="h-12 bg-gray-50 border-b border-gray-100 flex items-center px-6">
-          <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
-        </div>
-        {/* Rows Skeleton */}
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="h-16 border-b border-gray-50 flex items-center px-6 gap-6 last:border-0"
-          >
-            <div className="h-4 bg-gray-100 rounded w-1/6 animate-pulse" />
-            <div className="h-4 bg-gray-100 rounded w-1/4 animate-pulse" />
-            <div className="h-4 bg-gray-100 rounded w-1/5 animate-pulse" />
-            <div className="flex-1" />
-            <div className="h-8 bg-gray-100 rounded w-20 animate-pulse" />
-          </div>
-        ))}
-      </div>
-    );
+    return <TableSkeleton rows={5} columns={columns.length} />;
   }
 
   if (data.length === 0) {

@@ -5,7 +5,7 @@ import { useSyllabus, useDeleteSyllabus } from "@/hooks/useSyllabus";
 import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
-import LoadingState from "@/components/common/LoadingState";
+import { TableSkeleton } from "@/components/loaders";
 import Badge from "@/components/common/Badge";
 import { Plus, Eye, Edit, Trash2, FilePlus } from "lucide-react";
 
@@ -220,7 +220,7 @@ const SyllabusTable = () => {
       </div>
 
       {isLoading ? (
-        <LoadingState type="table" />
+        <TableSkeleton rows={10} columns={8} />
       ) : (
         <DataTable
           data={data?.content || []}
