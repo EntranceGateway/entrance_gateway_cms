@@ -100,7 +100,7 @@ const Sidebar = () => {
       path: "/college/all",
     },
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
-    { name: "Training", icon: <Presentation size={20} />, path: "/training/add" },
+    { name: "Training", icon: <Presentation size={20} />, path: "/admin/training" },
     {
       name: "Quiz Management",
       icon: <HelpCircle size={20} />,
