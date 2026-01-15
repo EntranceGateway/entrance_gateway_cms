@@ -5,7 +5,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import { TableSkeleton } from "@/components/loaders";
-import { Plus, Edit, Trash2, Calendar, Users, DollarSign, GraduationCap } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Users, DollarSign, GraduationCap, Eye } from "lucide-react";
 
 const TrainingTable = () => {
   const navigate = useNavigate();
@@ -134,7 +134,7 @@ const TrainingTable = () => {
         render: (row) => (
           <div>
             <div className="flex items-center gap-1 text-sm font-semibold text-gray-700">
-              <DollarSign size={14} />
+              <span className="text-xs font-bold text-gray-500">Rs.</span>
               <span>{row.price?.toFixed(2)}</span>
             </div>
             {row.offerPercentage > 0 && (
@@ -153,7 +153,7 @@ const TrainingTable = () => {
         key: "actions",
         label: "Actions",
         render: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <Link
               to={`/admin/training/edit/${row.trainingId}`}
               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -224,6 +224,7 @@ const TrainingTable = () => {
             setSortField(key);
             setSortOrder(dir);
           }}
+          onRowClick={(row) => navigate(`/admin/training/view/${row.trainingId}`)}
         />
       )}
 

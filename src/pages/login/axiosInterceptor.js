@@ -72,12 +72,14 @@ const useAxiosInterceptor = () => {
         }
 
         // SECURITY: Sanitize request body for non-GET requests
-        // Skip for FormData (file uploads) and Blobs
+        // LIMITATION: Only sanitize Auth requests (Login/Register) to prevent XSS in credentials
+        // For other data (Blogs, Training, etc.), allow rich text/links to pass through
         if (
           config.data &&
           typeof config.data === 'object' &&
           !(config.data instanceof FormData) &&
-          !(config.data instanceof Blob)
+          !(config.data instanceof Blob) &&
+          config.url?.includes('/auth/') 
         ) {
           // Don't sanitize password fields
           const { password, confirmPassword, ...rest } = config.data;

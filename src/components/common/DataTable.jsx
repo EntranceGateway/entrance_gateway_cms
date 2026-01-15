@@ -19,6 +19,7 @@ const DataTable = ({
   pagination = null,
   onPageChange,
   onSort,
+  onRowClick,
   emptyMessage = "No data found",
 }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -111,7 +112,8 @@ const DataTable = ({
             {data.map((row, idx) => (
               <tr
                 key={row.id || row._id || idx}
-                className="hover:bg-gray-50 transition-colors duration-150"
+                onClick={() => onRowClick && onRowClick(row)}
+                className={`transition-colors duration-150 ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : 'hover:bg-gray-50 bg-white'}`}
               >
                 {columns.map((col) => (
                   <td
