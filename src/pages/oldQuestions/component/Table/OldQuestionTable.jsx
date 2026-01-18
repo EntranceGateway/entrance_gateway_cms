@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useOldQuestions, useDeleteOldQuestion } from "@/hooks/useOldQuestions";
 import { useCourses } from "@/hooks/useCourses";
@@ -6,8 +6,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import { TableSkeleton } from "@/components/loaders";
-import Badge from "@/components/common/Badge";
-import { Plus, Edit, Trash2, Eye, Calendar, Filter, X } from "lucide-react";
+import { Plus, Edit, Trash2, Filter, X } from "lucide-react";
 
 // Affiliation options (standardized)
 const AFFILIATIONS = [
@@ -77,14 +76,13 @@ const OldQuestionTable = () => {
         key: "setName",
         label: "Set Name",
         sortable: true,
-        render: (row) => <span className="font-semibold text-gray-900">{row.setName}</span>,
-      },
-      {
-        key: "subject",
-        label: "Subject",
-        sortable: true,
         render: (row) => (
-          <Badge variant="subject">{row.subject || "N/A"}</Badge>
+          <div>
+            <div className="font-semibold text-gray-900">{row.setName}</div>
+            {row.subject && (
+              <div className="text-xs text-gray-500 mt-0.5">{row.subject}</div>
+            )}
+          </div>
         ),
       },
       {
@@ -92,27 +90,44 @@ const OldQuestionTable = () => {
         label: "Course",
         sortable: true,
         render: (row) => (
-          <Badge variant="course">{row.courseName || "N/A"}</Badge>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+            {row.courseName || "N/A"}
+          </span>
         ),
       },
-      { key: "year", label: "Year", sortable: true },
+      {
+        key: "year",
+        label: "Year",
+        sortable: true,
+        align: "right",
+        render: (row) => (
+          <span className="font-medium text-gray-900">{row.year || "-"}</span>
+        ),
+      },
+      {
+        key: "semester",
+        label: "Semester",
+        align: "right",
+        render: (row) => (
+          <span className="font-medium text-gray-900">
+            {row.semester ? `Sem ${row.semester}` : "-"}
+          </span>
+        ),
+      },
       {
         key: "description",
         label: "Description",
-        render: (row) => <div className="max-w-xs truncate text-gray-500" title={row.description}>{row.description || "-"}</div>,
+        render: (row) => (
+          <div className="max-w-xs text-sm text-gray-600 line-clamp-2" title={row.description}>
+            {row.description || "-"}
+          </div>
+        ),
       },
       {
         key: "actions",
         label: "Actions",
         render: (row) => (
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/old-questions/view/${row.id}`}
-              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-              title="View PDF"
-            >
-              <Eye size={18} />
-            </Link>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <Link
               to={`/old-questions/edit/${row.id}`}
               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -121,7 +136,10 @@ const OldQuestionTable = () => {
               <Edit size={18} />
             </Link>
             <button
-              onClick={() => setDeleteId(row.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteId(row.id);
+              }}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete"
             >
@@ -268,12 +286,13 @@ const OldQuestionTable = () => {
       </div>
 
       {isLoading ? (
-        <TableSkeleton rows={10} columns={7} />
+        <TableSkeleton rows={10} columns={6} />
       ) : (
         <DataTable
           data={data?.content || []}
           columns={columns}
           loading={isLoading}
+          onRowClick={(row) => navigate(`/old-questions/view/${row.id}`)}
           pagination={{
             currentPage: page,
             totalPages: data?.totalPages || 0,

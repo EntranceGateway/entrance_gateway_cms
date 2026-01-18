@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/common/PageHeader";
+import { getCollegeLogoUrl, getCollegeImageUrl } from "@/http/colleges";
 import {
   Building2,
   University,
@@ -46,13 +47,16 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   useEffect(() => {
     if (initialData) {
       setFormData({ ...defaultForm, ...initialData });
-      // Set existing logo preview if available
-      if (initialData.logoName) {
-        setLogoPreview(initialData.logoName);
+      // Set existing logo preview URL if available
+      if (initialData.logoName && initialData.collegeId) {
+        setLogoPreview(getCollegeLogoUrl(initialData.collegeId));
       }
-      // Set existing images previews if available
-      if (initialData.collegePictureName?.length > 0) {
-        setImagePreviews(initialData.collegePictureName);
+      // Set existing images preview URLs if available
+      if (initialData.collegePictureName?.length > 0 && initialData.collegeId) {
+        const imageUrls = initialData.collegePictureName.map(imageName => 
+          getCollegeImageUrl(initialData.collegeId, imageName)
+        );
+        setImagePreviews(imageUrls);
       }
     }
   }, [initialData]);
@@ -171,7 +175,17 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
     e.preventDefault();
     setSuccess("");
     setErrors({});
-    if (!validateForm()) return;
+    
+    console.log("Form submission started");
+    console.log("Mode:", mode);
+    console.log("FormData:", formData);
+    console.log("Logo:", logo);
+    console.log("Images:", images);
+    
+    if (!validateForm()) {
+      console.log("Validation failed:", errors);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -187,6 +201,7 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
         navigate("/college/all");
       }, 1500);
     } catch (err) {
+      console.error("Submission error:", err);
       const backendErrors = err || {};
       setErrors((prev) => ({ ...prev, ...backendErrors }));
     } finally {

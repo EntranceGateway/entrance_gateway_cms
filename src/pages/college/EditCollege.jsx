@@ -32,10 +32,10 @@ function EditCollege() {
     fetchCollege();
   }, [id]);
 
-  // Handle form submission (edit mode doesn't update logo/images - use JSON)
+  // Handle form submission (edit mode supports logo/images update)
   const handleUpdate = async (formData, logo, images) => {
     try {
-      const res = await updateColleges(id, formData);
+      const res = await updateColleges(id, formData, logo, images);
       if (res.status === 200) {
         alert("College updated successfully");
       } else {

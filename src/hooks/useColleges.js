@@ -49,7 +49,7 @@ export const useCreateCollege = () => {
 export const useUpdateCollege = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, body }) => updateColleges(id, body),
+        mutationFn: ({ id, formData, logo, images }) => updateColleges(id, formData, logo, images),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["colleges"] });
         },

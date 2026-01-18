@@ -9,7 +9,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import { TableSkeleton } from "@/components/loaders";
-import { GraduationCap, Trash2, Calendar, Edit2, Phone, Mail, Eye } from "lucide-react";
+import { GraduationCap, Trash2, Calendar, Edit2, Phone, Mail } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const AdmissionTable = () => {
@@ -183,21 +183,15 @@ const AdmissionTable = () => {
         render: (row) => (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(`/admin/admission/view/${row.admissionId}`)}
-              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-              title="View Details"
-            >
-              <Eye size={18} />
-            </button>
-            <button
-              onClick={() =>
+              onClick={(e) => {
+                e.stopPropagation();
                 setStatusModal({
                   open: true,
                   id: row.admissionId,
                   currentStatus: row.status,
                   remarks: row.remarks || "",
-                })
-              }
+                });
+              }}
               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
               title="Update Status"
             >
@@ -205,7 +199,10 @@ const AdmissionTable = () => {
             </button>
             {(row.status === "PENDING" || row.status === "UNDER_REVIEW") && (
               <button
-                onClick={() => setWithdrawId(row.admissionId)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setWithdrawId(row.admissionId);
+                }}
                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 title="Withdraw Application"
               >
@@ -228,7 +225,7 @@ const AdmissionTable = () => {
           icon={GraduationCap}
         />
         <div className="p-8 text-center text-amber-600 bg-amber-50 rounded-2xl border border-amber-200 max-w-2xl mx-auto mt-10">
-          <h3 className="text-xl font-bold mb-2">⚠️ Backend API Not Available</h3>
+          <h3 className="text-xl font-bold mb-2">Backend API Not Available</h3>
           <p className="mb-4">
             The admission API endpoint is not yet implemented on the backend server.
           </p>
@@ -263,6 +260,7 @@ const AdmissionTable = () => {
           data={data?.content || []}
           columns={columns}
           loading={isLoading}
+          onRowClick={(row) => navigate(`/admin/admission/view/${row.admissionId}`)}
           pagination={{
             currentPage: page,
             totalPages: data?.totalPages || 0,

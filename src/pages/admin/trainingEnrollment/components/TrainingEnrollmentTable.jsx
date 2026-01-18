@@ -176,13 +176,14 @@ const TrainingEnrollmentTable = () => {
               </span>
             </div>
             <button
-              onClick={() =>
+              onClick={(e) => {
+                e.stopPropagation();
                 setProgressModal({
                   open: true,
                   id: row.enrollmentId,
                   current: row.progressPercentage || 0,
-                })
-              }
+                });
+              }}
               className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
             >
               <TrendingUp size={12} />

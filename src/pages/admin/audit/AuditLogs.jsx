@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import auditLogService from "../../../http/auditLogService";
-import DataTable from "@/components/common/DataTable";
-import Badge from "@/components/common/Badge";
 import PageHeader from "@/components/common/PageHeader";
 import {
-  Filter, RefreshCw, Eye, XCircle, Clock, Shield
+  Filter, RefreshCw, XCircle, Clock, Shield
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -113,88 +111,49 @@ export default function AuditLogs() {
     }, 100);
   };
 
-  // Column Definition
-  const columns = [
-    {
-      key: "timestamp",
-      label: "Timestamp",
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-gray-400" />
-          <span className="text-gray-600">{new Date(row.timestamp).toLocaleString()}</span>
-        </div>
-      ),
-    },
-    {
-      key: "admin",
-      label: "Admin",
-      render: (row) => (
-        <div>
-          <div className="font-medium text-gray-900">{row.adminName || "System"}</div>
-          <div className="text-xs text-gray-500">{row.adminEmail}</div>
-        </div>
-      ),
-    },
-    {
-      key: "action",
-      label: "Action",
-      render: (row) => {
-        let variant = "default";
-        const action = row.action || "";
-        if (action.includes("CREATE")) variant = "create";
-        else if (action.includes("UPDATE")) variant = "update";
-        else if (action.includes("DELETE")) variant = "delete";
-        else if (action.includes("LOGIN_SUCCESS")) variant = "active";
-        else if (action.includes("LOGIN_FAILED")) variant = "delete";
-        
-        return <Badge variant={variant}>{action.replace(/_/g, " ")}</Badge>;
-      },
-    },
-    {
-      key: "entity",
-      label: "Entity",
-      render: (row) => (
-        <div className="text-gray-600">
-          {row.entityType}
-          {row.entityId && (
-            <span className="text-xs text-gray-400 block font-mono mt-0.5 truncate max-w-[100px]">
-              {row.entityId}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "description",
-      label: "Description",
-      render: (row) => (
-        <div className="max-w-xs truncate text-gray-600" title={row.description}>
-          {row.description}
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (row) => (
-        <Badge variant={row.responseStatus < 300 ? "active" : "delete"}>
-          {row.responseStatus}
-        </Badge>
-      ),
-    },
-    {
-      key: "details",
-      label: "Details",
-      render: (row) => (
-        <button
-          onClick={() => setSelectedLog(row)}
-          className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-        >
-          <Eye size={18} />
-        </button>
-      ),
-    },
-  ];
+  // Format timestamp for display
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+    
+    if (isToday) {
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Get action badge styling
+  const getActionBadge = (action) => {
+    const actionStr = action || "";
+    let bgColor = "bg-gray-100";
+    let textColor = "text-gray-700";
+    let dotColor = "bg-gray-400";
+    
+    if (actionStr.includes("CREATE")) {
+      bgColor = "bg-green-50";
+      textColor = "text-green-700";
+      dotColor = "bg-green-500";
+    } else if (actionStr.includes("UPDATE")) {
+      bgColor = "bg-blue-50";
+      textColor = "text-blue-700";
+      dotColor = "bg-blue-500";
+    } else if (actionStr.includes("DELETE")) {
+      bgColor = "bg-red-50";
+      textColor = "text-red-700";
+      dotColor = "bg-red-500";
+    } else if (actionStr.includes("LOGIN_SUCCESS")) {
+      bgColor = "bg-emerald-50";
+      textColor = "text-emerald-700";
+      dotColor = "bg-emerald-500";
+    } else if (actionStr.includes("LOGIN_FAILED")) {
+      bgColor = "bg-orange-50";
+      textColor = "text-orange-700";
+      dotColor = "bg-orange-500";
+    }
+    
+    return { bgColor, textColor, dotColor };
+  };
 
   return (
     <Layout>
@@ -226,10 +185,10 @@ export default function AuditLogs() {
         }
       />
 
-      <div className="space-y-6">
+      <div className="space-y-3">
         {/* Filters Panel */}
         {showFilters && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 grid grid-cols-1 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 grid grid-cols-1 md:grid-cols-4 gap-2 animate-in slide-in-from-top-2 duration-200">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Action Type
@@ -237,7 +196,7 @@ export default function AuditLogs() {
               <select
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
-                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1.5 px-2.5 border text-sm"
               >
                 <option value="">All Actions</option>
                 {availableActions.map((action) => (
@@ -258,7 +217,7 @@ export default function AuditLogs() {
                 onChange={(e) =>
                   setDateRange({ ...dateRange, start: e.target.value })
                 }
-                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1.5 px-2.5 border text-sm"
               />
             </div>
 
@@ -272,20 +231,20 @@ export default function AuditLogs() {
                 onChange={(e) =>
                   setDateRange({ ...dateRange, end: e.target.value })
                 }
-                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1.5 px-2.5 border text-sm"
               />
             </div>
 
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-1.5">
               <button
                 onClick={applyFilters}
-                className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                className="flex-1 bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
               >
                 Apply
               </button>
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 Clear
               </button>
@@ -293,29 +252,184 @@ export default function AuditLogs() {
           </div>
         )}
 
-        <DataTable
-          data={logs}
-          columns={columns}
-          loading={loading}
-          pagination={{
-            currentPage: pagination.page,
-            totalPages: pagination.totalPages,
-            totalItems: pagination.totalElements,
-            pageSize: pagination.size,
-          }}
-          onPageChange={handlePageChange}
-          emptyMessage="No audit logs found matching your criteria"
-        />
+        {/* Professional Data Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <p className="mt-2 text-sm text-gray-500">Loading audit logs...</p>
+              </div>
+            ) : logs.length === 0 ? (
+              <div className="p-12 text-center">
+                <Shield size={48} className="mx-auto text-gray-300 mb-3" />
+                <p className="text-gray-500 font-medium">No audit logs found</p>
+                <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Timestamp
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Admin
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Action
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Entity
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Request
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      IP Address
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {logs.map((log, index) => {
+                    const actionBadge = getActionBadge(log.action);
+                    return (
+                      <tr
+                        key={log.id}
+                        onClick={() => setSelectedLog(log)}
+                        className={`cursor-pointer transition-colors hover:bg-gray-50 ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                        }`}
+                      >
+                        {/* Timestamp */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Clock size={14} className="text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-900 font-medium">
+                              {formatTimestamp(log.timestamp)}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Admin */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-[180px]">
+                            <div className="text-sm font-medium text-gray-900">
+                              {log.adminName || "System"}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {log.adminEmail}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${actionBadge.bgColor} ${actionBadge.textColor}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${actionBadge.dotColor}`}></span>
+                            {log.action?.replace(/_/g, " ")}
+                          </span>
+                        </td>
+
+                        {/* Entity */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-[120px]">
+                            <div className="text-sm text-gray-900 font-medium">
+                              {log.entityType || "-"}
+                            </div>
+                            {log.entityId && (
+                              <div className="text-xs text-gray-400 font-mono mt-0.5 truncate max-w-[120px]" title={log.entityId}>
+                                {log.entityId}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Request */}
+                        <td className="px-4 py-3">
+                          <div className="min-w-[200px] flex items-center gap-1.5">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-mono font-semibold bg-gray-100 text-gray-700">
+                              {log.requestMethod}
+                            </span>
+                            <span className="text-xs text-gray-500 truncate max-w-[150px]" title={log.requestUri}>
+                              {log.requestUri}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
+                          <span className={`inline-flex items-center justify-center w-14 px-2 py-1 rounded text-xs font-bold font-mono ${
+                            log.responseStatus < 300 
+                              ? 'bg-green-50 text-green-700' 
+                              : log.responseStatus < 400
+                              ? 'bg-yellow-50 text-yellow-700'
+                              : 'bg-red-50 text-red-700'
+                          }`}>
+                            {log.responseStatus}
+                          </span>
+                        </td>
+
+                        {/* IP Address */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-xs font-mono text-gray-600">
+                            {log.ipAddress || "-"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {!loading && logs.length > 0 && (
+            <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Showing <span className="font-medium">{pagination.page * pagination.size + 1}</span> to{" "}
+                <span className="font-medium">
+                  {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}
+                </span>{" "}
+                of <span className="font-medium">{pagination.totalElements}</span> logs
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 0}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page <span className="font-medium">{pagination.page + 1}</span> of{" "}
+                  <span className="font-medium">{pagination.totalPages}</span>
+                </span>
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages - 1}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Detail Modal */}
       {selectedLog && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 Audit Log Details
-                <span className="text-xs font-mono bg-gray-200 px-2 py-0.5 rounded text-gray-600">
+                <span className="text-xs font-mono bg-gray-200 px-1.5 py-0.5 rounded text-gray-600">
                   #{selectedLog.id}
                 </span>
               </h3>
@@ -324,15 +438,15 @@ export default function AuditLogs() {
                 className="p-1 hover:bg-gray-200 rounded-full transition-colors"
               >
                 <XCircle
-                  size={24}
+                  size={20}
                   className="text-gray-400 hover:text-gray-600"
                 />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div className="p-3 overflow-y-auto space-y-3">
               {/* Main Info Grid */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase">
                     Actor
@@ -344,7 +458,9 @@ export default function AuditLogs() {
                     {selectedLog.adminEmail}
                   </div>
                   <div className="mt-1 inline-block">
-                    <Badge variant="code">{selectedLog.adminRole}</Badge>
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      {selectedLog.adminRole}
+                    </span>
                   </div>
                 </div>
 
@@ -353,21 +469,15 @@ export default function AuditLogs() {
                     Action
                   </label>
                   <div className="mt-1">
-                    <Badge
-                      variant={
-                        selectedLog.action.includes("CREATE")
-                          ? "create"
-                          : selectedLog.action.includes("UPDATE")
-                          ? "update"
-                          : selectedLog.action.includes("DELETE")
-                          ? "delete"
-                          : selectedLog.responseStatus < 300
-                          ? "active"
-                          : "default"
-                      }
-                    >
-                      {selectedLog.action}
-                    </Badge>
+                    {(() => {
+                      const badge = getActionBadge(selectedLog.action);
+                      return (
+                        <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold ${badge.bgColor} ${badge.textColor} border border-current border-opacity-20`}>
+                          <span className={`w-2 h-2 rounded-full ${badge.dotColor}`}></span>
+                          {selectedLog.action?.replace(/_/g, " ")}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="mt-2 text-sm text-gray-600">
                     <span className="font-semibold">
@@ -379,7 +489,7 @@ export default function AuditLogs() {
               </div>
 
               {/* Technical Details */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 space-y-3">
+              <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 space-y-1.5">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500">IP Address:</span>
                   <span className="font-mono text-gray-700">
@@ -411,7 +521,7 @@ export default function AuditLogs() {
                 <label className="text-xs font-semibold text-gray-500 uppercase">
                   User Agent
                 </label>
-                <div className="mt-1 text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 font-mono break-all">
+                <div className="mt-1 text-sm text-gray-600 bg-gray-50 p-1.5 rounded border border-gray-100 font-mono break-all">
                   {selectedLog.userAgent}
                 </div>
               </div>
@@ -421,16 +531,16 @@ export default function AuditLogs() {
                 <label className="text-xs font-semibold text-gray-500 uppercase">
                   Description
                 </label>
-                <p className="mt-1 text-gray-700 leading-relaxed bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm">
+                <p className="mt-1 text-gray-700 leading-relaxed bg-blue-50 p-2 rounded-lg border border-blue-100 text-sm">
                   {selectedLog.description}
                 </p>
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+            <div className="p-2.5 border-t border-gray-100 bg-gray-50 flex justify-end">
               <button
                 onClick={() => setSelectedLog(null)}
-                className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                className="px-5 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm"
               >
                 Close
               </button>

@@ -5,8 +5,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import { TableSkeleton } from "@/components/loaders";
-import Badge from "@/components/common/Badge";
-import { Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 
 const NoteTable = () => {
   const navigate = useNavigate();
@@ -47,44 +46,61 @@ const NoteTable = () => {
 
   const columns = useMemo(
     () => [
-      { key: "subject", label: "Subject", sortable: true },
       {
-        key: "subjectCode",
-        label: "Code",
+        key: "subject",
+        label: "Subject",
+        sortable: true,
         render: (row) => (
-          <Badge variant="code">{row.subjectCode || "N/A"}</Badge>
+          <div>
+            <div className="font-semibold text-gray-900">{row.subject}</div>
+            {row.subjectCode && (
+              <div className="text-xs text-gray-500 mt-0.5">Code: {row.subjectCode}</div>
+            )}
+          </div>
         ),
       },
       {
         key: "courseName",
         label: "Course",
         render: (row) => (
-          <Badge variant="course">{row.courseName || "N/A"}</Badge>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+            {row.courseName || "N/A"}
+          </span>
         ),
       },
-      { key: "semester", label: "Sem", sortable: true },
-      { key: "year", label: "Year" },
+      {
+        key: "semester",
+        label: "Semester",
+        sortable: true,
+        align: "right",
+        render: (row) => (
+          <span className="font-medium text-gray-900">
+            {row.semester ? `Sem ${row.semester}` : "-"}
+          </span>
+        ),
+      },
+      {
+        key: "year",
+        label: "Year",
+        align: "right",
+        render: (row) => (
+          <span className="font-medium text-gray-900">{row.year || "-"}</span>
+        ),
+      },
       {
         key: "affiliation",
         label: "Affiliation",
         render: (row) => (
-          <Badge variant="affiliation">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
             {row.affiliation?.replace(/_/g, " ") || "N/A"}
-          </Badge>
+          </span>
         ),
       },
       {
         key: "actions",
         label: "Actions",
         render: (row) => (
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/notes/viewnotes/${row.noteId}`}
-              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-              title="View PDF"
-            >
-              <Eye size={18} />
-            </Link>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <Link
               to={`/notes/edit/${row.noteId}`}
               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -93,7 +109,10 @@ const NoteTable = () => {
               <Edit size={18} />
             </Link>
             <button
-              onClick={() => setDeleteId(row.noteId)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteId(row.noteId);
+              }}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Note"
             >
@@ -193,6 +212,7 @@ const NoteTable = () => {
           data={data?.content || []}
           columns={columns}
           loading={isLoading}
+          onRowClick={(row) => navigate(`/notes/viewnotes/${row.noteId}`)}
           pagination={{
             currentPage: page,
             totalPages: data?.totalPages || 0,

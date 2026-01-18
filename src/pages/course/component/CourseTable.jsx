@@ -5,8 +5,7 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import PageHeader from "@/components/common/PageHeader";
 import { TableSkeleton } from "@/components/loaders";
-import Badge from "@/components/common/Badge";
-import { Plus, Edit, Trash2, FileText, Search, Filter, X, ChevronRight } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Filter, X } from "lucide-react";
 
 // Affiliation options (standardized)
 const AFFILIATIONS = [
@@ -60,54 +59,60 @@ const CourseTable = () => {
         label: "Course Name",
         sortable: true,
         render: (row) => (
-          <div className="flex flex-col">
-            <span className="font-bold text-gray-900">{row.courseName}</span>
-            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-0.5">{row.courseId}</span>
+          <div>
+            <div className="font-semibold text-gray-900">{row.courseName}</div>
+            <div className="text-xs text-gray-500 mt-0.5">ID: {row.courseId}</div>
           </div>
         ),
       },
       {
         key: "description",
-        label: "Description/Criteria",
+        label: "Description",
         render: (row) => (
           <div className="max-w-xs">
-            <div className="text-xs text-gray-600 truncate mb-1" title={row.description}>
+            <div className="text-sm text-gray-700 line-clamp-2" title={row.description}>
               {row.description || "No description"}
             </div>
-            <div className="text-[10px] text-gray-400 italic truncate" title={row.criteria}>
-              {row.criteria ? `Criteria: ${row.criteria}` : "No criteria defined"}
-            </div>
+            {row.criteria && (
+              <div className="text-xs text-gray-500 mt-1 italic" title={row.criteria}>
+                Criteria: {row.criteria}
+              </div>
+            )}
           </div>
         ),
       },
       {
         key: "courseLevel",
-        label: "Level & Type",
+        label: "Level",
         render: (row) => (
-          <div className="flex flex-wrap gap-1.5">
-            <Badge variant="code" className="uppercase">
-              {row.courseLevel?.replace(/_/g, " ") || "N/A"}
-            </Badge>
-            <Badge variant="course" className="uppercase">
-              {row.courseType?.replace(/_/g, " ") || "N/A"}
-            </Badge>
-          </div>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+            {row.courseLevel?.replace(/_/g, " ") || "N/A"}
+          </span>
+        ),
+      },
+      {
+        key: "courseType",
+        label: "Type",
+        render: (row) => (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+            {row.courseType?.replace(/_/g, " ") || "N/A"}
+          </span>
         ),
       },
       {
         key: "affiliation",
         label: "Affiliation",
         render: (row) => (
-          <Badge variant="affiliation">
-             {row.affiliation?.replace(/_/g, " ")}
-          </Badge>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+            {row.affiliation?.replace(/_/g, " ")}
+          </span>
         ),
       },
       {
         key: "actions",
         label: "Actions",
         render: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <Link
               to={`/syllabus/add/${row.courseId}`}
               className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -123,7 +128,10 @@ const CourseTable = () => {
               <Edit size={18} />
             </Link>
             <button
-              onClick={() => setDeleteId(row.courseId)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteId(row.courseId);
+              }}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Course"
             >
