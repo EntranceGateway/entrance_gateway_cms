@@ -198,7 +198,10 @@ const TrainingEnrollmentTable = () => {
           <div className="flex items-center gap-2">
             {(row.status === "ACTIVE" || row.status === "PENDING") && (
               <button
-                onClick={() => setCancelId(row.enrollmentId)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCancelId(row.enrollmentId);
+                }}
                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 title="Cancel Enrollment"
               >
@@ -256,6 +259,7 @@ const TrainingEnrollmentTable = () => {
           data={data?.content || []}
           columns={columns}
           loading={isLoading}
+          onRowClick={(row) => navigate(`/admin/training-enrollment/view/${row.enrollmentId}`)}
           pagination={{
             currentPage: page,
             totalPages: data?.totalPages || 0,
