@@ -16,7 +16,9 @@ import {
   Newspaper,
   Shield,
   Archive,
-  Presentation
+  Presentation,
+  UserCheck,
+  ClipboardList
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import tokenService from "@/auth/services/tokenService";
@@ -101,6 +103,8 @@ const Sidebar = () => {
     },
     { name: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
     { name: "Training", icon: <Presentation size={20} />, path: "/admin/training" },
+    { name: "Training Enrollment", icon: <UserCheck size={20} />, path: "/admin/training-enrollment" },
+    { name: "Admission", icon: <ClipboardList size={20} />, path: "/admin/admission" },
     {
       name: "Quiz Management",
       icon: <HelpCircle size={20} />,
