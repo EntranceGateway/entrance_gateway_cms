@@ -6,59 +6,27 @@ export const createColleges = async (formData, logo, images) => {
   try {
     const data = new FormData();
 
-    // Debug: Log what we're sending
-    console.log("=== CREATE COLLEGE API CALL ===");
-    console.log("FormData object:", formData);
-    console.log("Logo file:", logo);
-    console.log("Logo type:", logo ? logo.constructor.name : "null");
-    console.log("Images:", images);
-
-    // Append all form fields individually (NOT as JSON string)
-    // Send null for empty values instead of empty strings
-    Object.keys(formData).forEach((key) => {
-      const value = formData[key];
-      // Send null for undefined, null, or empty strings
-      if (value === undefined || value === null || value === "") {
-        console.log(`✓ Appending ${key}: null (empty value)`);
-        data.append(key, "null");
-      } else {
-        console.log(`✓ Appending ${key}:`, value);
-        data.append(key, value);
-      }
+    // Append college data as JSON blob (required by @RequestPart("college"))
+    const collegeBlob = new Blob([JSON.stringify(formData)], {
+      type: 'application/json'
     });
+    data.append("college", collegeBlob);
 
     // Append logo file - REQUIRED by backend
     if (logo && logo instanceof File) {
-      console.log("✓ Appending logo file:", logo.name, logo.size, "bytes");
       data.append("logo", logo);
     } else {
-      console.error("✗ Logo is missing or not a File object:", logo);
       throw new Error("Logo file is required");
     }
 
     // Append images files
     if (images && images.length > 0) {
-      console.log(`✓ Appending ${images.length} image files`);
-      images.forEach((image, index) => {
+      images.forEach((image) => {
         if (image instanceof File) {
-          console.log(`  - Image ${index + 1}:`, image.name, image.size, "bytes");
           data.append("images", image);
         }
       });
-    } else {
-      console.warn("⚠ No images provided");
     }
-
-    // Debug: Log FormData entries
-    console.log("=== FormData entries to be sent ===");
-    for (let pair of data.entries()) {
-      if (pair[1] instanceof File) {
-        console.log(`${pair[0]}: [File] ${pair[1].name}`);
-      } else {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-    }
-    console.log("=== END ===");
 
     return await api.post("/api/v1/colleges", data, {
       headers: {
@@ -90,75 +58,61 @@ export const getSingle = async (id) => {
 };
 
 // Update college with multipart form data
-export const updateColleges = async (id, formData, logo, images) => {
+export const updateColleges = async (id, formData, logo, images, existingLogoUrl = null, existingImageUrls = []) => {
   try {
     const data = new FormData();
-
-    // Debug: Log what we're sending
-    console.log("=== UPDATE COLLEGE API CALL ===");
-    console.log("College ID:", id);
-    console.log("FormData object:", formData);
-    console.log("Logo file:", logo);
-    console.log("Images:", images);
 
     // Fields that should NOT be sent (backend-generated or relationships)
     const excludeFields = ['collegeId', 'logoName', 'collegePictureName', 'courses'];
 
-    // Append all form fields individually (NOT as JSON string)
-    // Send null for empty values instead of empty strings
+    // Create clean college object without excluded fields
+    const collegeData = {};
     Object.keys(formData).forEach((key) => {
-      // Skip excluded fields
-      if (excludeFields.includes(key)) {
-        console.log(`⊘ Excluding ${key}: (backend-generated or relationship field)`);
-        return;
-      }
-
-      const value = formData[key];
-      // Send null for undefined, null, or empty strings
-      if (value === undefined || value === null || value === "") {
-        console.log(`✓ Appending ${key}: null (empty value)`);
-        data.append(key, "null");
-      } else {
-        console.log(`✓ Appending ${key}:`, value);
-        data.append(key, value);
+      if (!excludeFields.includes(key)) {
+        collegeData[key] = formData[key];
       }
     });
 
-    // Append logo file - REQUIRED by backend even for updates
-    // If no new logo provided, send empty blob to satisfy backend requirement
+    // Append college data as JSON blob (required by @RequestPart("college"))
+    const collegeBlob = new Blob([JSON.stringify(collegeData)], {
+      type: 'application/json'
+    });
+    data.append("college", collegeBlob);
+
+    // Handle logo - REQUIRED by backend
     if (logo && logo instanceof File) {
-      console.log("✓ Appending logo file:", logo.name, logo.size, "bytes");
       data.append("logo", logo);
+    } else if (existingLogoUrl) {
+      // Download existing logo and re-upload it
+      try {
+        const response = await fetch(existingLogoUrl);
+        const blob = await response.blob();
+        const filename = existingLogoUrl.split('/').pop() || 'existing_logo.jpg';
+        const file = new File([blob], filename, { type: blob.type });
+        data.append("logo", file);
+      } catch (err) {
+        console.error("Failed to download existing logo:", err);
+        // Send empty blob as fallback
+        const emptyBlob = new Blob([], { type: 'application/octet-stream' });
+        data.append("logo", emptyBlob, "no-change.tmp");
+      }
     } else {
-      console.log("⚠ No new logo file provided - sending empty blob to satisfy backend");
-      // Create an empty blob with a dummy filename
       const emptyBlob = new Blob([], { type: 'application/octet-stream' });
       data.append("logo", emptyBlob, "no-change.tmp");
     }
 
-    // Append images files if provided (OPTIONAL for update)
+    // Handle images - Backend will ADD new images to existing ones
     if (images && images.length > 0) {
-      console.log(`✓ Appending ${images.length} image files`);
-      images.forEach((image, index) => {
+      images.forEach((image) => {
         if (image instanceof File) {
-          console.log(`  - Image ${index + 1}:`, image.name, image.size, "bytes");
           data.append("images", image);
         }
       });
     } else {
-      console.log("ℹ No new images provided (keeping existing)");
+      // No new images - send empty blob (backend should skip processing)
+      const emptyBlob = new Blob([], { type: 'application/octet-stream' });
+      data.append("images", emptyBlob, "no-change.tmp");
     }
-
-    // Debug: Log FormData entries
-    console.log("=== FormData entries to be sent ===");
-    for (let pair of data.entries()) {
-      if (pair[1] instanceof File || pair[1] instanceof Blob) {
-        console.log(`${pair[0]}: [File/Blob] ${pair[1].name || 'blob'} (${pair[1].size} bytes)`);
-      } else {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-    }
-    console.log("=== END ===");
 
     return await api.put(`/api/v1/colleges/${id}`, data, {
       headers: {
@@ -223,16 +177,14 @@ export const getCollegesByCourse = async (courseId, params = {}) => {
 
 // Get college logo URL
 export const getCollegeLogoUrl = (collegeId) => {
-  // Returns the URL for the logo endpoint
-  // Frontend can use this directly in <img src={} />
-  return `${api.defaults.baseURL}/api/v1/colleges/${collegeId}/logo`;
+  const baseURL = api.defaults.baseURL || '';
+  return `${baseURL}/api/v1/colleges/${collegeId}/logo`;
 };
 
 // Get college image URL
 export const getCollegeImageUrl = (collegeId, imageName) => {
-  // Returns the URL for a specific college image
-  // Frontend can use this directly in <img src={} />
-  return `${api.defaults.baseURL}/api/v1/colleges/${collegeId}/images/${imageName}`;
+  const baseURL = api.defaults.baseURL || '';
+  return `${baseURL}/api/v1/colleges/${collegeId}/images/${imageName}`;
 };
 
 // Get all college image URLs

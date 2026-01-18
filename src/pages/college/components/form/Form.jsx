@@ -41,21 +41,26 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   // File states
   const [logo, setLogo] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
-  const [images, setImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingLogoUrl, setExistingLogoUrl] = useState(null); // Track existing logo URL
+  const [images, setImages] = useState([]); // New images to upload (File objects)
+  const [imagePreviews, setImagePreviews] = useState([]); // Preview URLs for display
+  const [existingImages, setExistingImages] = useState([]); // Existing image URLs from backend
 
   useEffect(() => {
     if (initialData) {
       setFormData({ ...defaultForm, ...initialData });
       // Set existing logo preview URL if available
       if (initialData.logoName && initialData.collegeId) {
-        setLogoPreview(getCollegeLogoUrl(initialData.collegeId));
+        const logoUrl = getCollegeLogoUrl(initialData.collegeId);
+        setLogoPreview(logoUrl);
+        setExistingLogoUrl(logoUrl); // Store for re-upload
       }
       // Set existing images preview URLs if available
       if (initialData.collegePictureName?.length > 0 && initialData.collegeId) {
         const imageUrls = initialData.collegePictureName.map(imageName => 
           getCollegeImageUrl(initialData.collegeId, imageName)
         );
+        setExistingImages(imageUrls);
         setImagePreviews(imageUrls);
       }
     }
@@ -82,8 +87,10 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
 
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + images.length > 10) {
-      setErrors((prev) => ({ ...prev, images: "Maximum 10 images allowed" }));
+    const totalImages = existingImages.length + images.length + files.length;
+    
+    if (totalImages > 10) {
+      setErrors((prev) => ({ ...prev, images: "Maximum 10 images allowed (including existing images)" }));
       return;
     }
     
@@ -107,6 +114,7 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
   };
 
   const removeImage = (index) => {
+    // Remove from new images array
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
@@ -176,20 +184,20 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
     setSuccess("");
     setErrors({});
     
-    console.log("Form submission started");
-    console.log("Mode:", mode);
-    console.log("FormData:", formData);
-    console.log("Logo:", logo);
-    console.log("Images:", images);
-    
     if (!validateForm()) {
-      console.log("Validation failed:", errors);
       return;
     }
 
     try {
       setLoading(true);
-      await onSubmit(formData, logo, images);
+      
+      // In edit mode, pass existing URLs so they can be re-uploaded if needed
+      if (mode === "edit") {
+        await onSubmit(formData, logo, images, existingLogoUrl, existingImages);
+      } else {
+        await onSubmit(formData, logo, images);
+      }
+      
       setSuccess(
         mode === "add"
           ? "College added successfully!"
@@ -516,30 +524,65 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
                     Gallery Images
                 </h3>
                 
+                {mode === "edit" && existingImages.length > 0 && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-800">
+                      <strong>Current:</strong> {existingImages.length} existing image(s). You can add more images below.
+                    </p>
+                  </div>
+                )}
+                
+                {mode === "edit" && images.length > 0 && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-xs text-green-800">
+                      <strong>Adding:</strong> {images.length} new image(s) will be added to your {existingImages.length} existing images.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-3 mb-4">
-                    {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative aspect-square">
+                    {/* Show existing images */}
+                    {mode === "edit" && existingImages.map((imageUrl, index) => (
+                      <div key={`existing-${index}`} className="relative aspect-square">
                         <img
-                        src={typeof preview === "string" && preview.startsWith("blob:") 
-                            ? preview 
-                            : preview}
-                        alt={`Gallery ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg border border-gray-100"
+                          src={imageUrl}
+                          alt={`Existing ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg border border-gray-100"
                         />
-                        <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
-                        >
-                        <X size={12} />
-                        </button>
-                    </div>
+                        <div className="absolute top-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded">
+                          Existing
+                        </div>
+                      </div>
                     ))}
                     
-                    {images.length < 10 && (
+                    {/* Show new images being uploaded */}
+                    {imagePreviews.map((preview, index) => (
+                      <div key={`new-${index}`} className="relative aspect-square">
+                        <img
+                          src={preview}
+                          alt={`New ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg border border-gray-100"
+                        />
+                        <div className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded">
+                          New
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Show upload button */}
+                    {(existingImages.length + images.length) < 10 && (
                         <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                             <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                            <span className="text-xs text-gray-500 font-medium">Add Photo</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                              {mode === "edit" ? "Add More" : "Add Photos"}
+                            </span>
                             <input
                             type="file"
                             accept="image/*"
@@ -552,8 +595,20 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
                 </div>
                 
                  <div className="text-xs text-center text-gray-500">
-                    <p>{imagePreviews.length} / 10 images uploaded</p>
-                    {mode === "add" && <p className="text-indigo-600 font-medium mt-1">At least 1 image recommended</p>}
+                    {mode === "add" && (
+                      <>
+                        <p>{images.length} / 10 images selected</p>
+                        <p className="text-indigo-600 font-medium mt-1">At least 1 image required</p>
+                      </>
+                    )}
+                    {mode === "edit" && (
+                      <>
+                        <p>Total: {existingImages.length + images.length} / 10 images ({existingImages.length} existing + {images.length} new)</p>
+                        {images.length > 0 && (
+                          <p className="text-green-600 font-medium mt-1">{images.length} new image(s) will be added</p>
+                        )}
+                      </>
+                    )}
                 </div>
                  {getError("images") && (
                     <span className="text-red-600 text-xs text-center block mt-2">{getError("images")}</span>

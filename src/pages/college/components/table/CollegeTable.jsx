@@ -151,6 +151,7 @@ const CollegeTable = () => {
           <div className="flex items-center gap-1.5">
             <Link
               to={`/college/${row.collegeId}/courses`}
+              onClick={(e) => e.stopPropagation()}
               className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100"
               title="Manage Courses"
             >
@@ -158,13 +159,17 @@ const CollegeTable = () => {
             </Link>
             <Link
               to={`/college/edit/${row.collegeId}`}
+              onClick={(e) => e.stopPropagation()}
               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100"
               title="Edit College"
             >
               <Edit size={18} />
             </Link>
             <button
-              onClick={() => setDeleteId(row.collegeId)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteId(row.collegeId);
+              }}
               className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
               title="Delete College"
             >
@@ -304,6 +309,7 @@ const CollegeTable = () => {
             setSortField(key);
             setSortOrder(dir);
           }}
+          onRowClick={(row) => navigate(`/college/view/${row.collegeId}`)}
         />
       )}
 
