@@ -18,7 +18,8 @@ import {
   Archive,
   Presentation,
   UserCheck,
-  ClipboardList
+  ClipboardList,
+  MessageSquare
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import tokenService from "@/auth/services/tokenService";
@@ -105,6 +106,7 @@ const Sidebar = () => {
     { name: "Training", icon: <Presentation size={20} />, path: "/admin/training" },
     { name: "Training Enrollment", icon: <UserCheck size={20} />, path: "/admin/training-enrollment" },
     { name: "Admission", icon: <ClipboardList size={20} />, path: "/admin/admission" },
+    { name: "Contact Us", icon: <MessageSquare size={20} />, path: "/admin/contact-us" },
     {
       name: "Quiz Management",
       icon: <HelpCircle size={20} />,

@@ -17,6 +17,7 @@ import { oldQuestionRoutes } from "./oldQuestions.routes";
 import { trainingRoutes } from "./training.routes";
 import { trainingEnrollmentRoutes } from "./trainingEnrollment.routes";
 import { admissionRoutes } from "./admission.routes";
+import { contactUsRoutes } from "./contactUs.routes";
 
 export const AppRoutes = () => {
     return (
@@ -42,6 +43,7 @@ export const AppRoutes = () => {
                     ...trainingRoutes,
                     ...trainingEnrollmentRoutes,
                     ...admissionRoutes,
+                    ...contactUsRoutes,
                 ].map((route) => (
                     <Route key={route.path} path={route.path} element={route.element} />
                 ))}
