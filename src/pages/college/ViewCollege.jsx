@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import Layout from "@/components/layout/Layout";
 import PageHeader from "@/components/common/PageHeader";
 import { getSingle, getCollegeLogoUrl, getCollegeImageUrl } from "@/http/colleges";
@@ -16,8 +17,19 @@ import {
   ExternalLink,
   Image as ImageIcon,
   GraduationCap,
+  Map as MapIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix for default marker icon in React-Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 const ViewCollege = () => {
   const { id } = useParams();
@@ -239,6 +251,52 @@ const ViewCollege = () => {
           </h2>
           <p className="text-gray-700 leading-relaxed whitespace-pre-line">{college.description}</p>
         </div>
+
+        {/* Map Location */}
+        {college.latitude && college.longitude && (
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <MapIcon size={24} className="text-indigo-600" />
+              Location on Map
+            </h2>
+            <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+              <MapContainer
+                center={[college.latitude, college.longitude]}
+                zoom={15}
+                style={{ height: "400px", width: "100%" }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={[college.latitude, college.longitude]}>
+                  <Popup>
+                    <div className="text-center">
+                      <p className="font-bold text-gray-900">{college.collegeName}</p>
+                      <p className="text-xs text-gray-600 mt-1">{college.location}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              </MapContainer>
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+              <MapPin size={16} className="text-indigo-500" />
+              <span>
+                Coordinates: {college.latitude.toFixed(6)}, {college.longitude.toFixed(6)}
+              </span>
+              <a
+                href={`https://www.google.com/maps?q=${college.latitude},${college.longitude}`}
+                target="_blank"
+                rel="noreferrer"
+                className="ml-auto text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+              >
+                Open in Google Maps
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Gallery */}
         {imageUrls.length > 0 && (

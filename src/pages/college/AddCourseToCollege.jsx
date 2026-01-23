@@ -5,19 +5,22 @@ import Layout from "@/components/layout/Layout";
 import PageHeader from "@/components/common/PageHeader";
 import { FormSkeleton } from "@/components/loaders";
 import { getSingle, addCourseToCollege } from "../../http/colleges";
-import { getCourses } from "../../http/course";
+import { useCourses } from "@/hooks/useCourses";
 
 const AddCourseToCollege = () => {
   const { id: collegeId } = useParams();
   const navigate = useNavigate();
 
   const [college, setCollege] = useState(null);
-  const [allCourses, setAllCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+
+  // Fetch all courses using hook
+  const { data: coursesData } = useCourses({ page: 0, size: 100 });
+  const allCourses = coursesData?.content || [];
 
   // Fetch college details
   const fetchCollege = async () => {
@@ -32,23 +35,10 @@ const AddCourseToCollege = () => {
     }
   };
 
-  // Fetch all courses
-  const fetchCourses = async () => {
-    try {
-      const res = await getCourses({ page: 0, size: 100 });
-      if (res.status === 200) {
-        setAllCourses(res.data.data.content || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch courses:", err);
-      setError("Failed to load courses");
-    }
-  };
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchCollege(), fetchCourses()]);
+      await fetchCollege();
       setLoading(false);
     };
     loadData();

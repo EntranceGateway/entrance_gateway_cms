@@ -6,6 +6,12 @@ export const createColleges = async (formData, logo, images) => {
   try {
     const data = new FormData();
 
+    // Log the formData being sent
+    console.log("=== CREATE COLLEGE - FormData being sent ===");
+    console.log("College Data:", formData);
+    console.log("Latitude:", formData.latitude);
+    console.log("Longitude:", formData.longitude);
+
     // Append college data as JSON blob (required by @RequestPart("college"))
     const collegeBlob = new Blob([JSON.stringify(formData)], {
       type: 'application/json'
@@ -15,27 +21,61 @@ export const createColleges = async (formData, logo, images) => {
     // Append logo file - REQUIRED by backend
     if (logo && logo instanceof File) {
       data.append("logo", logo);
+      console.log("Logo:", logo.name);
     } else {
       throw new Error("Logo file is required");
     }
 
-    // Append images files
+    // Append images files - REQUIRED by backend
     if (images && images.length > 0) {
       images.forEach((image) => {
         if (image instanceof File) {
           data.append("images", image);
         }
       });
+      console.log(`Images: ${images.length} file(s)`);
+    } else {
+      // Backend requires 'images' part - send empty file if no images
+      const emptyBlob = new Blob([], { type: 'application/octet-stream' });
+      const emptyFile = new File([emptyBlob], '', { type: 'application/octet-stream' });
+      data.append("images", emptyFile);
+      console.log("No images - sending empty file");
     }
 
-    return await api.post("/api/v1/colleges", data, {
+    console.log("=== END ===");
+
+    const response = await api.post("/api/v1/colleges", data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
+
+    return response;
   } catch (err) {
     console.error("Create college error:", err);
-    handleApiError(err);
+    
+    // Enhanced error handling
+    if (err.response) {
+      const errorData = err.response.data;
+      const errorMessage = errorData?.message || errorData?.messageDetail || "Failed to create college";
+      
+      // Create user-friendly error message
+      if (errorMessage.includes("image")) {
+        throw new Error("Error processing images. Please check your image files and try again.");
+      } else if (errorMessage.includes("logo")) {
+        throw new Error("Error processing logo. Please check your logo file and try again.");
+      } else if (errorMessage.includes("validation")) {
+        throw new Error("Validation error: " + errorMessage);
+      } else if (errorMessage.includes("duplicate") || errorMessage.includes("already exists")) {
+        throw new Error("A college with this name already exists.");
+      } else {
+        throw new Error(errorMessage);
+      }
+    } else if (err.message) {
+      throw new Error(err.message);
+    } else {
+      throw new Error("Network error. Please check your connection and try again.");
+    }
   }
 };
 
@@ -73,6 +113,13 @@ export const updateColleges = async (id, formData, logo, images, existingLogoUrl
       }
     });
 
+    // Log the data being sent
+    console.log("=== UPDATE COLLEGE - FormData being sent ===");
+    console.log("College ID:", id);
+    console.log("College Data:", collegeData);
+    console.log("Latitude:", collegeData.latitude);
+    console.log("Longitude:", collegeData.longitude);
+
     // Append college data as JSON blob (required by @RequestPart("college"))
     const collegeBlob = new Blob([JSON.stringify(collegeData)], {
       type: 'application/json'
@@ -81,47 +128,78 @@ export const updateColleges = async (id, formData, logo, images, existingLogoUrl
 
     // Handle logo - REQUIRED by backend
     if (logo && logo instanceof File) {
+      // New logo uploaded
       data.append("logo", logo);
-    } else if (existingLogoUrl) {
-      // Download existing logo and re-upload it
+      console.log("Uploading new logo:", logo.name);
+    } else if (existingLogoUrl && formData.logoName) {
+      // No new logo - re-upload existing with original backend filename
       try {
         const response = await fetch(existingLogoUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch logo: ${response.status}`);
+        }
         const blob = await response.blob();
-        const filename = existingLogoUrl.split('/').pop() || 'existing_logo.jpg';
-        const file = new File([blob], filename, { type: blob.type });
+        // Use the logoName from backend data to preserve original filename
+        const file = new File([blob], formData.logoName, { type: blob.type });
         data.append("logo", file);
+        console.log("Re-uploading existing logo with name:", formData.logoName);
       } catch (err) {
         console.error("Failed to download existing logo:", err);
-        // Send empty blob as fallback
-        const emptyBlob = new Blob([], { type: 'application/octet-stream' });
-        data.append("logo", emptyBlob, "no-change.tmp");
+        throw new Error("Failed to process existing logo. Please try uploading a new logo.");
       }
     } else {
-      const emptyBlob = new Blob([], { type: 'application/octet-stream' });
-      data.append("logo", emptyBlob, "no-change.tmp");
+      throw new Error("Logo is required");
     }
 
-    // Handle images - Backend will ADD new images to existing ones
+    // Handle images - Backend REQUIRES this part even if empty
     if (images && images.length > 0) {
+      // Add new images
       images.forEach((image) => {
         if (image instanceof File) {
           data.append("images", image);
         }
       });
+      console.log(`Adding ${images.length} new image(s)`);
     } else {
-      // No new images - send empty blob (backend should skip processing)
+      // Backend requires 'images' part - send empty file
       const emptyBlob = new Blob([], { type: 'application/octet-stream' });
-      data.append("images", emptyBlob, "no-change.tmp");
+      const emptyFile = new File([emptyBlob], '', { type: 'application/octet-stream' });
+      data.append("images", emptyFile);
+      console.log("No new images - sending empty file");
     }
 
-    return await api.put(`/api/v1/colleges/${id}`, data, {
+    console.log("=== END ===");
+
+    const response = await api.put(`/api/v1/colleges/${id}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
+
+    return response;
   } catch (err) {
     console.error("Update college error:", err);
-    handleApiError(err);
+    
+    // Enhanced error handling
+    if (err.response) {
+      const errorData = err.response.data;
+      const errorMessage = errorData?.message || errorData?.messageDetail || "Failed to update college";
+      
+      // Create user-friendly error message
+      if (errorMessage.includes("image")) {
+        throw new Error("Error processing images. Please try again.");
+      } else if (errorMessage.includes("logo")) {
+        throw new Error("Error processing logo. Please upload a new logo.");
+      } else if (errorMessage.includes("validation")) {
+        throw new Error("Validation error: " + errorMessage);
+      } else {
+        throw new Error(errorMessage);
+      }
+    } else if (err.message) {
+      throw new Error(err.message);
+    } else {
+      throw new Error("Network error. Please check your connection and try again.");
+    }
   }
 };
 

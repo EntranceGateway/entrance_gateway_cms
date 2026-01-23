@@ -125,7 +125,7 @@ const AdsTable = () => {
         render: (row) =>
           row.totalBudget ? (
             <div className="flex items-center gap-1 text-sm font-semibold text-gray-700">
-              <DollarSign size={14} />
+              <span>Rs</span>
               <span>{row.totalBudget.toFixed(2)}</span>
             </div>
           ) : (
@@ -198,7 +198,7 @@ const AdsTable = () => {
           pagination={{
             currentPage: page,
             totalPages: data?.totalPages || 0,
-            totalItems: data?.totalItems || 0,
+            totalItems: data?.totalElements || 0,
             pageSize: pageSize,
           }}
           onPageChange={setPage}

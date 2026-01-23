@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/common/PageHeader";
+import LocationPicker from "@/components/common/LocationPicker";
 import { getCollegeLogoUrl, getCollegeImageUrl } from "@/http/colleges";
 import {
   Building2,
@@ -21,6 +22,8 @@ import {
 const defaultForm = {
   collegeName: "",
   location: "",
+  latitude: 27.7172, // Default: Kathmandu
+  longitude: 85.324,
   affiliation: "",
   priority: "HIGH",
   website: "",
@@ -48,7 +51,16 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
 
   useEffect(() => {
     if (initialData) {
-      setFormData({ ...defaultForm, ...initialData });
+      const formDataWithDefaults = { ...defaultForm, ...initialData };
+      // Ensure latitude/longitude are numbers or null
+      if (formDataWithDefaults.latitude) {
+        formDataWithDefaults.latitude = parseFloat(formDataWithDefaults.latitude);
+      }
+      if (formDataWithDefaults.longitude) {
+        formDataWithDefaults.longitude = parseFloat(formDataWithDefaults.longitude);
+      }
+      setFormData(formDataWithDefaults);
+      
       // Set existing logo preview URL if available
       if (initialData.logoName && initialData.collegeId) {
         const logoUrl = getCollegeLogoUrl(initialData.collegeId);
@@ -276,9 +288,9 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
                       </div>
 
                       {/* Location */}
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                          Location <span className="text-red-500">*</span>
+                          Location Address <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <MapPin className="absolute left-3.5 top-3.5 text-gray-400" size={18} />
@@ -286,12 +298,39 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
                             name="location"
                             value={formData.location}
                             onChange={handleChange}
-                            placeholder="City, Address"
+                            placeholder="e.g. Jawalakhel, Lalitpur"
                             className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all placeholder:text-gray-400"
                             />
                         </div>
                         {getError("location") && (
                           <span className="text-red-600 text-xs mt-1 block">{getError("location")}</span>
+                        )}
+                      </div>
+
+                      {/* Map Location Picker */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Map Location <span className="text-xs font-normal text-gray-500">(Optional - Default: Kathmandu)</span>
+                        </label>
+                        <LocationPicker
+                          value={
+                            formData.latitude && formData.longitude
+                              ? { lat: formData.latitude, lng: formData.longitude }
+                              : null
+                          }
+                          onChange={(position) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              latitude: position.lat,
+                              longitude: position.lng,
+                            }));
+                          }}
+                          error={getError("latitude") || getError("longitude")}
+                        />
+                        {formData.latitude && formData.longitude && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Current: {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)}
+                          </p>
                         )}
                       </div>
 

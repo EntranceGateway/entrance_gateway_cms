@@ -26,10 +26,11 @@ export const getOldQuestionById = async (id) => {
 
 // ===============================
 // CREATE OLD QUESTION COLLECTION
+// Endpoint: POST /api/v1/old-question-collections
 // ===============================
 export const addOldQuestion = async (formData) => {
   try {
-    return await api.post("/api/v1/old-question-collections/admin/old-questions", formData, {
+    return await api.post("/api/v1/old-question-collections", formData, {
       headers: {
         // Don't manually set Content-Type for FormData
       },

@@ -22,7 +22,7 @@ const validateForm = (form, mode) => {
   const errors = {};
 
   if (!form.noteName.trim()) errors.noteName = "Note name is required";
-  if (!form.syllabusId.trim()) errors.syllabusId = "Syllabus ID is required";
+  if (!form.syllabusId || String(form.syllabusId).trim() === "") errors.syllabusId = "Syllabus ID is required";
 
   // File only required for add mode
   if (mode === "add" && !form.file) {
@@ -50,7 +50,7 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
       setForm({
         noteName: initialData.noteName || "",
         noteDescription: initialData.noteDescription || "",
-        syllabusId: initialData.syllabusId || "",
+        syllabusId: String(initialData.syllabusId || ""),
         fileUrl: initialData.fileUrl || "",
         file: null,
       });
@@ -58,12 +58,12 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
       // Pre-fill syllabusId when coming from syllabus table
       setForm({
         ...DEFAULT_FORM,
-        syllabusId: initialData.syllabusId || id || "",
+        syllabusId: String(initialData.syllabusId || id || ""),
       });
     } else {
       setForm({
         ...DEFAULT_FORM,
-        syllabusId: id || "",
+        syllabusId: String(id || ""),
       });
     }
     setErrors({});
@@ -104,7 +104,7 @@ const NoteForm = ({ mode = "add", initialData = null, onSubmit }) => {
     const json = {
       noteName: form.noteName.trim(),
       noteDescription: form.noteDescription.trim(),
-      syllabusId: form.syllabusId.trim(),
+      syllabusId: String(form.syllabusId).trim(),
     };
 
     // ADD MODE → Always FormData

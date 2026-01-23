@@ -100,14 +100,18 @@ const OldQuestionForm = ({ mode = "add", initialData = null, onSubmit }) => {
         // Handle paginated response structure
         const rawContent = res.data?.data?.content || res.data?.content || [];
         
+        console.log("Fetched syllabi:", rawContent); // Debug log
+        
         // Map to simpler structure
         const parsedSyllabi = rawContent.map(s => ({
-            syllabusId: s.id, // Use actual ID
-            subjectName: s.subject,
+            syllabusId: s.syllabusId || s.id, // Try both fields
+            subjectName: s.subject || s.subjectName,
             semester: s.semester,
-            year: s.year
+            year: s.year,
+            syllabusTitle: s.syllabusTitle
         }));
 
+        console.log("Parsed syllabi:", parsedSyllabi); // Debug log
         setSyllabi(parsedSyllabi);
       } catch (err) {
         console.error("Error fetching syllabi:", err);

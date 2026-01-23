@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAds, createAd, deleteAd, updateAd } from "@/http/ads";
+import toast from "react-hot-toast";
 
 /**
  * Hook for fetching ads
@@ -9,6 +10,7 @@ export const useAds = (params = {}) => {
     return useQuery({
         queryKey: ["ads", params],
         queryFn: () => getAds(params),
+        select: (response) => response?.data?.data || response?.data,
     });
 };
 
@@ -21,6 +23,10 @@ export const useCreateAd = () => {
         mutationFn: createAd,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ads"] });
+            toast.success("Ad created successfully");
+        },
+        onError: (error) => {
+            toast.error(error.message || "Failed to create ad");
         },
     });
 };
@@ -34,6 +40,10 @@ export const useUpdateAd = () => {
         mutationFn: ({ id, data }) => updateAd(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ads"] });
+            toast.success("Ad updated successfully");
+        },
+        onError: (error) => {
+            toast.error(error.message || "Failed to update ad");
         },
     });
 };
@@ -47,6 +57,10 @@ export const useDeleteAd = () => {
         mutationFn: deleteAd,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ads"] });
+            toast.success("Ad deleted successfully");
+        },
+        onError: (error) => {
+            toast.error(error.message || "Failed to delete ad");
         },
     });
 };

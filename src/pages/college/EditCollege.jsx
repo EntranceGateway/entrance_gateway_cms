@@ -50,8 +50,11 @@ function EditCollege() {
         toast.error("Failed to update college");
       }
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Error updating college");
+      console.error("Update error:", err);
+      // Show user-friendly error message
+      const errorMessage = err.message || err.response?.data?.message || "Error updating college";
+      toast.error(errorMessage);
+      throw err; // Re-throw so form can handle it
     }
   };
 
