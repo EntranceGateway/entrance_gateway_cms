@@ -174,12 +174,13 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
         "Description must be between 50 and 2000 characters";
     }
 
-    // Website format (optional)
-    if (
-      formData.website &&
-      !/^(https?:\/\/)?([\w\d-]+\.)+[\w]{2,}(\/.*)?$/.test(formData.website)
-    ) {
-      newErrors.website = "Invalid website URL";
+    // Website format (optional but must be valid if provided)
+    if (formData.website && formData.website.trim()) {
+      // Validate URL format (protocol should already be added in handleSubmit)
+      const websiteUrl = formData.website.trim();
+      if (!/^https?:\/\/([\w\d-]+\.)+[\w]{2,}(\/.*)?$/.test(websiteUrl)) {
+        newErrors.website = "Invalid website URL";
+      }
     }
 
     // Established Year: optional but must be 4 digits if entered
@@ -196,12 +197,28 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
     setSuccess("");
     setErrors({});
     
+    // Normalize website URL before validation
+    if (formData.website && formData.website.trim()) {
+      let websiteUrl = formData.website.trim();
+      if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+        websiteUrl = 'https://' + websiteUrl;
+        // Update formData synchronously
+        formData.website = websiteUrl;
+        setFormData({ ...formData, website: websiteUrl });
+      }
+    }
+    
     if (!validateForm()) {
       return;
     }
 
     try {
       setLoading(true);
+      
+      console.log("=== FORM SUBMISSION ===");
+      console.log("Form Data:", formData);
+      console.log("Logo:", logo);
+      console.log("Images:", images);
       
       // In edit mode, pass existing URLs so they can be re-uploaded if needed
       if (mode === "edit") {
@@ -222,8 +239,17 @@ const CollegeForm = ({ mode = "add", initialData = null, onSubmit }) => {
       }, 1500);
     } catch (err) {
       console.error("Submission error:", err);
-      const backendErrors = err || {};
-      setErrors((prev) => ({ ...prev, ...backendErrors }));
+      
+      // Parse backend validation errors
+      if (err.response?.data?.fieldErrors) {
+        const fieldErrors = err.response.data.fieldErrors;
+        setErrors(fieldErrors);
+      } else if (err.message) {
+        // Show general error message
+        setErrors({ general: err.message });
+      } else {
+        setErrors({ general: "An error occurred. Please try again." });
+      }
     } finally {
       setLoading(false);
     }

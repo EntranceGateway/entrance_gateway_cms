@@ -9,14 +9,22 @@ export const createColleges = async (formData, logo, images) => {
     // Log the formData being sent
     console.log("=== CREATE COLLEGE - FormData being sent ===");
     console.log("College Data:", formData);
+    console.log("College Data JSON:", JSON.stringify(formData));
     console.log("Latitude:", formData.latitude);
     console.log("Longitude:", formData.longitude);
+    console.log("College Name:", formData.collegeName);
+    console.log("Website:", formData.website);
+    console.log("Affiliation:", formData.affiliation);
 
     // Append college data as JSON blob (required by @RequestPart("college"))
-    const collegeBlob = new Blob([JSON.stringify(formData)], {
+    const collegeJson = JSON.stringify(formData);
+    console.log("College JSON string:", collegeJson);
+    
+    const collegeBlob = new Blob([collegeJson], {
       type: 'application/json'
     });
-    data.append("college", collegeBlob);
+    console.log("College Blob size:", collegeBlob.size);
+    data.append("college", collegeBlob); // No filename, just like your example
 
     // Append logo file - REQUIRED by backend
     if (logo && logo instanceof File) {
@@ -44,19 +52,31 @@ export const createColleges = async (formData, logo, images) => {
 
     console.log("=== END ===");
 
-    const response = await api.post("/api/v1/colleges", data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    // Let axios automatically set Content-Type with boundary
+    const response = await api.post("/api/v1/colleges", data);
 
     return response;
   } catch (err) {
     console.error("Create college error:", err);
+    console.error("Error response data:", err.response?.data);
+    console.error("Error response status:", err.response?.status);
+    console.error("Error response headers:", err.response?.headers);
     
     // Enhanced error handling
     if (err.response) {
       const errorData = err.response.data;
+      
+      // Handle field validation errors
+      if (errorData.fieldErrors) {
+        console.error("Field errors:", errorData.fieldErrors);
+        const fieldErrorMessages = Object.entries(errorData.fieldErrors)
+          .map(([field, message]) => `${field}: ${message}`)
+          .join(', ');
+        const error = new Error(`Validation errors: ${fieldErrorMessages}`);
+        error.response = err.response; // Preserve response for form to parse
+        throw error;
+      }
+      
       const errorMessage = errorData?.message || errorData?.messageDetail || "Failed to create college";
       
       // Create user-friendly error message
@@ -65,11 +85,15 @@ export const createColleges = async (formData, logo, images) => {
       } else if (errorMessage.includes("logo")) {
         throw new Error("Error processing logo. Please check your logo file and try again.");
       } else if (errorMessage.includes("validation")) {
-        throw new Error("Validation error: " + errorMessage);
+        const error = new Error("Validation error: " + errorMessage);
+        error.response = err.response;
+        throw error;
       } else if (errorMessage.includes("duplicate") || errorMessage.includes("already exists")) {
         throw new Error("A college with this name already exists.");
       } else {
-        throw new Error(errorMessage);
+        const error = new Error(errorMessage);
+        error.response = err.response;
+        throw error;
       }
     } else if (err.message) {
       throw new Error(err.message);
@@ -124,7 +148,7 @@ export const updateColleges = async (id, formData, logo, images, existingLogoUrl
     const collegeBlob = new Blob([JSON.stringify(collegeData)], {
       type: 'application/json'
     });
-    data.append("college", collegeBlob);
+    data.append("college", collegeBlob); // No filename
 
     // Handle logo - REQUIRED by backend
     if (logo && logo instanceof File) {
@@ -170,11 +194,8 @@ export const updateColleges = async (id, formData, logo, images, existingLogoUrl
 
     console.log("=== END ===");
 
-    const response = await api.put(`/api/v1/colleges/${id}`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    // Let axios automatically set Content-Type with boundary
+    const response = await api.put(`/api/v1/colleges/${id}`, data);
 
     return response;
   } catch (err) {
