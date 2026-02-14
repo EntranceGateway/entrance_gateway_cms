@@ -8,6 +8,7 @@ const TrainingForm = ({ mode = "add", initialData = null, onSubmit }) => {
   const [form, setForm] = useState({
     trainingName: "",
     description: "",
+    syllabusDescription: "",
     startDate: "",
     endDate: "",
     trainingType: "REMOTE",
@@ -32,6 +33,7 @@ const TrainingForm = ({ mode = "add", initialData = null, onSubmit }) => {
       setForm({
         trainingName: initialData.trainingName || "",
         description: initialData.description || "",
+        syllabusDescription: initialData.syllabusDescription || "",
         startDate: initialData.startDate || "",
         endDate: initialData.endDate || "",
         trainingType: initialData.trainingType || "REMOTE",
@@ -153,6 +155,18 @@ const TrainingForm = ({ mode = "add", initialData = null, onSubmit }) => {
                      placeholder="Comprehensive training covering all aspects..."
                    />
                    {errors.description && <p className="mt-1 text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-3 h-3"/>{errors.description}</p>}
+                </div>
+
+                <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">Syllabus Description</label>
+                   <textarea
+                     name="syllabusDescription"
+                     value={form.syllabusDescription}
+                     onChange={handleChange}
+                     maxLength={2000}
+                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all h-32 resize-y"
+                     placeholder="Detailed syllabus and course outline..."
+                   />
                 </div>
               
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
