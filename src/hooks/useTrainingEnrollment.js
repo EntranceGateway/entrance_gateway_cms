@@ -6,7 +6,10 @@ import {
   getMyTrainingEnrollments,
   getTrainingEnrollmentsByStatus,
   cancelTrainingEnrollment,
+  cancelEnrollmentBySystem,
   updateEnrollmentProgress,
+  approveTrainingEnrollment,
+  rejectTrainingEnrollment,
 } from "@/http/trainingEnrollment";
 
 /**
@@ -78,7 +81,7 @@ export const useEnrollInTraining = () => {
 };
 
 /**
- * Hook for canceling enrollment
+ * Hook for canceling enrollment (User)
  */
 export const useCancelTrainingEnrollment = () => {
   const queryClient = useQueryClient();
@@ -92,6 +95,20 @@ export const useCancelTrainingEnrollment = () => {
 };
 
 /**
+ * Hook for canceling enrollment by system (Admin)
+ */
+export const useCancelEnrollmentBySystem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: cancelEnrollmentBySystem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trainingEnrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["trainingEnrollment"] });
+    },
+  });
+};
+
+/**
  * Hook for updating enrollment progress (Admin)
  */
 export const useUpdateEnrollmentProgress = () => {
@@ -100,6 +117,34 @@ export const useUpdateEnrollmentProgress = () => {
     mutationFn: ({ id, progressPercentage }) => updateEnrollmentProgress(id, progressPercentage),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trainingEnrollments"] });
+    },
+  });
+};
+
+/**
+ * Hook for approving enrollment (Admin)
+ */
+export const useApproveTrainingEnrollment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: approveTrainingEnrollment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trainingEnrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["trainingEnrollment"] });
+    },
+  });
+};
+
+/**
+ * Hook for rejecting enrollment (Admin)
+ */
+export const useRejectTrainingEnrollment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ enrollmentId, reason }) => rejectTrainingEnrollment(enrollmentId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trainingEnrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["trainingEnrollment"] });
     },
   });
 };
